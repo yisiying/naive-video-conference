@@ -1,0 +1,196 @@
+
+.homeSceneBtn-live {
+     -fx-background-radius: 25;
+     -fx-border-radius: 25;
+     -fx-font: 20 arial;
+     -fx-max-height: 150;
+     -fx-max-width: 150;
+     -fx-background-color: #00000000;
+ }
+.homeSceneBtn-watch {
+    -fx-background-radius: 25;
+    -fx-border-radius: 25;
+    -fx-font: 20 arial;
+    -fx-max-height: 150;
+    -fx-max-width: 150;
+    -fx-background-color: #00000000;
+}
+.homeSceneBtn-login {
+    -fx-font-size: 20;
+}
+.homeSceneBtn-confirm {
+    -fx-font-size: 17;
+}
+.homeSceneBtn-register {
+    -fx-background-radius: 25;
+    -fx-border-radius: 25;
+    -fx-font: 20 arial;
+    -fx-max-height: 150;
+    -fx-max-width: 150;
+    -fx-base: #00000000;
+}
+.homeSceneBtn-logout {
+    -fx-background-radius: 25;
+    -fx-border-radius: 25;
+    -fx-font: 20 arial;
+    -fx-max-height: 150;
+    -fx-max-width: 150;
+    -fx-base: #00000000;
+}
+.homeScene-userLabel{
+    -fx-font: 20 arial;
+    -fx-text-fill: white;
+}
+.topBtn {
+    -fx-background-radius: 6;
+    -fx-background-color: white;
+    -fx-border-color: #333f50;
+    -fx-border-radius: 6;
+    -fx-border-width: 2;
+    -fx-font: 15 arial;
+    -fx-text-fill: #333f50;
+    -fx-cursor: hand;
+}
+.roomSceneBtn {
+    -fx-background-radius: 25;
+    -fx-border-radius: 25;
+    -fx-font: 20 arial;
+    -fx-max-height: 150;
+    -fx-max-width: 150;
+}
+
+.toggleButton {
+    -fx-graphic: url("../img/offBtn2.png");
+    -fx-background-color: #00000000;
+}
+
+.toggleButton:selected {
+    -fx-graphic: url("../img/onBtn2.png");
+    -fx-background-color: #00000000;
+}
+
+
+
+/*.hostScene-rightArea-toggleButton {*/
+    /*-fx-graphic: url("../img/offBtn.png");*/
+    /*-fx-background-color: 	#f2f5fb;*/
+    /*-fx-background-radius: 30;*/
+    /*-fx-border-color: 	#f2f5fb;*/
+    /*-fx-border-radius: 30;*/
+    /*-fx-cursor: hand;*/
+
+/*}*/
+
+/*.hostScene-rightArea-toggleButton:selected {*/
+    /*-fx-graphic: url("../img/onBtn.png");*/
+    /*-fx-background-color: 	#f2f5fb;*/
+    /*-fx-background-radius: 30;*/
+    /*-fx-border-color: 	#f2f5fb;*/
+    /*-fx-border-radius: 30;*/
+    /*-fx-cursor: hand;*/
+/*}*/
+/*.hostScene-rightArea-toggleButton:hover {*/
+    /*!*-fx-graphic: url("../img/chooseBtn.png");*!*/
+    /*-fx-background-color: 	#d4dbe3;*/
+    /*-fx-background-radius: 30;*/
+    /*-fx-border-color: 	#d4dbe3;*/
+    /*-fx-border-radius: 30;*/
+    /*-fx-cursor: hand;*/
+/*}*/
+
+.backBtn{
+    -fx-background-color: #00000000;
+}
+
+
+.viewport {
+    -fx-background-color: white;
+}
+.hostScene_agreeBtn{
+     -fx-background-color: transparent;
+ }
+.hostScene_refuseBtn{
+    -fx-background-color: transparent;
+}
+.hostScene-leftArea-label{
+    -fx-background-radius: 6;
+    -fx-background-color: white;
+    -fx-border-color: #333f50;
+    -fx-border-radius: 6;
+    -fx-border-width: 2;
+    -fx-font: 15 arial;
+    -fx-text-fill: #333f50;
+}
+
+.homeScene-bottomBtn {
+    -fx-border-color: #333f50;
+    -fx-border-radius: 15;
+    -fx-background-radius: 15;
+    -fx-cursor: hand;
+}
+
+.homeScene-bottomText {
+    -fx-font: 32 KaiTi;
+    -fx-font-weight: bolder;
+    -fx-stroke-width: 1;
+    -fx-fill: #000000 ;
+}
+.roomScene-roomName{
+    -fx-font-size: 15 ;
+    -fx-text-fill: #333f50;
+    -fx-stroke-width: 1;
+}
+.roomScene-userName{
+    -fx-font-size: 12 ;
+    -fx-text-fill: #696969;
+}
+
+/*设置表格头靠左、字体大小，字体颜色*/
+.table-view .column-header .label{
+    -fx-alignment: center-left;
+    -fx-font-family: "Arial";
+    -fx-text-fill: rgba(68,68,68,0.96);
+    -fx-font-size: 12;
+}
+
+/*设置每一列内容居中，每一行高度,去掉很小*/
+.table-view .table-row-cell{
+    -fx-cell-size: 30px;
+    -fx-alignment: center;
+    -fx-background-insets: 0;
+    -fx-border-width: 0px;
+}
+/*去掉外边框*/
+.table-view{
+    -fx-background-color: #c1c1c13d;
+    -fx-prompt-text-fill: "";
+}
+.table-view .table-row-cell .table-cell {
+    -fx-border-width: 0px;
+}
+
+/*设置表格头高度*/
+.table-view .column-header-background {
+    -fx-max-height: 0;
+    -fx-pref-height: 0;
+    -fx-min-height: 0;
+}
+
+.hostScene-rightArea-label{
+    -fx-font-size: 15 ;
+    /*-fx-font-weight: bold;*/
+    -fx-text-fill: #333f50;
+}
+
+/*
+#studentTableView{
+    -fx-table-cell-border-color:transparent;
+    -fx-border-color: white;
+    -fx-alignment: center-left;
+}*/
+
+/*设置每一列内容居中*/
+/*
+#studentTableView .table-column{
+    -fx-alignment: center-left;
+}*/
