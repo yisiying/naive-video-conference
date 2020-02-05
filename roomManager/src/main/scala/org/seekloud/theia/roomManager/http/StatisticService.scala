@@ -8,7 +8,7 @@ import akka.actor.typed.scaladsl.AskPattern._
 import org.seekloud.theia.protocol.ptcl.CommonRsp
 import org.seekloud.theia.protocol.ptcl.client2Manager.http.StatisticsProtocol._
 import org.seekloud.theia.roomManager.common.AppSettings
-import org.seekloud.theia.roomManager.models.dao.{RecordDao, StatisticDao}
+import org.seekloud.theia.roomManager.models.dao.{RecordDao}
 import org.seekloud.theia.roomManager.utils.TimeUtil
 import org.slf4j.LoggerFactory
 
@@ -22,6 +22,7 @@ trait StatisticService extends ServiceUtils{
   import io.circe.generic.auto._
 
   private val log = LoggerFactory.getLogger(this.getClass)
+/*
 
 
   val watchRecordEnd = (path("watchRecordEnd") & post){
@@ -242,6 +243,7 @@ trait StatisticService extends ServiceUtils{
     watchRecordEnd ~ getLoginData ~ loginDataByDay ~ loginDataByHour ~ getRecordDataByAdmin ~ getObserveDataById ~
     getObserveDataByHour ~ getObserveDataByDay
   }
+*/
 
 }
 

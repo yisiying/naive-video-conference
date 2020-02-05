@@ -127,41 +127,45 @@ class RecordPage(roomId:Long,time:Long) extends Page{
   private var mp4Url = Var("")
   //https://www.runoob.com/try/demo_source/mov_bbb.mp4
   def watchRecord():Unit = {
-    val userId =
-      if(isTemUser()) dom.window.sessionStorage.getItem("userId")
-      else dom.window.localStorage.getItem("userId")
-    val userOption = {
-      (dom.window.localStorage.getItem("isTemUser"), userId) match {
-        case (null, null) => None
-        case (null, b) => Some(b.toLong)
-        case _ => None
+    if(isTemUser()){
+      PopWindow.commonPop(s"you are temporary user, please login!")
+    }else{
+      val userId =
+        if(isTemUser()) dom.window.sessionStorage.getItem("userId")
+        else dom.window.localStorage.getItem("userId")
+      val userOption = {
+        (dom.window.localStorage.getItem("isTemUser"), userId) match {
+          case (null, null) => None
+          case (null, b) => Some(b.toLong)
+          case _ => None
+        }
       }
-    }
-    val newData = new Date().getTime
-    val data = SearchRecord(roomId,time,newData,userOption).asJson.noSpaces
-    Http.postJsonAndParse[SearchRecordRsp](Routes.UserRoutes.getOneRecord,data).map{
-      case Right(rsp) =>
-        if(rsp.errCode==0){
-          //获得了url
-          mp4Url := rsp.url
+      val newData = new Date().getTime
+      val data = SearchRecord(roomId,time,newData,userOption).asJson.noSpaces
+      Http.postJsonAndParse[SearchRecordRsp](Routes.UserRoutes.getOneRecord,data).map{
+        case Right(rsp) =>
+          if(rsp.errCode==0){
+            //获得了url
+            mp4Url := rsp.url
 
-          dom.window.sessionStorage.setItem("recordName", rsp.recordInfo.recordName)
-          dom.window.sessionStorage.setItem("recordCoverImg", rsp.recordInfo.coverImg)
-          dom.window.sessionStorage.setItem("recordStartTime", rsp.recordInfo.startTime.toString)
+            dom.window.sessionStorage.setItem("recordName", rsp.recordInfo.recordName)
+            dom.window.sessionStorage.setItem("recordCoverImg", rsp.recordInfo.coverImg)
+            dom.window.sessionStorage.setItem("recordStartTime", rsp.recordInfo.startTime.toString)
 
-          watchRecordEndInfo = WatchRecordEnd(rsp.recordInfo.recordId, newData)
-          roomCoverImg := rsp.recordInfo.coverImg
-          videoTime := rsp.recordInfo.startTime.toString
-          videoName := rsp.recordInfo.recordName
-          val v = dom.document.getElementById("recordVideo").asInstanceOf[Video]
-          v.load()
-          v.play()
-        }
-        else{
-          PopWindow.commonPop(s"get url error in watchRecord: ${rsp.msg}")
-        }
-      case Left(e) =>
-        PopWindow.commonPop(s"get url error in watchRecord: $e")
+            watchRecordEndInfo = WatchRecordEnd(rsp.recordInfo.recordId, newData)
+            roomCoverImg := rsp.recordInfo.coverImg
+            videoTime := rsp.recordInfo.startTime.toString
+            videoName := rsp.recordInfo.recordName
+            val v = dom.document.getElementById("recordVideo").asInstanceOf[Video]
+            v.load()
+            v.play()
+          }
+          else{
+            PopWindow.commonPop(s"get url error in watchRecord: ${rsp.msg}")
+          }
+        case Left(e) =>
+          PopWindow.commonPop(s"get url error in watchRecord: $e")
+      }
     }
   }
 

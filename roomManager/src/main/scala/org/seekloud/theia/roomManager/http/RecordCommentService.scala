@@ -30,22 +30,30 @@ trait RecordCommentService extends ServiceUtils{
                     RecordDao.searchRecord(req.roomId,req.recordTime).map{v=>
                       if(v.nonEmpty){
                         dealFutureResult{
-                          RecordCommentDAO.addRecordComment(rRecordComment(req.roomId,req.recordTime,req.comment,req.commentTime,req.commentUid,req.authorUidOpt,-1l,req.relativeTime)).map{r =>
-                            complete(CommonRsp())
-                          }.recover{
-                            case e:Exception =>
-                              log.debug(s"增加记录评论失败，error=$e")
-                              complete(addRecordCommentErrorRsp(s"增加记录评论失败，error=$e"))
+                          RecordCommentDAO.checkAccess(v.get.recordId, req.commentUid).map{a =>
+                            if(a){
+                              dealFutureResult{
+                                RecordCommentDAO.addRecordComment(rRecordComment(-1l,req.roomId,req.recordTime,req.comment,req.commentTime,req.commentUid,req.authorUidOpt,req.relativeTime)).map{r =>
+                                  complete(CommonRsp())
+                                }.recover{
+                                  case e:Exception =>
+                                    log.debug(s"增加记录评论失败，error=$e")
+                                    complete(addRecordCommentErrorRsp(s"增加记录评论失败，error=$e"))
+                                }
+                              }
+                            }
+                            else{
+                              log.debug(s"该用户没有权限评论录像")
+                              complete(addRecordCommentErrorRsp("该用户没有权限评论录像"))
+                            }
                           }
                         }
                       }else{
                         log.debug(s"增加记录评论失败，录像不存在")
                         complete(addRecordCommentErrorRsp(s"增加记录评论失败，录像不存在"))
                       }
-
                     }
                   }
-
                 }
               case None =>
                 complete(addRecordCommentErrorRsp(s"无法找到该用户"))
@@ -122,9 +130,49 @@ trait RecordCommentService extends ServiceUtils{
 //    }
   }
 
+  private def addCommentAccessErrorRsp(msg:String) = CommonRsp(1000040,msg)
+  private val addCommentAccess = (path("addCommentAccess") & post){
+    entity(as[Either[Error,RecordCommentProtocol.AddCommentAccessReq]]){
+      case Right(req) =>
+        dealFutureResult{
+          RecordCommentDAO.checkHostAccess(req.recordId, req.operatorId).map{a =>
+            if(a){
+              RecordCommentDAO.addCommentAccess(req.recordId, req.operatorId, req.addUserID)
+              complete(CommonRsp())
+            }else{
+              complete(addRecordCommentErrorRsp(s"您没有添加用户的权限"))
+            }
+          }
+        }
+      case Left(error) =>
+        log.debug(s"增加记录评论失败，请求错误，error=$error")
+        complete(addCommentAccessErrorRsp(s"增加用户评论权限失败，请求错误，error=$error"))
+    }
+  }
+
+  private def deleteCommentAccessErrorRsp(msg:String) = CommonRsp(1000041,msg)
+  private val deleteCommentAccess = (path("deleteCommentAccess") & post){
+    entity(as[Either[Error,RecordCommentProtocol.DeleteCommentAccessReq]]){
+      case Right(req) =>
+        dealFutureResult{
+          RecordCommentDAO.checkHostAccess(req.recordId, req.operatorId).map{a =>
+            if(a){
+              RecordCommentDAO.addCommentAccess(req.recordId, req.operatorId, req.deleteUserID)
+              complete(CommonRsp())
+            }else{
+              complete(addRecordCommentErrorRsp(s"您没有删除用户的权限"))
+            }
+          }
+        }
+      case Left(error) =>
+        log.debug(s"增加记录评论失败，请求错误，error=$error")
+        complete(deleteCommentAccessErrorRsp(s"删除用户评论权限失败，请求错误，error=$error"))
+    }
+  }
+
 
   val recordComment = pathPrefix("recordComment"){
-    addRecordComment ~ getRecordCommentList
+    addRecordComment ~ getRecordCommentList ~ addCommentAccess ~ deleteCommentAccess
 
   }
 }

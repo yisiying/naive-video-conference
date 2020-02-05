@@ -22,7 +22,7 @@ trait HttpService extends ServiceUtils
   with RecordService
   with AdminService
   with RecordCommentService
-  with StatisticService
+//  with StatisticService
   with ResourceService{
 
   implicit val system: ActorSystem
@@ -65,7 +65,7 @@ trait HttpService extends ServiceUtils
       pathPrefix("theia") {
         home ~ statistics ~
         pathPrefix("roomManager"){
-          resourceRoutes ~ userRoutes ~ rtpRoutes ~ recordRoutes ~ test ~ file ~ rtmp ~ admin ~ recordComment ~ statistic
+          resourceRoutes ~ userRoutes ~ rtpRoutes ~ recordRoutes ~ test ~ file ~ rtmp ~ admin ~ recordComment //~ statistic
         }
       }
     }

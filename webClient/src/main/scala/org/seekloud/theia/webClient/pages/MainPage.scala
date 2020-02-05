@@ -50,8 +50,8 @@ object MainPage extends PageSwitcher {
     </div>
   private val noUserShow: Elem =
     <div class="header-content-nologin">
-      <div class="header-adminLogin" onclick={() => adminLogin()}>管理员登录</div>
-      {showAdminLogin}
+      <!--div class="header-adminLogin" onclick={() => adminLogin()}>管理员登录</div-->
+      <!--{showAdminLogin}-->
       <label class="header-login" id="login" for="pop-login">登录</label>
       {PopWindow.loginPop}
       {PopWindow.emailLoginPop}
@@ -65,10 +65,10 @@ object MainPage extends PageSwitcher {
           <img src="/theia/roomManager/static/img/下载客户端.png"></img>
           <div>下载客户端</div>
         </div>
-        <div class="obs-anchor" onclick={() => connectRTMP()}>
+        <!--div class="obs-anchor" onclick={() => connectRTMP()}>
           <img src="/theia/roomManager/static/img/anchor.png"></img>
           <div style="font-size:14px">我要直播</div>
-        </div>
+        </div-->
         {showRtmpInfo}
       </div>
       <div style="display:flex">
@@ -104,9 +104,9 @@ object MainPage extends PageSwitcher {
   }else Var(noUserShow)
   private val exitShow = Var(emptyHTML)
 
-  def adminLogin() = {
+  /*def adminLogin() = {
     showAdminLogin := PopWindow.adminLogin()
-  }
+  }*/
   def hashChangeHandle(): Unit ={
     preLive.foreach(_.closeWS())
     preRecord.foreach(_.exitRecord().foreach(_ => preRecord = None))
@@ -337,7 +337,7 @@ object MainPage extends PageSwitcher {
     }.foreach(_ => PopWindow.emailLoginButton := <div class="pop-button" onclick={(e: Event) => MainPage.emailLogin(e, "pop-emailLogin")}>GO</div>)
   }
 
-  def adminLogin(e: Event, popId: String):Unit = {
+  /*def adminLogin(e: Event, popId: String):Unit = {
     val adminName = dom.document.getElementById("adminName").asInstanceOf[Input].value
     val password = dom.document.getElementById("password").asInstanceOf[Input].value
     val data = AdminSignIn(adminName,password).asJson.noSpaces
@@ -357,7 +357,7 @@ object MainPage extends PageSwitcher {
         PopWindow.commonPop(s"error: $error")
 
     }
-  }
+  }*/
 
   def loginOut(): Unit = {
     menuShow := noUserShow

@@ -1,3 +1,4 @@
+
 package org.seekloud.theia.roomManager.models.dao
 import java.util
 
@@ -18,7 +19,7 @@ import scala.concurrent.Future
   * 统计
   * */
 object StatisticDao {
-  def addLoginEvent(uid:Long, time:Long) = {
+ /* def addLoginEvent(uid:Long, time:Long) = {
     db.run(tLoginEvent += rLoginEvent(1, uid, time))
   }
 
@@ -77,5 +78,6 @@ object StatisticDao {
   //录像id获取观看时长
   def getObserveTimeByRid(recordId: Long) ={
     db.run(tObserveEvent.filter(t => t.recordid === recordId && !(t.outTime === 0l) ).map(t => t.outTime - t.inTime).sum.result)
-  }
+  }*/
 }
+

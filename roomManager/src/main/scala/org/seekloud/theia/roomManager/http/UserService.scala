@@ -33,7 +33,7 @@ trait UserService extends ServiceUtils {
 
   private val tokenExistTime = AppSettings.tokenExistTime * 1000L // seconds
 
-  private val signUp = (path("signUp") & post) {
+ /* private val signUp = (path("signUp") & post) {
 
     entity(as[Either[Error, SignUp]]) {
       case Right(data) =>
@@ -70,8 +70,51 @@ trait UserService extends ServiceUtils {
       case Left(error) =>
         complete(CommonRsp(200001, s"error :${error}"))
     }
-  }
+  }*/
 
+  private val signUp = (path("signUp") & post) {
+    entity(as[Either[Error, SignUp]]) {
+      case Right(data) =>
+        val emailReg = "^([a-z0-9A-Z]+[-|\\.]?)+[a-z0-9A-Z]@([a-z0-9A-Z]+(-[a-z0-9A-Z]+)?\\.)+[a-zA-Z]{2,}$"
+        data.email.matches(emailReg) match {
+          case true =>
+            val code = SecureUtil.nonceStr(20)
+            dealFutureResult {
+              UserInfoDao.checkEmail(data.email).map {
+                case Some(_) =>
+                  complete(CommonRsp(180002, "邮箱已注册"))
+                case None =>
+                  dealFutureResult {
+                    UserInfoDao.searchByName(data.userName).map {
+                      case Some(_) =>
+                        complete(CommonRsp(180010, "用户名已注册"))
+                      case None =>
+                        val timestamp = System.currentTimeMillis()
+                        val token = SecureUtil.nonceStr(40)
+                        dealFutureResult {
+                          UserInfoDao.addUser(
+                            data.email, data.userName, SecureUtil.getSecurePassword(data.password, data.email, timestamp), token, timestamp, SecureUtil.nonceStr(40)
+                          ).map {
+                            case 1 =>
+                              log.debug("add user success")
+                              complete(CommonRsp())
+                            case _ =>
+                              log.debug(s"add register user:${data.userName} failed")
+                              complete(CommonRsp(180002, "注册失败"))
+                          }
+                        }
+                    }
+                  }
+              }
+            }
+          case false =>
+            complete(CommonRsp(180001, "邮箱地址不合法"))
+        }
+      case Left(error) =>
+        complete(CommonRsp(200001, s"error :${error}"))
+    }
+  }
+/*
   private val confirmEmail = (path("confirmEmail") & get & pathEndOrSingleSlash) { //收到用户点击确认链接
     parameter(
       'email.as[String],
@@ -94,7 +137,7 @@ trait UserService extends ServiceUtils {
         }
       }
     }
-  }
+  }*/
 
   private val signIn = (path("signIn") & post) {
     entity(as[Either[Error, SignIn]]) {
@@ -112,7 +155,7 @@ trait UserService extends ServiceUtils {
                 UserInfoDao.updateToken(rst.uid, token, System.currentTimeMillis())
                 val userInfo = UserInfo(rst.uid, rst.userName, if (rst.headImg == "") Common.DefaultImg.headImg else rst.headImg, token, tokenExistTime)
                 val roomInfo = RoomInfo(rst.roomid, s"${rst.userName}的直播间", "", rst.uid, rst.userName, if (rst.headImg == "") Common.DefaultImg.headImg else rst.headImg, if (rst.coverImg == "") Common.DefaultImg.coverImg else rst.coverImg, 0, 0)
-                StatisticDao.addLoginEvent(userInfo.userId, System.currentTimeMillis())
+//                StatisticDao.addLoginEvent(userInfo.userId, System.currentTimeMillis())
                 val session = UserSession(rst.uid.toString, rst.userName, System.currentTimeMillis().toString).toSessionMap
                 addSession(session) {
                   log.info(s"${rst.uid} login success")
@@ -122,7 +165,7 @@ trait UserService extends ServiceUtils {
               else {
                 val userInfo = UserInfo(rst.uid, rst.userName, if (rst.headImg == "") Common.DefaultImg.headImg else rst.headImg, rst.token, tokenExistTime)
                 val roomInfo = RoomInfo(rst.roomid, s"${rst.userName}的直播间", "", rst.uid, rst.userName, if (rst.headImg == "") Common.DefaultImg.headImg else rst.headImg, if (rst.coverImg == "") Common.DefaultImg.coverImg else rst.coverImg, 0, 0)
-                StatisticDao.addLoginEvent(userInfo.userId, System.currentTimeMillis())
+//                StatisticDao.addLoginEvent(userInfo.userId, System.currentTimeMillis())
                 val session = UserSession(rst.uid.toString, rst.userName, System.currentTimeMillis().toString).toSessionMap
                 addSession(session) {
                   log.info(s"${rst.uid} login success")
@@ -155,7 +198,7 @@ trait UserService extends ServiceUtils {
                 UserInfoDao.updateToken(rst.uid, token, System.currentTimeMillis())
                 val userInfo = UserInfo(rst.uid, rst.userName, if (rst.headImg == "") Common.DefaultImg.headImg else rst.headImg, token, tokenExistTime)
                 val roomInfo = RoomInfo(rst.roomid, s"${rst.userName}的直播间", "", rst.uid, rst.userName, if (rst.headImg == "") Common.DefaultImg.headImg else rst.headImg, if (rst.coverImg == "") Common.DefaultImg.coverImg else rst.coverImg, 0, 0)
-                StatisticDao.addLoginEvent(userInfo.userId, System.currentTimeMillis())
+//                StatisticDao.addLoginEvent(userInfo.userId, System.currentTimeMillis())
                 val session = UserSession(rst.uid.toString, rst.userName, System.currentTimeMillis().toString).toSessionMap
                 addSession(session) {
                   log.info(s"${rst.uid} login success")
@@ -166,7 +209,7 @@ trait UserService extends ServiceUtils {
                 log.info(s"${rst.uid} login success")
                 val userInfo = UserInfo(rst.uid, rst.userName, if (rst.headImg == "") Common.DefaultImg.headImg else rst.headImg, rst.token, tokenExistTime)
                 val roomInfo = RoomInfo(rst.roomid, s"room:${rst.roomid}", "", rst.uid, rst.userName, if (rst.headImg == "") Common.DefaultImg.headImg else rst.headImg, if (rst.coverImg == "") Common.DefaultImg.coverImg else rst.coverImg, 0, 0)
-                StatisticDao.addLoginEvent(userInfo.userId, System.currentTimeMillis())
+//                StatisticDao.addLoginEvent(userInfo.userId, System.currentTimeMillis())
                 val session = UserSession(rst.uid.toString, rst.userName, System.currentTimeMillis().toString).toSessionMap
                 addSession(session) {
                   log.info(s"${rst.uid} login success")
@@ -303,7 +346,7 @@ trait UserService extends ServiceUtils {
   }
 
   val userRoutes: Route = pathPrefix("user") {
-    signUp ~ signIn ~ confirmEmail ~ deleteUserByEmail ~
+    signUp ~ signIn ~ deleteUserByEmail ~
     nickNameChange ~ getRoomList ~ searchRoom ~ setupWebSocket ~ temporaryUser ~ signInByMail ~ getRoomInfo
   }
 }

@@ -10,12 +10,14 @@ import org.seekloud.theia.protocol.ptcl.processer2Manager.ProcessorProtocol.Seek
 import org.seekloud.theia.roomManager.Boot.{executor, scheduler, timeout}
 import org.seekloud.theia.roomManager.common.AppSettings._
 import org.seekloud.theia.roomManager.common.Common
-import org.seekloud.theia.roomManager.models.dao.{RecordDao, UserInfoDao}
+import org.seekloud.theia.roomManager.models.dao.{RecordDao, UserInfoDao, RecordCommentDAO}
 import org.seekloud.theia.roomManager.core.RoomActor._
 import org.seekloud.theia.roomManager.protocol.ActorProtocol
 import org.seekloud.theia.roomManager.protocol.CommonInfoProtocol.WholeRoomInfo
 import org.seekloud.theia.roomManager.utils.{DistributorClient, ProcessorClient}
 import org.slf4j.LoggerFactory
+import org.seekloud.theia.roomManager.common.Common.{Like, Role}
+
 
 import scala.collection.mutable
 import scala.concurrent.duration.{FiniteDuration, _}
@@ -39,16 +41,16 @@ object RoomManager {
 
   case class ExistRoom(roomId:Long,replyTo:ActorRef[Boolean]) extends Command
 
-  case class DelaySeekRecord(wholeRoomInfo:WholeRoomInfo, totalView:Int, roomId:Long, startTime:Long, liveId: String) extends Command
-  case class OnSeekRecord(wholeRoomInfo:WholeRoomInfo, totalView:Int, roomId:Long, startTime:Long, liveId: String) extends Command
+  case class DelaySeekRecord(wholeRoomInfo:WholeRoomInfo, totalView:Int, roomId:Long, startTime:Long, liveId: String, invitationList: mutable.HashMap[Int, List[Long]]) extends Command
+  case class OnSeekRecord(wholeRoomInfo:WholeRoomInfo, totalView:Int, roomId:Long, startTime:Long, liveId: String, invitationList: mutable.HashMap[Int, List[Long]]) extends Command
 
-  //case class FinishPull(roomId: Long, startTime: Long, liveId: String) extends Command
+  case class AddAccess(roomId: Long, startTime: Long, invitationList: mutable.HashMap[Int, List[Long]]) extends Command
 
   case class GetRtmpLiveInfo(roomId:Long, replyTo:ActorRef[GetLiveInfoRsp4RM]) extends Command with RoomActor.Command
 
   private final case object DelaySeekRecordKey
 
-  private final case object FinishPullKey
+  private final case object DelayAddAccessKey
 
   def create():Behavior[Command] = {
     Behaviors.setup[Command]{ctx =>
@@ -229,13 +231,13 @@ object RoomManager {
           Behaviors.same
 
         //延时请求获取录像（计时器）
-        case DelaySeekRecord(wholeRoomInfo, totalView, roomId, startTime, liveId) =>
+        case DelaySeekRecord(wholeRoomInfo, totalView, roomId, startTime, liveId, invitationList) =>
           log.info("---- wait seconds to seek record ----")
-          timer.startSingleTimer(DelaySeekRecordKey + roomId.toString + startTime, OnSeekRecord(wholeRoomInfo, totalView, roomId, startTime, liveId), 5.seconds)
+          timer.startSingleTimer(DelaySeekRecordKey + roomId.toString + startTime, OnSeekRecord(wholeRoomInfo, totalView, roomId, startTime, liveId, invitationList), 5.seconds)
           Behaviors.same
 
         //延时请求获取录像
-        case OnSeekRecord(wholeRoomInfo, totalView, roomId, startTime, liveId) =>
+        case OnSeekRecord(wholeRoomInfo, totalView, roomId, startTime, liveId, invitationList) =>
           timer.cancel(DelaySeekRecordKey + roomId.toString + startTime)
           DistributorClient.seekRecord(roomId,startTime).onComplete{
             case Success(v) =>
@@ -245,7 +247,8 @@ object RoomManager {
                   RecordDao.addRecord(wholeRoomInfo.roomInfo.roomId,
                     wholeRoomInfo.roomInfo.roomName,wholeRoomInfo.roomInfo.roomDes,startTime,
                     UserInfoDao.getVideoImg(wholeRoomInfo.roomInfo.coverImgUrl),0,wholeRoomInfo.roomInfo.like,rsp.duration)
-                  //timer.startSingleTimer(FinishPullKey + roomId.toString + startTime, FinishPull(roomId, startTime, liveId), 5.seconds)
+                //todo 添加RecordCommentDAO.addCommentAccess()，可以用ctx.self ! addAccess()
+                  timer.startSingleTimer(DelayAddAccessKey + roomId.toString + startTime, AddAccess(roomId, startTime, invitationList),3.seconds)
                 case Left(err) =>
                   log.debug(s"${ctx.self.path} 查询录像文件信息失败,error:$err")
               }
@@ -255,6 +258,21 @@ object RoomManager {
           }
           Behaviors.same
 
+        case AddAccess(roomId, startTime, invitationList) =>
+          timer.cancel(DelayAddAccessKey + roomId.toString + startTime)
+          RecordDao.searchRecord(roomId, startTime).map{
+            case Some(recordInfo) =>
+              val host = invitationList(Role.host).head
+              RecordCommentDAO.addCommentAccess(recordInfo.recordId, host, host)
+              invitationList(Role.audience).foreach{u =>
+                RecordCommentDAO.addCommentAccess(recordInfo.recordId, host, u)
+              }
+              log.info(s"录像${recordInfo.recordId}添加权限成功")
+            case None =>
+              log.error(s"未录像信息，无法添加权限")
+          }
+
+          Behavior.same
 
 
         case ChildDead(name,childRef) =>

@@ -31,7 +31,7 @@ object PopWindow {
   val loginButton = Var(<div class="pop-button" onclick={(e: Event) => MainPage.login(e, "pop-login")}>GO</div>)
   val emailLoginButton = Var(<div class="pop-button" onclick={(e: Event) => MainPage.emailLogin(e, "pop-emailLogin")}>GO</div>)
   val registerButton = Var(<div class="pop-button" onclick={(e: Event) => MainPage.register(e, "pop-register")}>GO</div>)
-  val adminLoginButton = Var(<div class="pop-button" onclick={(e :Event) => MainPage.adminLogin(e, "pop-adminLogin")}>GO</div>)
+//  val adminLoginButton = Var(<div class="pop-button" onclick={(e :Event) => MainPage.adminLogin(e, "pop-adminLogin")}>GO</div>)
 
   //防止弹窗消失
   def stopCancel(e: Event, id: String): Unit = {
@@ -261,9 +261,9 @@ object PopWindow {
           <input class="pop-input" id="adminName" placeholder="管理员名"></input>
           <input class="pop-input" id="password" type="password"  placeholder="密码"></input>
         </div>
-        <div class="pop-confirm">
+        <!--div class="pop-confirm">
           {adminLoginButton}
-        </div>
+        </div-->
       </div>
     </div>
 

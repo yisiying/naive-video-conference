@@ -11,10 +11,11 @@ import org.seekloud.theia.protocol.ptcl.CommonRsp
 import org.seekloud.theia.protocol.ptcl.client2Manager.http.AdminProtocol.DeleteRecordReq
 import org.seekloud.theia.protocol.ptcl.client2Manager.http.StatisticsProtocol
 import org.seekloud.theia.roomManager.Boot.{executor, scheduler, userManager}
-import org.seekloud.theia.roomManager.models.dao.{RecordDao, StatisticDao, UserInfoDao}
+import org.seekloud.theia.roomManager.models.dao.{RecordDao, UserInfoDao, RecordCommentDAO}
 import org.seekloud.theia.roomManager.common.{AppSettings, Common}
 
 trait RecordService {
+
   import io.circe._
   import io.circe.syntax._
   import io.circe.generic.auto._
@@ -46,13 +47,21 @@ trait RecordService {
           RecordDao.searchRecord(req.roomId, req.startTime).map {
             case Some(recordInfo) =>
               dealFutureResult {
-                StatisticDao.addObserveEvent(if (req.userIdOpt.nonEmpty) req.userIdOpt.get else 1l, recordInfo.recordId, false, req.userIdOpt.isEmpty, req.inTime).map { r =>
-                  RecordDao.updateViewNum(req.roomId, req.startTime, recordInfo.observeNum + 1)
-                  val url = s"https://${AppSettings.distributorDomain}/theia/distributor/getRecord/${req.roomId}/${req.startTime}/record.mp4"
-                  complete(SearchRecordRsp(url, recordInfo))
+                RecordCommentDAO.checkAccess(recordInfo.recordId, req.userIdOpt.get).map { a =>
+                  if(a){
+                    RecordDao.updateViewNum(req.roomId, req.startTime, recordInfo.observeNum + 1)
+                    val url = s"https://${AppSettings.distributorDomain}/theia/distributor/getRecord/${req.roomId}/${req.startTime}/record.mp4"
+                    complete(SearchRecordRsp(url, recordInfo))
+                  }else{
+                    complete(CommonRsp(100100, s"您没有权限查看该录像"))
+                  }
 
                 }
               }
+            //              dealFutureResult {
+            //                StatisticDao.addObserveEvent(if (req.userIdOpt.nonEmpty) req.userIdOpt.get else 1l, recordInfo.recordId, false, req.userIdOpt.isEmpty, req.inTime).map { r =>
+            //                }
+            //              }
 
             case None =>
               complete(CommonRsp(100070, s"没有该录像"))
@@ -63,7 +72,7 @@ trait RecordService {
     }
   }
 
-  private val watchRecordOver = (path("watchRecordOver") & post) {
+  /*private val watchRecordOver = (path("watchRecordOver") & post) {
     entity(as[Either[Error, StatisticsProtocol.WatchRecordEndReq]]) {
       case Right(req) =>
         dealFutureResult {
@@ -79,7 +88,7 @@ trait RecordService {
         complete(CommonRsp(100045, s"watch over error decode error:$error"))
 
     }
-  }
+  }*/
 
   private val getAuthorRecordList = (path("getAuthorRecordList") & get) {
     parameters(
@@ -120,8 +129,8 @@ trait RecordService {
     entity(as[Either[Error, AddRecordAddrReq]]) {
       case Right(req) =>
         dealFutureResult {
-          RecordDao.addRecordAddr(req.recordId, req.recordAddr).map{r =>
-            if(r == 1){
+          RecordDao.addRecordAddr(req.recordId, req.recordAddr).map { r =>
+            if (r == 1) {
               log.info("添加录像地址成功")
               complete(CommonRsp())
             } else {
@@ -137,6 +146,6 @@ trait RecordService {
 
 
   val recordRoutes: Route = pathPrefix("record") {
-    getRecordList ~ searchRecord ~ watchRecordOver ~ getAuthorRecordList ~ deleteRecord ~ addRecordAddr
+    getRecordList ~ searchRecord ~ getAuthorRecordList ~ deleteRecord ~ addRecordAddr
   }
 }

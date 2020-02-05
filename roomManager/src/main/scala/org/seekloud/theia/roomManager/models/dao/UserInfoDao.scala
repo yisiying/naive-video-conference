@@ -27,7 +27,7 @@ object UserInfoDao {
   }
 
   def addUser(email:String, name:String, pw:String, token:String, timeStamp:Long,rtmpToken:String) = {
-    db.run(tUserInfo += rUserInfo(1, name, pw, 1, token, timeStamp,Common.DefaultImg.headImg,Common.DefaultImg.coverImg,email,timeStamp,rtmpToken))
+    db.run(tUserInfo += rUserInfo(100201, name, pw, 1000201, token, timeStamp,Common.DefaultImg.headImg,Common.DefaultImg.coverImg,email,timeStamp,rtmpToken))
   }
 
   def modifyImg4User(userId:Long,fileName:String,imgType:Int) = {
