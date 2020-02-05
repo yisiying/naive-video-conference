@@ -132,6 +132,13 @@ object RoomManager {
           }
           Behaviors.same
 
+        case r@ActorProtocol.UpdateInvitationList(roomId, userId) =>
+          getRoomActorOpt(roomId,ctx) match {
+            case Some(actor) => actor ! r
+            case None => log.debug(s"${ctx.self.path}房间未建立，roomId：$roomId")
+          }
+          Behaviors.same
+
         case r@ActorProtocol.StartRoom4Anchor(userId,roomId,actor) =>
           getRoomActor(roomId,ctx) ! r
           Behaviors.same

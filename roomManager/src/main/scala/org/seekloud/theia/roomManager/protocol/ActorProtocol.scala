@@ -26,6 +26,9 @@ object ActorProtocol {
 
   case class AddUserActor4Test(userId:Long,roomId:Long,userActor: ActorRef[UserActor.Command])extends RoomCommand
 
+  final case class UpdateInvitationList(roomId:Long, userId: Long) extends RoomCommand
+
+
 
   case class BanOnAnchor(roomId:Long) extends RoomCommand
 }
