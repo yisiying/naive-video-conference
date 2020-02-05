@@ -46,4 +46,16 @@ object RecordCommentProtocol {
                               msg:String = "ok"
                               )extends Response
 
+  case class AddCommentAccessReq(
+                                recordId: Long,
+                                operatorId: Long,
+                                addUserID: Long
+                                )
+
+  case class DeleteCommentAccessReq(
+                                     recordId: Long,
+                                     operatorId: Long,
+                                     deleteUserID: Long
+                                )
+
 }
