@@ -286,7 +286,7 @@ class HostController(
           }
         }
 
-      case AudienceDisconnect =>
+      case AudienceDisconnect(_) =>
         //观众断开，提醒主播，去除连线观众信息
         rmManager ! RmManager.JoinStop
         Boot.addToPlatform {

@@ -407,7 +407,7 @@ class PlayerPane(media: Media, liveBar: LiveBar) {
   private def formattedTime(elapsed: Duration, duration: Duration): String = {
     val playedSec = elapsed.toMillis
     val allSec = duration.toMillis
-    s"${millis2HHMMSS(playedSec)} / ${millis2HHMMSS(allSe c)}"
+    s"${millis2HHMMSS(playedSec)} / ${millis2HHMMSS(allSec)}"
   }
 
   def millis2HHMMSS(sec: Double): String = {

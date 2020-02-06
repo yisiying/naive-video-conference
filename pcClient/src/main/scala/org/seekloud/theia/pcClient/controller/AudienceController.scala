@@ -263,7 +263,7 @@ class AudienceController(
             WarningDialog.initWarningDialog("转接错误 test")
           }
 
-        case HostDisconnect =>
+        case HostDisconnect(_) =>
           Boot.addToPlatform {
             WarningDialog.initWarningDialog("主播已断开连线~")
           }
