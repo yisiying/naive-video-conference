@@ -50,8 +50,8 @@ object MainPage extends PageSwitcher {
     </div>
   private val noUserShow: Elem =
     <div class="header-content-nologin">
-      <!--div class="header-adminLogin" onclick={() => adminLogin()}>管理员登录</div-->
-      <!--{showAdminLogin}-->
+      <!--div class="header-adminLogin" onclick={() => adminLogin()}>管理员登录</div>
+      {showAdminLogin}-->
       <label class="header-login" id="login" for="pop-login">登录</label>
       {PopWindow.loginPop}
       {PopWindow.emailLoginPop}

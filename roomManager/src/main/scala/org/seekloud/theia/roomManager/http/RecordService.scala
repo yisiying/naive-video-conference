@@ -47,7 +47,7 @@ trait RecordService {
           RecordDao.searchRecord(req.roomId, req.startTime).map {
             case Some(recordInfo) =>
               dealFutureResult {
-                RecordCommentDAO.checkAccess(recordInfo.recordId, req.userIdOpt.get).map { a =>
+                RecordCommentDAO.checkAccess(recordInfo.roomId, recordInfo.startTime, req.userIdOpt.get).map { a =>
                   if(a){
                     RecordDao.updateViewNum(req.roomId, req.startTime, recordInfo.observeNum + 1)
                     val url = s"https://${AppSettings.distributorDomain}/theia/distributor/getRecord/${req.roomId}/${req.startTime}/record.mp4"

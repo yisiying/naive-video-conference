@@ -271,6 +271,7 @@ object RoomActor {
 //            ProcessorClient.closeRoom(wholeRoomInfo.roomInfo.roomId)
           if (startTime != -1l) {
             log.debug(s"${ctx.self.path} 主播向distributor发送finishPull请求")
+//            log.debug(s"!!!!!!!!!!!!!!$invitationList")
             DistributorClient.finishPull(liveInfoMap(Role.host)(wholeRoomInfo.roomInfo.userId).liveId)
             roomManager ! RoomManager.DelaySeekRecord(wholeRoomInfo, totalView, roomId, startTime, liveInfoMap(Role.host)(wholeRoomInfo.roomInfo.userId).liveId, invitationList)
           }
@@ -529,6 +530,7 @@ object RoomActor {
             log.debug(s"roomId:$roomId 主播停止推流，向distributor发送finishpull消息")
             DistributorClient.finishPull(v)
             if (startTime != -1l) {
+//              log.debug(s"????????????????$invitationList")
               roomManager ! RoomManager.DelaySeekRecord(wholeRoomInfo, totalView, roomId, startTime, v, invitationList)
             }
           case None =>

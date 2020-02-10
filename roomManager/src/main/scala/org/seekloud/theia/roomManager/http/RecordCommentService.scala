@@ -30,7 +30,7 @@ trait RecordCommentService extends ServiceUtils{
                     RecordDao.searchRecord(req.roomId,req.recordTime).map{v=>
                       if(v.nonEmpty){
                         dealFutureResult{
-                          RecordCommentDAO.checkAccess(v.get.recordId, req.commentUid).map{a =>
+                          RecordCommentDAO.checkAccess(v.get.roomId, v.get.startTime, req.commentUid).map{a =>
                             if(a){
                               dealFutureResult{
                                 RecordCommentDAO.addRecordComment(rRecordComment(-1l,req.roomId,req.recordTime,req.comment,req.commentTime,req.commentUid,req.authorUidOpt,req.relativeTime)).map{r =>
@@ -135,9 +135,9 @@ trait RecordCommentService extends ServiceUtils{
     entity(as[Either[Error,RecordCommentProtocol.AddCommentAccessReq]]){
       case Right(req) =>
         dealFutureResult{
-          RecordCommentDAO.checkHostAccess(req.recordId, req.operatorId).map{a =>
+          RecordCommentDAO.checkHostAccess(req.roomId, req.startTime, req.operatorId).map{a =>
             if(a){
-              RecordCommentDAO.addCommentAccess(req.recordId, req.operatorId, req.addUserID)
+              RecordCommentDAO.addCommentAccess(req.roomId, req.startTime, req.operatorId, req.addUserID)
               complete(CommonRsp())
             }else{
               complete(addRecordCommentErrorRsp(s"您没有添加用户的权限"))
@@ -155,9 +155,9 @@ trait RecordCommentService extends ServiceUtils{
     entity(as[Either[Error,RecordCommentProtocol.DeleteCommentAccessReq]]){
       case Right(req) =>
         dealFutureResult{
-          RecordCommentDAO.checkHostAccess(req.recordId, req.operatorId).map{a =>
+          RecordCommentDAO.checkHostAccess(req.roomId, req.startTime, req.operatorId).map{a =>
             if(a){
-              RecordCommentDAO.addCommentAccess(req.recordId, req.operatorId, req.deleteUserID)
+              RecordCommentDAO.deleteCommentAccess(req.roomId, req.startTime, req.operatorId, req.deleteUserID)
               complete(CommonRsp())
             }else{
               complete(addRecordCommentErrorRsp(s"您没有删除用户的权限"))
