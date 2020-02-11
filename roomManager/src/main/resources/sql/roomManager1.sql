@@ -156,14 +156,20 @@ alter table comment_access
     add constraint comment_permission_pk
         primary key (id);
 
+-- alter table comment_access
+--     add record_id bigint not null ;
+
 alter table comment_access
-    add record_id bigint not null ;
+    add room_id bigint not null ;
+
+alter table comment_access
+    add start_time bigint not null ;
 
 alter table comment_access
     add host_id bigint not null ;
 
-alter table comment_access
-    add room_id bigint not null ;
+-- alter table comment_access
+--     add room_id bigint not null ;
 
 alter table comment_access
     add allow_uid bigint not null ;

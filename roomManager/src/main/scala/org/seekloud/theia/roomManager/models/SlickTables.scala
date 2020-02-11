@@ -21,26 +21,29 @@ trait SlickTables {
 
   /** Entity class storing rows of table tCommentAccess
    *  @param id Database column ID SqlType(BIGINT), AutoInc, PrimaryKey
-   *  @param recordId Database column RECORD_ID SqlType(BIGINT)
+   *  @param roomId Database column ROOM_ID SqlType(BIGINT)
+   *  @param startTime Database column START_TIME SqlType(BIGINT)
    *  @param hostId Database column HOST_ID SqlType(BIGINT)
    *  @param allowUid Database column ALLOW_UID SqlType(BIGINT)
    *  @param addTime Database column ADD_TIME SqlType(BIGINT) */
-  case class rCommentAccess(id: Long, recordId: Long, hostId: Long, allowUid: Long, addTime: Long)
+  case class rCommentAccess(id: Long, roomId: Long, startTime: Long, hostId: Long, allowUid: Long, addTime: Long)
   /** GetResult implicit for fetching rCommentAccess objects using plain SQL queries */
   implicit def GetResultrCommentAccess(implicit e0: GR[Long]): GR[rCommentAccess] = GR{
     prs => import prs._
-    rCommentAccess.tupled((<<[Long], <<[Long], <<[Long], <<[Long], <<[Long]))
+    rCommentAccess.tupled((<<[Long], <<[Long], <<[Long], <<[Long], <<[Long], <<[Long]))
   }
   /** Table description of table COMMENT_ACCESS. Objects of this class serve as prototypes for rows in queries. */
   class tCommentAccess(_tableTag: Tag) extends profile.api.Table[rCommentAccess](_tableTag, Some("PUBLIC"), "COMMENT_ACCESS") {
-    def * = (id, recordId, hostId, allowUid, addTime) <> (rCommentAccess.tupled, rCommentAccess.unapply)
+    def * = (id, roomId, startTime, hostId, allowUid, addTime) <> (rCommentAccess.tupled, rCommentAccess.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(id), Rep.Some(recordId), Rep.Some(hostId), Rep.Some(allowUid), Rep.Some(addTime))).shaped.<>({r=>import r._; _1.map(_=> rCommentAccess.tupled((_1.get, _2.get, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = ((Rep.Some(id), Rep.Some(roomId), Rep.Some(startTime), Rep.Some(hostId), Rep.Some(allowUid), Rep.Some(addTime))).shaped.<>({r=>import r._; _1.map(_=> rCommentAccess.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column ID SqlType(BIGINT), AutoInc, PrimaryKey */
     val id: Rep[Long] = column[Long]("ID", O.AutoInc, O.PrimaryKey)
-    /** Database column RECORD_ID SqlType(BIGINT) */
-    val recordId: Rep[Long] = column[Long]("RECORD_ID")
+    /** Database column ROOM_ID SqlType(BIGINT) */
+    val roomId: Rep[Long] = column[Long]("ROOM_ID")
+    /** Database column START_TIME SqlType(BIGINT) */
+    val startTime: Rep[Long] = column[Long]("START_TIME")
     /** Database column HOST_ID SqlType(BIGINT) */
     val hostId: Rep[Long] = column[Long]("HOST_ID")
     /** Database column ALLOW_UID SqlType(BIGINT) */

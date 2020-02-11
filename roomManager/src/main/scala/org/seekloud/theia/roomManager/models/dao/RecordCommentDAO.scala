@@ -21,32 +21,48 @@ object RecordCommentDAO {
     db.run(SlickTables.tRecordComment.filter(r => r.roomId === roomId && r.recordTime === recordTime).result)
   }
 
-  def addCommentAccess(recordId: Long, hostId: Long, /*hostRoomId:Long,*/ userId: Long): Future[Int] = {
-    db.run(SlickTables.tCommentAccess += SlickTables.rCommentAccess(1l, recordId, hostId, /*hostRoomId,*/ userId, System.currentTimeMillis()))
+  def addCommentAccess(roomId: Long, startTime: Long, hostId: Long, userId: Long): Future[Int] = {
+    db.run(SlickTables.tCommentAccess += SlickTables.rCommentAccess(1l, roomId, startTime, hostId,  userId, System.currentTimeMillis()))
   }
 
-  def deleteCommentAccess(recordId: Long, operatorId: Long, userId: Long): Future[Int] = {
-    val record = db.run(tRecord.filter(_.id === recordId).result.headOption)
-    record.flatMap {
-      case Some(r) =>
-        if (r.roomid == operatorId) {
-          db.run(tCommentAccess.filter(l => l.recordId === recordId && l.allowUid === userId).delete)
+  def deleteCommentAccess(roomId: Long, startTime: Long, operatorId: Long, userId: Long): Future[Int] = {
+    if (operatorId == userId) {
+      Future(-3) //不能删除主持人的全限
+    } else {
+      db.run(tCommentAccess.filter(r => r.roomId === roomId && r.startTime === startTime).result).flatMap { s =>
+        if (s.isEmpty) {
+          Future(-2) //无该录像，返回-2
         } else {
-          Future(-1) //删除操作不是主持人，不能执行
+          if (s.map(_.hostId).contains(operatorId)) {
+            db.run(tCommentAccess.filter(l => l.roomId === roomId && l.startTime === startTime && l.allowUid === userId).delete)
+          } else {
+            Future(-1) //删除操作不是主持人，不能执行
+          }
         }
-      case None => //无该录像ID，返回-2
-        Future(-2)
+      }
+
     }
+    //    val record = db.run(tRecord.filter(_.id === recordId).result.headOption)
+    //    record.flatMap {
+    //      case Some(r) =>
+    //        if (r.roomid == operatorId) {
+    //          db.run(tCommentAccess.filter(l => l.recordId === recordId && l.allowUid === userId).delete)
+    //        } else {
+    //          Future(-1) //删除操作不是主持人，不能执行
+    //        }
+    //      case None => //无该录像ID，返回-2
+    //        Future(-2)
+    //    }
   }
 
-  def checkAccess(recordId:Long, userId:Long): Future[Boolean] = {
-    db.run(tCommentAccess.filter(r => r.recordId === recordId).map(_.allowUid).result).map{r =>
+  def checkAccess(roomId: Long, startTime: Long, userId: Long): Future[Boolean] = {
+    db.run(tCommentAccess.filter(r => r.roomId === roomId && r.startTime === startTime).map(_.allowUid).result).map { r =>
       r.contains(userId)
     }
   }
 
-  def checkHostAccess(recordId: Long, hostId: Long): Future[Boolean] = {
-    db.run(tCommentAccess.filter(r => r.recordId === recordId).map(_.hostId).result).map(r => r.contains(hostId))
+  def checkHostAccess(roomId: Long, startTime: Long, hostId: Long): Future[Boolean] = {
+    db.run(tCommentAccess.filter(r => r.roomId === roomId && r.startTime === startTime).map(_.hostId).result).map(r => r.contains(hostId))
   }
 
 }

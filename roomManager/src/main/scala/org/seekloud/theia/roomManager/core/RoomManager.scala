@@ -255,31 +255,38 @@ object RoomManager {
                     wholeRoomInfo.roomInfo.roomName,wholeRoomInfo.roomInfo.roomDes,startTime,
                     UserInfoDao.getVideoImg(wholeRoomInfo.roomInfo.coverImgUrl),0,wholeRoomInfo.roomInfo.like,rsp.duration)
                 //todo 添加RecordCommentDAO.addCommentAccess()，可以用ctx.self ! addAccess()
-                  timer.startSingleTimer(DelayAddAccessKey + roomId.toString + startTime, AddAccess(roomId, startTime, invitationList),3.seconds)
+//                  timer.startSingleTimer(DelayAddAccessKey + roomId.toString + startTime, AddAccess(roomId, startTime, invitationList),3.seconds)
                 case Left(err) =>
                   log.debug(s"${ctx.self.path} 查询录像文件信息失败,error:$err")
               }
-
             case Failure(error) =>
               log.debug(s"${ctx.self.path} 查询录像文件失败,error:$error")
           }
-          Behaviors.same
-
-        case AddAccess(roomId, startTime, invitationList) =>
-          timer.cancel(DelayAddAccessKey + roomId.toString + startTime)
-          RecordDao.searchRecord(roomId, startTime).map{
-            case Some(recordInfo) =>
-              val host = invitationList(Role.host).head
-              RecordCommentDAO.addCommentAccess(recordInfo.recordId, host, host)
-              invitationList(Role.audience).foreach{u =>
-                RecordCommentDAO.addCommentAccess(recordInfo.recordId, host, u)
-              }
-              log.info(s"录像${recordInfo.recordId}添加权限成功")
-            case None =>
-              log.error(s"未录像信息，无法添加权限")
+          val host = invitationList(Role.host).head
+          RecordCommentDAO.addCommentAccess(wholeRoomInfo.roomInfo.roomId, startTime, host, host)
+          if(invitationList.contains(Role.audience)){
+            invitationList(Role.audience).foreach{u =>
+              RecordCommentDAO.addCommentAccess(wholeRoomInfo.roomInfo.roomId, startTime, host, u)
+            }
           }
 
-          Behavior.same
+          Behaviors.same
+
+//        case AddAccess(roomId, startTime, invitationList) =>
+//          timer.cancel(DelayAddAccessKey + roomId.toString + startTime)
+//          RecordDao.searchRecord(roomId, startTime).map{
+//            case Some(recordInfo) =>
+//              val host = invitationList(Role.host).head
+//              RecordCommentDAO.addCommentAccess(recordInfo.recordId, host, host)
+//              invitationList(Role.audience).foreach{u =>
+//                RecordCommentDAO.addCommentAccess(recordInfo.recordId, host, u)
+//              }
+//              log.info(s"录像${recordInfo.recordId}添加权限成功")
+//            case None =>
+//              log.error(s"未录像信息，无法添加权限")
+//          }
+//
+//          Behavior.same
 
 
         case ChildDead(name,childRef) =>

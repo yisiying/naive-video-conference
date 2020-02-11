@@ -45,6 +45,7 @@ object EncodeActor {
     def createDir(): AnyVal = {
       val fileLoc = new File(s"$fileLocation$roomId/")
       if(!fileLoc.exists()){
+        log.info("创建fileLocation路径")
         fileLoc.mkdir()
       }
       val recordLoc = new File(s"$recordLocation$roomId/")

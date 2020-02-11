@@ -47,13 +47,15 @@ object RecordCommentProtocol {
                               )extends Response
 
   case class AddCommentAccessReq(
-                                recordId: Long,
+                                roomId: Long,
+                                startTime:Long,
                                 operatorId: Long,
                                 addUserID: Long
                                 )
 
   case class DeleteCommentAccessReq(
-                                     recordId: Long,
+                                     roomId: Long,
+                                     startTime:Long,
                                      operatorId: Long,
                                      deleteUserID: Long
                                 )

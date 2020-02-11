@@ -98,17 +98,17 @@ object PullActor {
       Behaviors.withTimers[Command] {
         implicit timer =>
           log.info(s"pullActor start----")
-          if(testModel){
-            pullChannel.socket().bind(new InetSocketAddress("0.0.0.0", 41660))
-            work()
-          }else {
+//          if(testModel){
+//            pullChannel.socket().bind(new InetSocketAddress("0.0.0.0", 41660))
+//            work()
+//          }else {
             val pullStreamDst = new InetSocketAddress(rtpToHost, 61041)
             val host = "0.0.0.0"
             val port = getRandomPort
             val client = new PullStreamClient(host, port, pullStreamDst, ctx.self, rtpServerDst)
             ctx.self ! Ready(client)
             wait()
-          }
+//          }
       }
     }
   }
@@ -229,7 +229,7 @@ object PullActor {
     }
   }
 
-  def work()(implicit timer: TimerScheduler[Command],
+  /*def work()(implicit timer: TimerScheduler[Command],
     stashBuffer: StashBuffer[Command]):Behavior[Command] = {
     log.info("-----------------------测试中，自己收流")
     recvThread.start()
@@ -273,7 +273,7 @@ object PullActor {
       }
     }
   }
-
+*/
   private def getSendActor(ctx: ActorContext[Command], roomId:Long) = {
     val childName = s"wrapActor_$roomId"
     ctx.child(childName).getOrElse {
