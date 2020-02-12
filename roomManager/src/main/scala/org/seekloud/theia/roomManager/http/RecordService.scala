@@ -46,18 +46,23 @@ trait RecordService {
         dealFutureResult {
           RecordDao.searchRecord(req.roomId, req.startTime).map {
             case Some(recordInfo) =>
-              dealFutureResult {
-                RecordCommentDAO.checkAccess(recordInfo.roomId, recordInfo.startTime, req.userIdOpt.get).map { a =>
-                  if(a){
-                    RecordDao.updateViewNum(req.roomId, req.startTime, recordInfo.observeNum + 1)
-                    val url = s"http://${AppSettings.distributorIp}:${AppSettings.distributorPort}/theia/distributor/getRecord/${req.roomId}/${req.startTime}/record.mp4"
-                    complete(SearchRecordRsp(url, recordInfo))
-                  }else{
-                    complete(CommonRsp(100100, s"您没有权限查看该录像"))
-                  }
+              if(req.userIdOpt.isEmpty){
+                complete(CommonRsp(100110, s"请先登录"))
+              }else{
+                dealFutureResult {
+                  RecordCommentDAO.checkAccess(recordInfo.roomId, recordInfo.startTime, req.userIdOpt.get).map { a =>
+                    if(a){
+                      RecordDao.updateViewNum(req.roomId, req.startTime, recordInfo.observeNum + 1)
+                      val url = s"http://${AppSettings.distributorIp}:${AppSettings.distributorPort}/theia/distributor/getRecord/${req.roomId}/${req.startTime}/record.mp4"
+                      complete(SearchRecordRsp(url, recordInfo))
+                    }else{
+                      complete(CommonRsp(100100, s"您没有权限查看该录像"))
+                    }
 
+                  }
                 }
               }
+
             //              dealFutureResult {
             //                StatisticDao.addObserveEvent(if (req.userIdOpt.nonEmpty) req.userIdOpt.get else 1l, recordInfo.recordId, false, req.userIdOpt.isEmpty, req.inTime).map { r =>
             //                }

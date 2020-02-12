@@ -159,6 +159,10 @@ class RecordPage(roomId:Long,time:Long) extends Page{
             val v = dom.document.getElementById("recordVideo").asInstanceOf[Video]
             v.load()
             v.play()
+          }else if(rsp.errCode == 100110){
+            PopWindow.commonPop(s"请您先登录")
+          }else if(rsp.errCode == 100100){
+            PopWindow.commonPop(s"您没有权限查看该录像")
           }
           else{
             PopWindow.commonPop(s"get url error in watchRecord: ${rsp.msg}")
