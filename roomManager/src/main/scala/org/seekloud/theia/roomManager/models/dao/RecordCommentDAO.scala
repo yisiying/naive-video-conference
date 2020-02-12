@@ -40,7 +40,6 @@ object RecordCommentDAO {
           }
         }
       }
-
     }
     //    val record = db.run(tRecord.filter(_.id === recordId).result.headOption)
     //    record.flatMap {
@@ -55,6 +54,16 @@ object RecordCommentDAO {
     //    }
   }
 
+  def deleteComment(roomId:Long,startTime:Long,commentId:Long,operator:Long): Future[Int] ={
+    db.run(tCommentAccess.filter(r=>r.roomId===roomId&& r.startTime===startTime&&r.hostId===operator).result).flatMap{res=>
+      if(res.isEmpty){
+        Future(-1)
+      }else{
+        db.run(tRecordComment.filter(_.commentId===commentId).delete)
+      }
+    }
+  }
+
   def checkAccess(roomId: Long, startTime: Long, userId: Long): Future[Boolean] = {
     db.run(tCommentAccess.filter(r => r.roomId === roomId && r.startTime === startTime).map(_.allowUid).result).map { r =>
       r.contains(userId)
@@ -63,6 +72,10 @@ object RecordCommentDAO {
 
   def checkHostAccess(roomId: Long, startTime: Long, hostId: Long): Future[Boolean] = {
     db.run(tCommentAccess.filter(r => r.roomId === roomId && r.startTime === startTime).map(_.hostId).result).map(r => r.contains(hostId))
+  }
+
+  def getAudienceIds(roomId:Long, startTime:Long): Future[Seq[Long]] = {
+    db.run(tCommentAccess.filter(r => r.roomId === roomId && r.startTime === startTime).map(_.allowUid).result)
   }
 
 }

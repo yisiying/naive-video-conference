@@ -75,7 +75,13 @@ class HomePage extends Page{
           <img class="img-record" src="/theia/roomManager/static/img/homePage/record.png"></img>
         </div>
         <div class="record-head-text">录像</div>
-        <div class="record-head-number">当前共有<span>{recordNumber}</span>个录像</div>
+        {
+          if(dom.window.localStorage.getItem("userName")==null || dom.window.localStorage.getItem("isTemUser") == "1") {
+            <div class="record-head-number">登录后查看录像</div>
+          } else {
+            <div class="record-head-number">当前共有<span>{recordNumber}</span>个录像</div>
+          }
+        }
         <div class="record-head-refresh">
           <img class="img-refresh" src="/theia/roomManager/static/img/homePage/refresh.png" style="float: right;" onclick={()=>getRecordList("time",1,10)}></img>
         </div>

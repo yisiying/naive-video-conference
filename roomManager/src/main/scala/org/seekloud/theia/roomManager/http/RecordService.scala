@@ -11,8 +11,10 @@ import org.seekloud.theia.protocol.ptcl.CommonRsp
 import org.seekloud.theia.protocol.ptcl.client2Manager.http.AdminProtocol.DeleteRecordReq
 import org.seekloud.theia.protocol.ptcl.client2Manager.http.StatisticsProtocol
 import org.seekloud.theia.roomManager.Boot.{executor, scheduler, userManager}
-import org.seekloud.theia.roomManager.models.dao.{RecordDao, UserInfoDao, RecordCommentDAO}
+import org.seekloud.theia.roomManager.models.dao.{RecordCommentDAO, RecordDao, UserInfoDao}
 import org.seekloud.theia.roomManager.common.{AppSettings, Common}
+
+import scala.concurrent.Future
 
 trait RecordService {
 
@@ -149,8 +151,26 @@ trait RecordService {
     }
   }
 
+  private val getAudienceList = (path("getAudienceList") & post) {
+    entity(as[Either[Error, GetAudienceListReq]]) {
+      case Right(req) =>
+        dealFutureResult {
+          RecordCommentDAO.checkAccess(req.roomId, req.startTime, req.userId).flatMap {
+            case true =>
+              RecordCommentDAO.getAudienceIds(req.roomId, req.startTime).flatMap { seq =>
+                UserInfoDao.getUserDes(seq.toList).map{ res=>
+                  complete(GetAudienceListRsp(res))
+                }
+              }
+            case false =>
+              Future(complete(CommonRsp(100051, "你没有权限访问参会人员名单")))
+          }
+        }
+    }
+  }
+
 
   val recordRoutes: Route = pathPrefix("record") {
-    getRecordList ~ searchRecord ~ getAuthorRecordList ~ deleteRecord ~ addRecordAddr
+    getRecordList ~ searchRecord ~ getAuthorRecordList ~ deleteRecord ~ addRecordAddr ~ getAudienceList
   }
 }

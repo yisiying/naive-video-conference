@@ -10,9 +10,10 @@ import io.circe.syntax._
 import io.circe.generic.auto._
 
 import scala.xml.Elem
-import MainPage.{showPersonCenter, showRtmpInfo, userShowName, showAdminLogin}
+import MainPage.{showAdminLogin, showPersonCenter, showRtmpInfo, userShowName}
 import org.scalajs.dom.html
 import org.scalajs.dom.raw.{File, FileList, FileReader, FormData, HTMLElement}
+import org.seekloud.theia.protocol.ptcl.CommonInfo.UserDes
 import org.seekloud.theia.protocol.ptcl.CommonRsp
 import org.seekloud.theia.protocol.ptcl.client2Manager.http.CommonProtocol.ImgChangeRsp
 import org.seekloud.theia.webClient.actors.WebSocketRoom
@@ -72,6 +73,29 @@ object PopWindow {
       </div>
     }
   }
+
+  def audienceLists(audienceLists:Var[List[UserDes]]): Elem =
+    <div>
+      <input id="pop-audience-list" style="display: none;" type="checkbox"></input>
+      <label class="pop-background" for="pop-audience-list" onclick={(e: Event)=>closeReport(e,"pop-audience-list")}>
+        <div class="pop-main" onclick={(e: Event)=>stopCancel(e,"pop-audience-list")}>
+          <div class="pop-header"></div>
+          <div class="pop-title">会议名单</div>
+          {audienceLists.map{lists =>
+          def createAudienceList(item:UserDes) = {
+            <div style="display:flex; line-height:35px" class="roomItem">
+              <img src={item.headImgUrl} style="margin-right:10px"></img>
+              <div style="#333">{item.userName}</div>
+            </div>
+          }
+          <div class="roomContain">
+            {lists.map(createAudienceList)}
+          </div>}}
+          <div class="pop-confirm">
+          </div>
+        </div>
+      </label>
+    </div>
 
   // 'for' is 'pop-login'
   def loginPop: Elem =

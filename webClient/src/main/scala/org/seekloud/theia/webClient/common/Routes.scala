@@ -31,12 +31,19 @@ object Routes {
 
     val getOneRecord = urlRecord + "/searchRecord"
     val watchRecordOver = urlRecord + "/watchRecordOver"
+    val getAudienceList = urlRecord + "/getAudienceList"
     val getCommentInfo = "/theia/roomManager/recordComment/getRecordCommentList"
     val sendCommentInfo = "/theia/roomManager/recordComment/addRecordComment"
+    val deleteComment = "/theia/roomManager/recordComment/deleteComment"
 
     def uploadImg(imgType:Int, userId:String) = base+s"/file/uploadFile?imgType=$imgType&userId=$userId"
 
     def nickNameChange(userId:Long,userName:String) = urlbase + s"/nickNameChange?userId=$userId&newName=$userName"
+
+    /**
+     * 用户访问权限相关
+     */
+    val checkAuthority = urlbase + "/checkAuthority"
   }
 
   object AdminRoutes{

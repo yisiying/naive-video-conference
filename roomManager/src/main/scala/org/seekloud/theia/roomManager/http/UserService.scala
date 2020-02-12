@@ -15,7 +15,7 @@ import akka.stream.scaladsl.Flow
 import org.seekloud.theia.protocol.ptcl.{CommonRsp, Response}
 import org.seekloud.theia.roomManager.core.RegisterActor.{ConfirmEmail, SendEmail}
 import org.seekloud.theia.roomManager.core.RoomManager
-import org.seekloud.theia.roomManager.models.dao.{StatisticDao, RecordDao, UserInfoDao}
+import org.seekloud.theia.roomManager.models.dao.{RecordCommentDAO, RecordDao, StatisticDao, UserInfoDao}
 import org.seekloud.theia.roomManager.utils.HestiaClient
 import akka.http.scaladsl.model.headers._
 import org.seekloud.theia.protocol.ptcl.CommonInfo.{RoomInfo, UserInfo}
@@ -345,8 +345,35 @@ trait UserService extends ServiceUtils {
     }
   }
 
+  private val checkAuthority = (path("checkAuthority") & post) {
+    entity(as[Either[Error, CheckAuthorityReq]]) {
+      case Right(req) =>
+        dealFutureResult {
+          RecordCommentDAO.checkHostAccess(req.roomId,req.startTime,req.userIdOpt.getOrElse(-1L)).flatMap{
+            case true=>
+              //主持人权限
+              Future(complete(CheckAuthorityRsp(3)))
+
+            case false=>
+              RecordCommentDAO.checkAccess(req.roomId,req.startTime,req.userIdOpt.getOrElse(-1L)).map{
+                case true=>
+                  //参会人员权限
+                  complete(CheckAuthorityRsp(2))
+                case false=>
+                  //无访问权限
+                  complete(CheckAuthorityRsp(1))
+              }
+          }
+        }
+
+      case Left(error) =>
+        log.debug(s"获取主持人信息失败，error:$error")
+        complete(CommonRsp(201, s"decode error:$error"))
+    }
+  }
+
   val userRoutes: Route = pathPrefix("user") {
     signUp ~ signIn ~ deleteUserByEmail ~
-    nickNameChange ~ getRoomList ~ searchRoom ~ setupWebSocket ~ temporaryUser ~ signInByMail ~ getRoomInfo
+    nickNameChange ~ getRoomList ~ searchRoom ~ setupWebSocket ~ temporaryUser ~ signInByMail ~ getRoomInfo ~ checkAuthority
   }
 }

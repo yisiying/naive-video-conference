@@ -10,6 +10,9 @@
 #pop-common:checked + .pop-background{
     display:flex;
 }
+#pop-audience-list:checked + .pop-background{
+    display:flex;
+}
 .pop-background{
     display: none;
     flex-flow: column nowrap;
