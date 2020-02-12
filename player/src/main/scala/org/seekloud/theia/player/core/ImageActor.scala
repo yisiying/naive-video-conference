@@ -7,7 +7,7 @@ import javafx.scene.canvas.GraphicsContext
 import org.seekloud.theia.player.protocol.Messages._
 import org.slf4j.LoggerFactory
 
-import scala.collection.immutable
+import scala.collection.{immutable, mutable}
 import concurrent.duration._
 
 /**
@@ -31,6 +31,8 @@ object ImageActor {
   final case object ContinuePlayImage extends ImageCmd
 
   final case class AudioPlayedTimeUpdated(audioPlayedTime: Long) extends ImageCmd // in us
+
+  final case class SetConnectState(connectState: Boolean, resetFunc: () => Unit) extends ImageCmd // in us
 
   private final object TryPlayImageTick extends ImageCmd
 
@@ -78,7 +80,7 @@ object ImageActor {
       )
       timer.startPeriodicTimer(TimerKey4Count, Count, 1.seconds)
       //      hasTimer = true
-      playing(id, gc, playerGrabber, immutable.Queue[AddPicture](), 0, 0L, 0L, 0L)
+      playing(id, gc, playerGrabber, mutable.Queue[AddPicture](), 0, 0L, 0L, 0L)
     }
   }
 
@@ -87,11 +89,12 @@ object ImageActor {
     id: String,
     gc: GraphicsContext,
     playerGrabber: ActorRef[PlayerGrabber.MonitorCmd],
-    queue: immutable.Queue[AddPicture],
+    queue: mutable.Queue[AddPicture],
     playedImages: Int,
     lastPlayTimeInWallClock: Long,
     ImagePlayedTime: Long,
-    audioPlayedTime: Long
+    audioPlayedTime: Long,
+    connectState: Boolean = false
   )(
     implicit timer: TimerScheduler[ImageCmd]
   ): Behavior[ImageCmd] = Behaviors.receive { (ctx, msg) =>
@@ -119,18 +122,19 @@ object ImageActor {
       case m: AddPicture =>
 //        debug(s"PicturePlayActor got $m")
 //        Behaviors.same
-        val newQueue = queue.enqueue(m)
-
+//        val newQueue = queue.enqueue(m)
+        queue.enqueue(m)
 //        println(s"ImageActor get picture, queue size : ${newQueue.length}")
         playing(
           id,
           gc,
           playerGrabber,
-          newQueue,
+          queue,
           playedImages,
           lastPlayTimeInWallClock,
           ImagePlayedTime,
-          audioPlayedTime
+          audioPlayedTime,
+          connectState
         )
 
       case AudioPlayedTimeUpdated(apt) =>
@@ -144,7 +148,8 @@ object ImageActor {
           playedImages,
           lastPlayTimeInWallClock,
           ImagePlayedTime,
-          apt
+          apt,
+          connectState
         )
 
       case TryPlayImageTick =>
@@ -171,7 +176,7 @@ object ImageActor {
               ctx.self ! TryPlayImageTick
             }
 //            println("draw image")
-            val (newQueue, newImagePlayedTime, playTimeInWallClock) = drawPicture(id, gc, queue, ImagePlayedTime)
+            val (newQueue, newImagePlayedTime, playTimeInWallClock) = drawPicture(id, gc, queue, ImagePlayedTime, connectState)
             playing(
               id,
               gc,
@@ -180,7 +185,8 @@ object ImageActor {
               playedImages + 1,
               playTimeInWallClock,
               newImagePlayedTime,
-              audioPlayedTime
+              audioPlayedTime,
+              connectState
             )
           } else {
 //            println("ask image")
@@ -190,6 +196,21 @@ object ImageActor {
           }
 
         }
+
+      case msg: SetConnectState =>
+        log.info(s"ImageActor-$id got SetConnectState: ${msg.connectState}")
+        msg.resetFunc()
+        playing(
+          id,
+          gc,
+          playerGrabber,
+          queue,
+          playedImages,
+          lastPlayTimeInWallClock,
+          ImagePlayedTime,
+          audioPlayedTime,
+          msg.connectState
+        )
 
       case msg: PictureFinish =>
         log.info(s"ImageActor-$id got PictureFinish")
@@ -212,42 +233,44 @@ object ImageActor {
   }
 
 
-  private def drawPicture(id: String, gc: GraphicsContext, queue: immutable.Queue[AddPicture], imagePlayedTime: Long) = {
+  private def drawPicture(id: String, gc: GraphicsContext, queue: mutable.Queue[AddPicture], imagePlayedTime: Long, connectState: Boolean) = {
     //draw picture
 //    val (AddPicture(img, pictureTs), newQueue) = queue.dequeue
     frameCount += 1
-    val res = queue.dequeue
-    val img = res._1.img
-    val newQueue = res._2
+//    val res = queue.dequeue
+    val img = queue.dequeue()
+//    val img = res._1.img
+//    val newQueue = res._2
     val playTimeInWallClock = System.currentTimeMillis() //实际播放时间
     Platform.runLater { () =>
       val sW = gc.getCanvas.getWidth
       val sH = gc.getCanvas.getHeight
-      val w = img.getWidth
-      val h = img.getHeight
-      if (id.contains("-")) { //连线状态
+      val w = img.img.getWidth
+      val h = img.img.getHeight
+//      println("con: "+connectState)
+      if (id.contains("-") || connectState) { //连线状态
         if (w / sW > h / sH) {
-          gc.drawImage(img, sW / 2, (sH - h * sW / w) / 2 + sH / 4, sW / 2, (h * sW / w) / 2)
+          gc.drawImage(img.img, sW / 2, (sH - h * sW / w) / 2 + sH / 4, sW / 2, (h * sW / w) / 2)
         } else {
-          gc.drawImage(img, (sW - w * sH / h) / 2 + sW / 2, sH / 4, (w * sH / h) / 2, sH / 2)
+          gc.drawImage(img.img, (sW - w * sH / h) / 2 + sW / 2, sH / 4, (w * sH / h) / 2, sH / 2)
         }
 
       } else { //普通观看
         if (w / sW > h / sH) {
-          gc.drawImage(img, 0, (sH - h * sW / w) / 2, sW, h * sW / w)
+          gc.drawImage(img.img, 0, (sH - h * sW / w) / 2, sW, h * sW / w)
         } else {
-          gc.drawImage(img, (sW - w * sH / h) / 2, 0, w * sH / h, sH)
+          gc.drawImage(img.img, (sW - w * sH / h) / 2, 0, w * sH / h, sH)
         }
       }
 
     }
     val newImagePlayedTime = //时间戳
       if (hasPictureTs) {
-        res._1.timestamp
+        img.timestamp
       } else {
         imagePlayedTime + (1000000 / frameRate)
       }
-    (newQueue, newImagePlayedTime, playTimeInWallClock)
+    (queue, newImagePlayedTime, playTimeInWallClock)
   }
 
   //  private def drawWaiting(gc: GraphicsContext): Unit = {

@@ -11,6 +11,7 @@ import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol._
 import org.slf4j.LoggerFactory
 import akka.actor.typed.{ActorRef, Behavior}
 import org.seekloud.theia.pcClient.Boot.executor
+import org.seekloud.theia.pcClient.common.Constants.AudienceStatus
 import org.seekloud.theia.pcClient.component.WarningDialog
 import org.seekloud.theia.pcClient.core.RmManager.HeartBeat
 import org.seekloud.theia.pcClient.scene.AudienceScene.AudienceSceneListener
@@ -263,18 +264,25 @@ class AudienceController(
             WarningDialog.initWarningDialog("转接错误 test")
           }
 
-        case HostDisconnect =>
+        case HostDisconnect(liveId) =>
           Boot.addToPlatform {
             WarningDialog.initWarningDialog("主播已断开连线~")
           }
-          rmManager ! RmManager.StopJoinAndWatch
+          rmManager ! RmManager.StopJoinAndWatch(liveId)
 
 
-        case HostCloseRoom =>
+        case HostCloseRoom() =>
           Boot.addToPlatform {
             WarningDialog.initWarningDialog("房主连接断开，互动功能已关闭！")
           }
 
+        case AudienceDisconnect(liveId) =>
+          if(audienceScene.audienceStatus == AudienceStatus.LIVE){
+            Boot.addToPlatform {
+              WarningDialog.initWarningDialog("连线者已断开连线~")
+            }
+            rmManager ! RmManager.StopJoinAndWatch(liveId)
+          }
 
         case msg: UpdateAudienceInfo =>
           //          log.info(s"update audienceList.")
@@ -307,6 +315,7 @@ class AudienceController(
         case HostStopPushStream2Client =>
           Boot.addToPlatform({
             WarningDialog.initWarningDialog("主播已停止直播，请换个房间观看哦~")
+            audienceScene.BtnDis()
           })
 
         case x =>

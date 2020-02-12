@@ -1,6 +1,7 @@
 package org.seekloud.theia.pcClient.core.stream
 
 import java.io.FileOutputStream
+import java.net.{DatagramPacket, DatagramSocket, InetAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.{Channels, Pipe}
 
@@ -16,6 +17,7 @@ import org.seekloud.theia.rtpClient.Protocol._
 import org.seekloud.theia.rtpClient.{Protocol, PullStreamClient}
 import org.seekloud.theia.pcClient.core.player.VideoPlayer
 import org.seekloud.theia.pcClient.scene.{AudienceScene, HostScene}
+import org.seekloud.theia.pcClient.utils.NetUtil
 import org.slf4j.LoggerFactory
 
 import concurrent.duration._
@@ -90,6 +92,9 @@ object StreamPuller {
       }
 
     }
+  var port = NetUtil.getFreePort
+  var socket = new DatagramSocket(port)
+  private val addr = InetAddress.getByName("127.0.0.1")
 
   private def init(
     liveId: String,
@@ -108,6 +113,8 @@ object StreamPuller {
       msg match {
         case msg: InitRtpClient =>
           log.info(s"StreamPuller-$liveId init rtpClient.")
+          socket = new DatagramSocket()
+          port = NetUtil.getFreePort
           msg.pullClient.pullStreamStart()
           timer.startSingleTimer(PullStartTimeOut, PullStartTimeOut, 5.seconds)
           audienceScene.foreach(_.startPackageLoss())
@@ -146,24 +153,29 @@ object StreamPuller {
           //          source.configureBlocking(false)
           //          val inputStream = new ChannelInputStream(source)
           val inputStream = Channels.newInputStream(source)
+//          val freePort = NetUtil.getFreePort
+//          val inputStream = s"udp://127.0.0.1:$port"
           if (joinInfo.nonEmpty) {
             audienceScene.foreach(_.autoReset())
             hostScene.foreach(_.resetBack())
             val playId = Ids.getPlayId(AudienceStatus.CONNECT, roomId = Some(joinInfo.get.roomId), audienceId = Some(joinInfo.get.audienceId))
+            println(s"===joinInfo playId:$playId")
             mediaPlayer.setTimeGetter(playId, pullClient.get.getServerTimestamp)
             val videoPlayer = ctx.spawn(VideoPlayer.create(playId, audienceScene, None, None), s"videoPlayer$playId")
             mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(joinInfo.get.gc), None)
           }
 
+
           if (watchInfo.nonEmpty) {
             audienceScene.foreach(_.autoReset())
             val playId = Ids.getPlayId(AudienceStatus.LIVE, roomId = Some(watchInfo.get.roomId))
+            println(s"===watchInfo playId:$playId")
             mediaPlayer.setTimeGetter(playId, pullClient.get.getServerTimestamp)
             val videoPlayer = ctx.spawn(VideoPlayer.create(playId, audienceScene, None, None), s"videoPlayer$playId")
             mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
 
           }
-          stashBuffer.unstashAll(ctx, pulling(liveId, parent, pullClient.get, mediaPlayer, sink, audienceScene, hostScene))
+          stashBuffer.unstashAll(ctx, pulling(liveId, parent, pullClient.get, mediaPlayer, sink, source, audienceScene, hostScene))
 
         case GetLossAndBand =>
           pullClient.foreach{ p =>
@@ -186,7 +198,8 @@ object StreamPuller {
           log.info(s"No stream ids: ${msg.liveIds}")
           if (msg.liveIds.contains(liveId)) {
             log.info(s"Stream-$liveId unavailable now, try later.")
-            timer.startSingleTimer(PullStream, PullStream, 30.seconds)
+            timer.cancel(PullTimeOut)
+            timer.startSingleTimer(PullStream, PullStream, 10.seconds)
           }
           Behaviors.same
 
@@ -215,6 +228,7 @@ object StreamPuller {
     mediaPlayer: MediaPlayer,
     //    joinInfo: Option[JoinInfo],
     mediaSink: Pipe.SinkChannel,
+    mediaSource: Pipe.SourceChannel,
     audienceScene: Option[AudienceScene],
     hostScene: Option[HostScene]
   )(
@@ -228,9 +242,14 @@ object StreamPuller {
             try {
 //              log.debug(s"StreamPuller-$liveId pull-${msg.data.length}.")
 //              outStream.write(msg.data)
+
               mediaSink.write(ByteBuffer.wrap(msg.data))
+//              val s = msg.data
+//              val datagramPacket = new DatagramPacket(s, s.length, addr, port)
+//              if(!socket.isClosed || !socket.isBound)socket.send(datagramPacket)
+//              else log.error("socket is not open!!!!!!")
               //              log.debug(s"StreamPuller-$liveId  write success.")
-              ctx.self ! SwitchBehavior("pulling", pulling(liveId, parent, pullClient, mediaPlayer, mediaSink, audienceScene, hostScene))
+              ctx.self ! SwitchBehavior("pulling", pulling(liveId, parent, pullClient, mediaPlayer, mediaSink, mediaSource, audienceScene, hostScene))
             } catch {
               case ex: Exception =>
                 log.warn(s"sink write pulled data error: $ex. Stop StreamPuller-$liveId")
@@ -238,9 +257,9 @@ object StreamPuller {
             }
           } else {
             log.debug(s"StreamPuller-$liveId pull null.")
-            ctx.self ! SwitchBehavior("pulling", pulling(liveId, parent, pullClient, mediaPlayer, mediaSink, audienceScene, hostScene))
+            ctx.self ! SwitchBehavior("pulling", pulling(liveId, parent, pullClient, mediaPlayer, mediaSink, mediaSource, audienceScene, hostScene))
           }
-          busy(liveId, parent, pullClient)
+          busy(liveId, parent, pullClient, mediaSink , mediaSource)
 
         case GetLossAndBand =>
           val info = pullClient.getPackageLoss().map(i => i._1 -> PackageLossInfo(i._2.lossScale60, i._2.lossScale10, i._2.lossScale2))
@@ -252,6 +271,7 @@ object StreamPuller {
         case StopPull =>
           log.info(s"StreamPuller-$liveId is stopping.")
           timer.startPeriodicTimer(ENSURE_STOP_PULL,StopPull,2000.milliseconds)
+          socket.close()
           try pullClient.close()
           catch {
             case  e: Exception =>
@@ -263,6 +283,8 @@ object StreamPuller {
           log.info(s"StreamPuller-$liveId stopped.")
 //          outStream.flush()
 //          outStream.close()
+          mediaSink.close()
+          mediaSource.close()
           parent ! LiveManager.PullerStopped
           timer.cancel(ENSURE_STOP_PULL)
           Behaviors.stopped
@@ -287,10 +309,13 @@ object StreamPuller {
     }
 
 
+
   private def busy(
     liveId: String,
     parent: ActorRef[LiveManager.LiveCommand],
-    pullClient: PullStreamClient
+    pullClient: PullStreamClient,
+    mediaSink: Pipe.SinkChannel,
+    mediaSource: Pipe.SourceChannel
   )
     (
       implicit stashBuffer: StashBuffer[PullCommand],
@@ -307,6 +332,7 @@ object StreamPuller {
 
         case StopPull =>
           log.info(s"StreamPuller-$liveId is stopping.")
+          socket.close()
           try pullClient.close()
           catch {
             case  e: Exception =>
@@ -316,6 +342,8 @@ object StreamPuller {
 
         case CloseSuccess =>
           log.info(s"StreamPuller-$liveId stopped.")
+          mediaSink.close()
+          mediaSource.close()
           parent ! LiveManager.PullerStopped
           Behaviors.stopped
 

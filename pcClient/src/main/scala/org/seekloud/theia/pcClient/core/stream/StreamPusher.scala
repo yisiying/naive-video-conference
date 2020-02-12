@@ -2,7 +2,7 @@ package org.seekloud.theia.pcClient.core.stream
 
 
 import java.io.{File, FileOutputStream}
-import java.nio.ByteBuffer
+import java.nio.{ByteBuffer, ShortBuffer}
 import java.nio.channels.{Channels, Pipe}
 
 import akka.actor.typed.{ActorRef, Behavior}
@@ -21,6 +21,9 @@ import scala.util.{Failure, Success, Try}
 import java.io.FileOutputStream
 import java.io.File
 import java.net.{DatagramPacket, DatagramSocket, InetAddress}
+
+import org.bytedeco.javacv.FFmpegFrameGrabber
+import sun.nio.ch.DirectBuffer
 
 /**
   * User: TangYaruo
@@ -104,6 +107,9 @@ object StreamPusher {
             ctx.self ! PushStream
 //            val file = new File(s"theia-直播-${TimeUtil.timeStamp2DetailDate(System.currentTimeMillis()).replaceAll("-", "").replaceAll(":", "").replaceAll(" ", "")}.ts")
 //            val outStream = new FileOutputStream(file)
+//            val frameGrabber = new FFmpegFrameGrabber("D:\\视频\\1.mp4")
+//            frameGrabber.start()
+//            frameGrabber.setFrameNumber(30)
             pushing(liveId, liveCode, parent, pushClient.get, captureActor, source, dataBuff,null,false)
           } else {
             log.debug(s"Push liveId-$liveId liveCode-$liveCode auth failed.")
@@ -141,6 +147,7 @@ object StreamPusher {
     dataBuff: ByteBuffer,
     outputStream: FileOutputStream,
     isTestPush:Boolean
+//    fFmpegFrameGrabber: FFmpegFrameGrabber
   )(
     implicit timer: TimerScheduler[PushCommand],
     stashBuffer: StashBuffer[PushCommand]
@@ -152,6 +159,14 @@ object StreamPusher {
             dataBuff.clear()
             val bytesRead = mediaSource.read(dataBuff)
             dataBuff.flip()
+//            val frame = fFmpegFrameGrabber.grab()
+//            if(frame!=null && frame.image!=null){
+//              val i = ImgConv.toBufferedImage(frame)
+//              val raster = i.getRaster
+//              import java.awt.image.DataBufferByte
+//              val dataBuffer = raster.getDataBuffer.asInstanceOf[DataBufferByte]
+//              pushClient.pushStreamData(liveId,dataBuffer.getData)
+//            }
             if (bytesRead != -1) {
               //              log.debug(s"bytesRead: $bytesRead")
               //              log.debug(s"data length: ${dataBuff.remaining()}")

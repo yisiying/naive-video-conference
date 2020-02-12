@@ -185,7 +185,7 @@ object RoomActor {
         case UpdateRTMP(rtmp) =>
           //timer.cancel(DelayUpdateRtmpKey + wholeRoomInfo.roomInfo.roomId.toString)
           val newRoomInfo = wholeRoomInfo.copy(roomInfo = wholeRoomInfo.roomInfo.copy(rtmp = Some(rtmp)))
-          log.debug(s"${ctx.self.path} 更新liveId=$rtmp,更新后的liveId=${newRoomInfo.roomInfo.rtmp}")
+          log.debug(s"${ctx.self.path} 更新liveId=$rtmp,更新后的liveId=${newRoomInfo.roomInfo.rtmp} ---idle")
           idle(newRoomInfo, liveInfoMap, subscribe, liker, startTime, totalView, invitationList, isJoinOpen)
 
         case ActorProtocol.UpdateInvitationList(roomId, userId) =>
@@ -198,7 +198,7 @@ object RoomActor {
           handleWebSocketMsg(wholeRoomInfo, subscribe, liveInfoMap, liker, startTime, totalView, isJoinOpen, dispatch(subscribe), dispatchTo(subscribe), invitationList)(ctx, userId, roomId, wsMsg)
 
         case GetRtmpLiveInfo(_, replyTo) =>
-          log.debug(s"room${wholeRoomInfo.roomInfo.roomId}获取liveId成功")
+          log.debug(s"room${wholeRoomInfo.roomInfo.roomId}获取liveId成功   ---idle")
           liveInfoMap.get(Role.host) match {
             case Some(value) =>
               replyTo ! GetLiveInfoRsp4RM(Some(value.values.head))
@@ -213,7 +213,7 @@ object RoomActor {
           var viewNum = totalView
           //虽然房间存在，但其实主播已经关闭房间，这时的startTime=-1
           //向所有人发送主播已经关闭房间的消息
-          log.info(s"-----roomActor get UpdateSubscriber id: $roomId")
+          log.info(s"-----roomActor get UpdateSubscriber id: $roomId   ---idle")
           if (startTime == -1) {
             dispatchTo(subscribe)(List((userId, temporary)), NoAuthor)
           }
@@ -259,7 +259,7 @@ object RoomActor {
           idle(wholeRoomInfo, liveInfoMap, subscribe, liker, startTime, viewNum, invitationList, isJoinOpen)
 
         case ActorProtocol.HostCloseRoom(roomId) =>
-          log.debug(s"${ctx.self.path} host close the room")
+          log.debug(s"${ctx.self.path} host close the room   ---idle")
           wholeRoomInfo.roomInfo.rtmp match {
             case Some(v) =>
               if(v != liveInfoMap(Role.host)(wholeRoomInfo.roomInfo.userId).liveId){
@@ -397,7 +397,7 @@ object RoomActor {
         idle(wholeRoomInfo, liveInfoMap, subscribers, liker, startTime, totalView, invitationList, connect)
 
       case JoinAccept(`roomId`, userId4Audience, clientType, accept) =>
-        log.debug(s"${ctx.self.path} 接受连线者请求，roomId=$roomId")
+        log.debug(s"${ctx.self.path} 接受连线者请求，roomId=$roomId   ---ws")
         if (accept) {
           for {
             userInfoOpt <- UserInfoDao.searchById(userId4Audience)
@@ -472,7 +472,7 @@ object RoomActor {
         Behaviors.same
 
       case HostShutJoin(`roomId`) =>
-        log.debug(s"${ctx.self.path} the host has shut the join in room$roomId")
+        log.debug(s"${ctx.self.path} the host has shut the join in room$roomId ----ws")
         liveInfoMap.remove(Role.audience)
         liveInfoMap.get(Role.host) match {
           case Some(value) =>
@@ -507,7 +507,7 @@ object RoomActor {
           wholeRoomInfo.roomInfo
         }
         val info = WholeRoomInfo(roomInfo, wholeRoomInfo.layout, wholeRoomInfo.aiMode)
-        log.debug(s"${ctx.self.path} modify the room info$info")
+        log.debug(s"${ctx.self.path} modify the room info$info  ---ws")
         dispatch(UpdateRoomInfo2Client(roomInfo.roomName, roomInfo.roomDes))
         dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), ModifyRoomRsp())
         idle(info, liveInfoMap, subscribers, liker, startTime, totalView,invitationList, isJoinOpen)
@@ -520,7 +520,7 @@ object RoomActor {
           case None =>
         }*/
 
-        log.debug(s"${ctx.self.path} host stop stream in room${wholeRoomInfo.roomInfo.roomId},name=${wholeRoomInfo.roomInfo.roomName}")
+        log.debug(s"${ctx.self.path} host stop stream in room${wholeRoomInfo.roomInfo.roomId},name=${wholeRoomInfo.roomInfo.roomName}   ---ws")
         //前端需要自行处理主播主动断流的情况，后台默认连线者也会断开
         dispatch(HostStopPushStream2Client)
         wholeRoomInfo.roomInfo.rtmp match {
