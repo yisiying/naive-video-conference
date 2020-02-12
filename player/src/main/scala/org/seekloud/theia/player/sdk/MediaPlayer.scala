@@ -200,6 +200,15 @@ class MediaPlayer () {
     }
   }
 
+  /**
+    * 连线者切换状态
+    *
+    * */
+  def setConnectState(playId: String, connectState: Boolean, resetFunc: () => Unit): Unit = {
+    if (playerManager != null) {
+      playerManager ! PlayerManager.SetConnectState(playId, connectState, resetFunc)
+    }
+  }
 
 }
 

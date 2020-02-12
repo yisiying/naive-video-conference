@@ -67,6 +67,14 @@
     -fx-font: 16 arial;
     -fx-text-fill: Black;
 }
+.hostScene-leftArea-passText{
+    -fx-font: 12 arial;
+    -fx-text-fill: Black;
+}
+.hostScene-leftArea-checkBox{
+    -fx-font: 14 arial;
+    -fx-text-fill: Black;
+}
 .hostScene-leftArea-confirmBtn{
     -fx-background-color: #dee7f4;
     -fx-background-radius: 6;

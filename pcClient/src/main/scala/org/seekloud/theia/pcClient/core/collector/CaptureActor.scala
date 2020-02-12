@@ -12,8 +12,12 @@ import org.seekloud.theia.capture.protocol.Messages
 import org.seekloud.theia.capture.protocol.Messages._
 import org.seekloud.theia.capture.sdk.{DeviceUtil, MediaCapture}
 import org.seekloud.theia.pcClient.Boot
+import org.seekloud.theia.pcClient.component.WarningDialog
+import org.seekloud.theia.pcClient.core.stream.LiveManager
 import org.seekloud.theia.pcClient.core.stream.LiveManager.{ChangeMediaOption, RecordOption}
+import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol.HostStopPushStream2Client
 import org.slf4j.LoggerFactory
+//import org.bytedeco.javacv.FrameRecorder
 
 import concurrent.duration._
 import language.postfixOps
@@ -23,19 +27,23 @@ import language.postfixOps
   * Date: 2019/9/4
   * Time: 14:04
   */
-object CaptureActor {
+object   CaptureActor {
 
   private val log = LoggerFactory.getLogger(this.getClass)
 
   type CaptureCommand = ReplyToCommand
 
-  final case class StartEncode(output: Either[File, OutputStream]) extends CaptureCommand
+  final case class StartEncode(output: Either[File, OutputStream], url: Option[String] = None) extends CaptureCommand
 
   final case class StopEncode(encoderType: EncoderType.Value) extends CaptureCommand
 
   final case object StopCapture extends CaptureCommand
 
   final case class GetMediaCapture(mediaCapture: MediaCapture) extends CaptureCommand
+
+  final case class PushRtmpStream(url: String) extends CaptureCommand
+
+  final case object StopPushRtmp extends CaptureCommand
 
   /*drawer*/
   sealed trait DrawCommand
@@ -51,15 +59,16 @@ object CaptureActor {
   private object ENCODE_RETRY_TIMER_KEY
 
 
-  def create(frameRate: Int, gc: GraphicsContext, isJoin: Boolean, callBackFunc: Option[() => Unit] = None): Behavior[CaptureCommand] =
+  def create(frameRate: Int, gc: GraphicsContext, isJoin: Boolean, callBackFunc: Option[() => Unit] = None,parent: ActorRef[LiveManager.LiveCommand]): Behavior[CaptureCommand] =
     Behaviors.setup[CaptureCommand] { ctx =>
       log.info("CaptureActor is starting...")
       Behaviors.withTimers[CaptureCommand] { implicit timer =>
-        idle(frameRate, gc, isJoin, callBackFunc)
+        idle(parent,frameRate, gc, isJoin, callBackFunc)
       }
     }
 
   private def idle(
+    parent:ActorRef[LiveManager.LiveCommand],
     frameRate: Int,
     gc: GraphicsContext,
     isJoin: Boolean = false,
@@ -76,7 +85,7 @@ object CaptureActor {
     Behaviors.receive[CaptureCommand] { (ctx, msg) =>
       msg match {
         case msg: GetMediaCapture =>
-          idle(frameRate, gc, isJoin, callBackFunc, resetFunc, Some(msg.mediaCapture), reqActor, loopExecutor, imageLoop, drawActor)
+          idle(parent,frameRate, gc, isJoin, callBackFunc, resetFunc, Some(msg.mediaCapture), reqActor, loopExecutor, imageLoop, drawActor)
 
         case msg: CaptureStartSuccess =>
           log.info(s"MediaCapture start success!")
@@ -92,7 +101,7 @@ object CaptureActor {
             TimeUnit.MICROSECONDS
           )
           callBackFunc.foreach(func => func())
-          idle(frameRate, gc, isJoin, callBackFunc, resetFunc, mediaCapture, Some(msg.manager), Some(executor), Some(askImageLoop), Some(drawActor))
+          idle(parent,frameRate, gc, isJoin, callBackFunc, resetFunc, mediaCapture, Some(msg.manager), Some(executor), Some(askImageLoop), Some(drawActor))
 
         case msg: CannotAccessSound =>
           log.info(s"Sound unavailable.")
@@ -112,7 +121,7 @@ object CaptureActor {
             resetFunc.foreach(func => func())
             mediaCapture.foreach(_.start())
           }
-          idle(frameRate, gc, isJoin, callBackFunc, None, mediaCapture, reqActor, loopExecutor, imageLoop, drawActor)
+          idle(parent,frameRate, gc, isJoin, callBackFunc, None, mediaCapture, reqActor, loopExecutor, imageLoop, drawActor)
 
         case StreamCannotBeEncoded =>
           log.info(s"Stream cannot be encoded to mpegts.")
@@ -154,6 +163,15 @@ object CaptureActor {
           }
           Behaviors.same
 
+        case PushRtmpStream(url) =>
+          log.info(s"send url to CaptureManager: ${url}")
+          reqActor.foreach(_ ! RecordToBiliBili(url))
+          Behaviors.same
+
+        case StopPushRtmp =>
+          reqActor.foreach(_ ! StopRecordToBiliBili)
+          Behaviors.same
+
         case msg: StopEncode =>
           msg.encoderType match {
             case EncoderType.STREAM => reqActor.foreach(_ ! StopEncodeStream)
@@ -175,7 +193,7 @@ object CaptureActor {
             val offOrOn = msg.needImage
             drawActor.foreach(_ ! ReSet(msg.reset, offOrOn))
           }
-          idle(frameRate, gc, isJoin, callBackFunc, Some(msg.reset), mediaCapture, reqActor, loopExecutor, imageLoop, drawActor)
+          idle(parent,frameRate, gc, isJoin, callBackFunc, Some(msg.reset), mediaCapture, reqActor, loopExecutor, imageLoop, drawActor)
 
         case msg: RecordOption =>
           reqActor.foreach { req =>
@@ -185,7 +203,7 @@ object CaptureActor {
               req ! Messages.StopEncodeFile
             }
           }
-          idle(frameRate, gc, isJoin, callBackFunc, Some(msg.reset), mediaCapture, reqActor, loopExecutor, imageLoop, drawActor)
+          idle(parent,frameRate, gc, isJoin, callBackFunc, Some(msg.reset), mediaCapture, reqActor, loopExecutor, imageLoop, drawActor)
 
         case StopCapture =>
           log.info(s"Media capture is stopping...")
@@ -194,6 +212,25 @@ object CaptureActor {
           reqActor.foreach(_ ! StopMediaCapture)
           drawActor.foreach(_ ! StopDraw)
           Behaviors.stopped
+
+        case EncodeException(ex) =>
+          if(ex.getMessage.contains("av_interleaved_write_frame() error"))
+          {
+            Boot.addToPlatform{
+              WarningDialog.initWarningDialog("b站端直播已停止")
+              //dispatch(HostStopPushStream2Client)
+            }
+            parent!LiveManager.StopBili
+            log.error(s"${ex.getMessage}")
+          }
+          Behaviors.same
+
+        case CannotRecordToBiliBili =>
+          Boot.addToPlatform{
+            WarningDialog.initWarningDialog("连接到b站失败，请确认b站端是否开始直播，或者重开b站端直播")
+            parent!LiveManager.StopBili
+          }
+          Behaviors.same
 
         case x =>
           log.warn(s"unknown msg in idle: $x")

@@ -397,6 +397,7 @@ class LivePage(userId:Long, roomId:Long) extends Page{
         if(rsp.errCode==0 && rsp.roomInfo.isDefined){
           anchorName := rsp.roomInfo.get.userName
           anchorHeadImgUrl := rsp.roomInfo.get.headImgUrl
+//          val url = dom.window.location.protocol + "//" + dom.window.location.host + rsp.roomInfo.get.mpd.getOrElse("")
           val url = dom.window.location.protocol + "//" + dom.window.location.host + rsp.roomInfo.get.mpd.getOrElse("")
           dashurl = url
           hlsurl = url.replace("index","master").replace("mpd","m3u8")

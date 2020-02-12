@@ -34,16 +34,16 @@ class HomePage extends Page{
 
 
   def watchRecord(record:RecordInfo) = {
-    recordInfo = record
-    dom.window.sessionStorage.setItem("recordName", record.recordName)
-    dom.window.sessionStorage.setItem("recordCoverImg", record.coverImg)
-    dom.window.sessionStorage.setItem("recordStartTime", record.startTime.toString)
     if(isTemUser()){
-      //如果没有登录，就获取临时用户信息
-      MainPage.temUserLogin(-1l)
+      PopWindow.commonPop(s"请先登录")//如果没有登录，让用户先登陆
+    }else{
+      recordInfo = record
+      dom.window.sessionStorage.setItem("recordName", record.recordName)
+      dom.window.sessionStorage.setItem("recordCoverImg", record.coverImg)
+      dom.window.sessionStorage.setItem("recordStartTime", record.startTime.toString)
+      dom.window.location.hash = s"#/Record/${recordInfo.roomId}/${recordInfo.startTime}"
+      //若已经登录，就直接跳转进入观众页
     }
-    //若已经登录，就直接跳转进入观众页
-    dom.window.location.hash = s"#/Record/${recordInfo.roomId}/${recordInfo.startTime}"
   }
 
   private val recordArea:Rx[Elem] = recordList.map{ rl =>

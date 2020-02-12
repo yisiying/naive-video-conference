@@ -12,6 +12,7 @@ import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol._
 import org.slf4j.LoggerFactory
 import org.seekloud.theia.pcClient.utils.RMClient
 import org.seekloud.theia.pcClient.Boot.executor
+import org.seekloud.theia.pcClient.core.collector.CaptureActor
 
 /**
   * User: Arrow
@@ -40,8 +41,10 @@ class HostController(
   }
 
   hostScene.setListener(new HostSceneListener {
-    override def startLive(): Unit = {
-      rmManager ! RmManager.HostLiveReq
+    override def startLive(rtmpSelected: Boolean, rtpSelected: Boolean, rtmpServer: Option[String]): Unit = {
+      //test define
+      //val test="rtmp://txy.live-send.acg.tv/live-txy/?streamname=live_44829093_50571972&key=faf3125e8c84c88ad7f05e4fcc017149"
+      rmManager ! RmManager.HostLiveReq(rtmpSelected, rtpSelected, rtmpServer)
     }
 
     override def stopLive(): Unit = {
@@ -212,6 +215,11 @@ class HostController(
         hostScene.recordList = Nil
         getRecordList()
     }
+
+    override def pushRtmpStream(): Unit = {
+      val url = "123"
+//      rmManager
+    }
   })
 
 
@@ -286,7 +294,7 @@ class HostController(
           }
         }
 
-      case AudienceDisconnect(_) =>
+      case AudienceDisconnect(liveId) =>
         //观众断开，提醒主播，去除连线观众信息
         rmManager ! RmManager.JoinStop
         Boot.addToPlatform {

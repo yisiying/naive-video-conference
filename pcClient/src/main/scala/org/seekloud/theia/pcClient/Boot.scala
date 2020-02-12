@@ -53,8 +53,6 @@ class Boot extends javafx.application.Application {
 
   private[this] val log = LoggerFactory.getLogger(this.getClass)
 
-
-
   override def start(primaryStage: Stage): Unit = {
     val emojionemozilla = Font.loadFont(getClass.getResourceAsStream("/img/seguiemj.ttf"), 12) //表情浏览器？
     DeviceUtil.init

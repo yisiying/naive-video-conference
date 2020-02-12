@@ -16,7 +16,7 @@ import javafx.scene.image.{Image, ImageView}
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout._
 import javafx.scene.text.Text
-import org.seekloud.theia.pcClient.common.{AlbumInfo, Constants,Ids, Pictures}
+import org.seekloud.theia.pcClient.common.{AlbumInfo, Constants, Ids, Pictures}
 import org.seekloud.theia.pcClient.core.RmManager
 import org.seekloud.theia.protocol.ptcl.CommonInfo
 import org.seekloud.theia.protocol.ptcl.CommonInfo.RecordInfo
@@ -31,6 +31,7 @@ import javafx.stage.{DirectoryChooser, Stage}
 import javafx.util.Duration
 import org.seekloud.theia.capture.sdk.DeviceUtil
 import org.seekloud.theia.capture.sdk.DeviceUtil.VideoOption
+import org.seekloud.theia.pcClient.Boot
 import org.seekloud.theia.pcClient.component.Common.getImageView
 import org.seekloud.theia.pcClient.component._
 import org.seekloud.theia.pcClient.core.stream.StreamPuller.{BandWidthInfo, PackageLossInfo}
@@ -69,7 +70,7 @@ object HostScene {
 
   trait HostSceneListener {
 
-    def startLive()
+    def startLive(rtmpSelected: Boolean, rtpSelected: Boolean, rtmpServer: Option[String] = None)
 
     def stopLive()
 
@@ -115,6 +116,8 @@ object HostScene {
     def ShowDesktop()
 
     def ShowBoth()
+
+    def pushRtmpStream()
   }
 
 }
@@ -234,8 +237,6 @@ class HostScene(stage: Stage) {
   AIBox.setAlignment(Pos.CENTER_LEFT)
 
 
-
-
   val pathLabel = new Text(s"选择录制文件保存路径：")
   pathLabel.setFont(Font.font(15))
   val pathField = new TextField(s"${Constants.recordPath}")
@@ -243,6 +244,54 @@ class HostScene(stage: Stage) {
   val chooseFileBtn = new Button("浏览")
 
   val commentFiled = new TextField() //留言输入框
+
+
+  /*直播方式选择*/
+  val sendWay = new Text("直播方式（开始直播前必选）:")
+  sendWay.getStyleClass.add("hostScene-leftArea-text")
+  val chooseWayOne = new CheckBox("b站 ")
+  chooseWayOne.getStyleClass.add("hostScene-leftArea-checkBox")
+
+
+  val pcDes =  new CheckBox("本站")
+  pcDes.getStyleClass.add("hostScene-leftArea-checkBox")
+
+  val chooseWay = new VBox()
+  chooseWay.setPadding(new Insets(15, 0, 0, 0))
+  chooseWay.setSpacing(10)
+  chooseWay.getChildren.addAll(sendWay, pcDes, chooseWayOne)
+
+  val rtmpDes = new TextField()
+  rtmpDes.setPrefWidth(width * 0.15)
+  rtmpDes.setText("rtmp://js.live-send.acg.tv/live-js/")
+  val rtmpText = new Text("rtmp地址：")
+  rtmpText.getStyleClass.add("hostScene-leftArea-passText")
+  val rtmpLine = new HBox()
+  rtmpLine.setSpacing(5)
+  rtmpLine.getChildren.addAll(rtmpText,rtmpDes)
+
+  val passWord = new PasswordField()
+  passWord.setPrefWidth(width * 0.15)
+  passWord.setText("?streamname=live_46800250_88676236&key=017ade101eaf1c5ddb2c86b6e1c051c0")
+  val passText = new Text("rtmp密钥：")
+  passText.getStyleClass.add("hostScene-leftArea-passText")
+  val passLine = new HBox()
+  passLine.setSpacing(5)
+  passLine.getChildren.addAll(passText,passWord)
+
+  val passArea = new VBox()
+  passArea.setSpacing(6)
+  passArea.setPadding(new Insets(10,10,0,0))
+  passArea.getChildren.addAll(rtmpLine,passLine)
+
+  chooseWayOne.setOnAction(
+    _=>
+      if(chooseWayOne.isSelected){
+        chooseWay.getChildren.add(passArea)
+      }else{
+        chooseWay.getChildren.remove(passArea)
+      }
+  )
 
   /**
     * 左侧导航栏
@@ -520,6 +569,15 @@ class HostScene(stage: Stage) {
       val roomNameText = new Text("房间名:")
       roomNameText.getStyleClass.add("hostScene-leftArea-text")
 
+      val sendWay = new Text("直播方式:")
+      sendWay.getStyleClass.add("hostScene-leftArea-text")
+
+      val wayOne = new Text("b站:")
+      wayOne.getStyleClass.add("hostScene-leftArea-text")
+
+      val wayTwo = new Text("本站:")
+      wayTwo.getStyleClass.add("hostScene-leftArea-text")
+
       val confirmIcon1 = new ImageView("img/confirm.png")
       confirmIcon1.setFitHeight(15)
       confirmIcon1.setFitWidth(15)
@@ -554,19 +612,16 @@ class HostScene(stage: Stage) {
       }
       Common.addButtonEffect(roomDesBtn)
 
-
       val roomDes = new HBox()
       roomDes.setAlignment(Pos.CENTER_LEFT)
       roomDes.getChildren.addAll(roomDesArea, roomDesBtn)
       roomDes.setSpacing(5)
 
       val roomInfoBox = new VBox()
-      roomInfoBox.getChildren.addAll(roomId, userId, roomNameText, roomName, roomDesText, roomDes)
+      roomInfoBox.getChildren.addAll(roomId, userId, roomNameText, roomName, roomDesText, roomDes, chooseWay)
       roomInfoBox.setPadding(new Insets(5, 30, 0, 30))
       roomInfoBox.setSpacing(15)
       roomInfoBox
-
-
     }
 
 
@@ -1270,11 +1325,21 @@ class HostScene(stage: Stage) {
     liveBar.liveToggleButton.setOnAction {
       _ =>
         if (liveBar.liveToggleButton.isSelected) {
-          listener.startLive()
-          liveBar.resetStartLiveTime(System.currentTimeMillis())
-          isLive = true
-          Tooltip.install(liveBar.liveToggleButton, new Tooltip("点击停止直播"))
+          if(chooseWayOne.isSelected||pcDes.isSelected){
+            val (rtmpSelected,url) = if(chooseWayOne.isSelected) (true, rtmpDes.getText()+passWord.getText()) else (false, "")
+            val rtpSelected = if(pcDes.isSelected) true else false
+            listener.startLive(rtmpSelected, rtpSelected, Some(url))
+            liveBar.resetStartLiveTime(System.currentTimeMillis())
+            isLive = true
+            Tooltip.install(liveBar.liveToggleButton, new Tooltip("点击停止直播"))
+          }else{
+            liveBar.liveToggleButton.setSelected(false)
+            Boot.addToPlatform {
+              WarningDialog.initWarningDialog("请先在左侧选择直播平台")
+            }
+          }
         } else {
+
           listener.stopLive()
           liveBar.isLiving = false
           liveBar.soundToggleButton.setDisable(false)

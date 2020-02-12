@@ -96,6 +96,8 @@ object PlayerManager {
 
   final case class SetTimeGetter(playId: String, func: () => Long) extends SupervisorCmd
 
+  final case class SetConnectState(playId: String, connectState: Boolean, resetFunc: () => Unit) extends SupervisorCmd
+
 
   def create(isDebug: Boolean, needTimestamp: Boolean): Behavior[SupervisorCmd] =
     Behaviors.setup[SupervisorCmd] { ctx =>
@@ -123,6 +125,10 @@ object PlayerManager {
         case msg: SetTimeGetter =>
           timeGetter = msg.func
           playerGrabberMap.get(msg.playId).foreach(_._1 ! PlayerGrabber.SetTimeGetter(msg.func))
+          Behaviors.same
+
+        case msg: SetConnectState =>
+          imageActorMap.get(msg.playId).foreach(_ ! ImageActor.SetConnectState(msg.connectState, msg.resetFunc))
           Behaviors.same
 
         case StartPlay(playId, replyTo, gc, input, settings) =>

@@ -1,6 +1,7 @@
 package org.seekloud.theia.pcClient.component
 
 
+import javafx.event.EventHandler
 import javafx.geometry.{Insets, Pos}
 import javafx.scene.Group
 import javafx.scene.control.{Button, Label, TextArea, TextField}
@@ -33,6 +34,7 @@ class GiftBar(group: Group) {
   var gift4Clicked = false
   var gift5Clicked = false
   var gift6Clicked = false
+
 
   def createGiftBox(pic: String, name: String): VBox = {
     val giftIcon = new ImageView(pic)
@@ -178,7 +180,9 @@ class GiftBar(group: Group) {
   val input1 = new TextField("5")
   val gift1Des: VBox = getDesBox("img/gift1.png", "冰可乐", 3, "大哥，霍冰阔落！", input1, sendBtn1)
   gift1Des.setLayoutY(50)
-  gift1.addEventHandler(MouseEvent.MOUSE_CLICKED, (_: MouseEvent) => {
+
+  val EventHandler1 :EventHandler[MouseEvent] =(_: MouseEvent) =>{
+ // def EventHandler1 (event:MouseEvent):EventHandler[MouseEvent] =(_: MouseEvent) =>{
     if (!gift1Clicked) {
       group.getChildren.removeAll(gift1Des, gift2Des, gift3Des, gift4Des, gift5Des, gift6Des)
       gift1Clicked = false
@@ -195,14 +199,33 @@ class GiftBar(group: Group) {
       gift1Clicked = false
       setClickedStyle()
     }
-  })
+  }
+  gift1.addEventHandler(MouseEvent.MOUSE_CLICKED,EventHandler1)
 
+  // (_: MouseEvent) => {
+    /*if (!gift1Clicked) {
+      group.getChildren.removeAll(gift1Des, gift2Des, gift3Des, gift4Des, gift5Des, gift6Des)
+      gift1Clicked = false
+      gift2Clicked = false
+      gift3Clicked = false
+      gift4Clicked = false
+      gift5Clicked = false
+      gift6Clicked = false
+      group.getChildren.add(1, gift1Des)
+      gift1Clicked = true
+      setClickedStyle()
+    } else {
+      group.getChildren.remove(gift1Des)
+      gift1Clicked = false
+      setClickedStyle()
+    }*/
+ // })
 
   val sendBtn2 = new Button("发送")
   val input2 = new TextField("5")
   val gift2Des: VBox = getDesBox("img/gift2.png", "雪糕", 5, "吃个雪糕吧！", input2, sendBtn2)
   gift2Des.setLayoutY(100)
-  gift2.addEventHandler(MouseEvent.MOUSE_CLICKED, (_: MouseEvent) => {
+  val EventHandler2:EventHandler[MouseEvent] =(_: MouseEvent) =>{
     if (!gift2Clicked) {
       //      log.debug(s"add des")
       group.getChildren.removeAll(gift1Des, gift2Des, gift3Des, gift4Des, gift5Des, gift6Des)
@@ -221,14 +244,36 @@ class GiftBar(group: Group) {
       gift2Clicked = false
       setClickedStyle()
     }
-  })
+  }
+  gift2.addEventHandler(MouseEvent.MOUSE_CLICKED,EventHandler2)
+
+  /*gift2.addEventHandler(MouseEvent.MOUSE_CLICKED, (_: MouseEvent) => {
+    if (!gift2Clicked) {
+      //      log.debug(s"add des")
+      group.getChildren.removeAll(gift1Des, gift2Des, gift3Des, gift4Des, gift5Des, gift6Des)
+      gift1Clicked = false
+      gift2Clicked = false
+      gift3Clicked = false
+      gift4Clicked = false
+      gift5Clicked = false
+      gift6Clicked = false
+      group.getChildren.add(1, gift2Des)
+      gift2Clicked = true
+      setClickedStyle()
+    } else {
+      //      log.debug(s"remove des")
+      group.getChildren.remove(gift2Des)
+      gift2Clicked = false
+      setClickedStyle()
+    }
+  }) */
 
 
   val sendBtn3 = new Button("发送")
   val input3 = new TextField("5")
   val gift3Des: VBox = getDesBox("img/gift3.png", "巧克力", 10, "巧克力可没有你甜！", input3, sendBtn3)
   gift3Des.setLayoutY(150)
-  gift3.addEventHandler(MouseEvent.MOUSE_CLICKED, (_: MouseEvent) => {
+  val EventHandler3: EventHandler[MouseEvent]=(_:MouseEvent) => {
     if (!gift3Clicked) {
       //      log.debug(s"add des")
       group.getChildren.removeAll(gift1Des, gift2Des, gift3Des, gift4Des, gift5Des, gift6Des)
@@ -247,14 +292,36 @@ class GiftBar(group: Group) {
       gift3Clicked = false
       setClickedStyle()
     }
-  })
+  }
+  gift3.addEventHandler(MouseEvent.MOUSE_CLICKED,EventHandler3)
+
+ /* gift3.addEventHandler(MouseEvent.MOUSE_CLICKED, (_: MouseEvent) => {
+    if (!gift3Clicked) {
+      //      log.debug(s"add des")
+      group.getChildren.removeAll(gift1Des, gift2Des, gift3Des, gift4Des, gift5Des, gift6Des)
+      gift1Clicked = false
+      gift2Clicked = false
+      gift3Clicked = false
+      gift4Clicked = false
+      gift5Clicked = false
+      gift6Clicked = false
+      group.getChildren.add(1, gift3Des)
+      gift3Clicked = true
+      setClickedStyle()
+    } else {
+      //      log.debug(s"remove des")
+      group.getChildren.remove(gift3Des)
+      gift3Clicked = false
+      setClickedStyle()
+    }
+  })*/
 
 
   val sendBtn4 = new Button("发送")
   val input4 = new TextField("99")
   val gift4Des: VBox = getDesBox("img/gift4.png", "花花", 20, "为你献花！", input4, sendBtn4)
   gift4Des.setLayoutY(200)
-  gift4.addEventHandler(MouseEvent.MOUSE_CLICKED, (_: MouseEvent) => {
+  val EventHandler4:EventHandler[MouseEvent]=(_:MouseEvent) => {
     if (!gift4Clicked) {
       //      log.debug(s"add des")
       group.getChildren.removeAll(gift1Des, gift2Des, gift3Des, gift4Des, gift5Des, gift6Des)
@@ -273,14 +340,36 @@ class GiftBar(group: Group) {
       gift4Clicked = false
       setClickedStyle()
     }
-  })
+  }
+  gift4.addEventHandler(MouseEvent.MOUSE_CLICKED,EventHandler4)
+
+  /*gift4.addEventHandler(MouseEvent.MOUSE_CLICKED, (_: MouseEvent) => {
+    if (!gift4Clicked) {
+      //      log.debug(s"add des")
+      group.getChildren.removeAll(gift1Des, gift2Des, gift3Des, gift4Des, gift5Des, gift6Des)
+      gift1Clicked = false
+      gift2Clicked = false
+      gift3Clicked = false
+      gift4Clicked = false
+      gift5Clicked = false
+      gift6Clicked = false
+      group.getChildren.add(1, gift4Des)
+      gift4Clicked = true
+      setClickedStyle()
+    } else {
+      //      log.debug(s"remove des")
+      group.getChildren.remove(gift4Des)
+      gift4Clicked = false
+      setClickedStyle()
+    }
+  }) */
 
 
   val sendBtn5 = new Button("发送")
   val input5 = new TextField("1")
   val gift5Des: VBox = getDesBox("img/gift5.png", "飞船", 50, "都让开，飞船来咯！", input5, sendBtn5)
   gift5Des.setLayoutY(250)
-  gift5.addEventHandler(MouseEvent.MOUSE_CLICKED, (_: MouseEvent) => {
+  val EventHandler5:EventHandler[MouseEvent] =(_:MouseEvent) => {
     if (!gift5Clicked) {
       //      log.debug(s"add des")
       group.getChildren.removeAll(gift1Des, gift2Des, gift3Des, gift4Des, gift5Des, gift6Des)
@@ -299,14 +388,36 @@ class GiftBar(group: Group) {
       gift5Clicked = false
       setClickedStyle()
     }
-  })
+  }
+  gift5.addEventHandler(MouseEvent.MOUSE_CLICKED,EventHandler5)
+
+ /* gift5.addEventHandler(MouseEvent.MOUSE_CLICKED, (_: MouseEvent) => {
+    if (!gift5Clicked) {
+      //      log.debug(s"add des")
+      group.getChildren.removeAll(gift1Des, gift2Des, gift3Des, gift4Des, gift5Des, gift6Des)
+      gift1Clicked = false
+      gift2Clicked = false
+      gift3Clicked = false
+      gift4Clicked = false
+      gift5Clicked = false
+      gift6Clicked = false
+      group.getChildren.add(1, gift5Des)
+      gift5Clicked = true
+      setClickedStyle()
+    } else {
+      //      log.debug(s"remove des")
+      group.getChildren.remove(gift5Des)
+      gift5Clicked = false
+      setClickedStyle()
+    }
+  }) */
 
 
   val sendBtn6 = new Button("发送")
   val input6 = new TextField("1")
   val gift6Des: VBox = getDesBox("img/gift6.png", "火箭", 100, "都让开，火箭来咯！", input6, sendBtn6)
   gift6Des.setLayoutY(300)
-  gift6.addEventHandler(MouseEvent.MOUSE_CLICKED, (_: MouseEvent) => {
+  val EventHandler6:EventHandler[MouseEvent]= (_: MouseEvent) => {
     if (!gift6Clicked) {
       //      log.debug(s"add des")
       group.getChildren.removeAll(gift1Des, gift2Des, gift3Des, gift4Des, gift5Des, gift6Des)
@@ -325,7 +436,29 @@ class GiftBar(group: Group) {
       gift6Clicked = false
       setClickedStyle()
     }
-  })
+  }
+  gift6.addEventHandler(MouseEvent.MOUSE_CLICKED,EventHandler6)
+
+ /* gift6.addEventHandler(MouseEvent.MOUSE_CLICKED, (_: MouseEvent) => {
+    if (!gift6Clicked) {
+      //      log.debug(s"add des")
+      group.getChildren.removeAll(gift1Des, gift2Des, gift3Des, gift4Des, gift5Des, gift6Des)
+      gift1Clicked = false
+      gift2Clicked = false
+      gift3Clicked = false
+      gift4Clicked = false
+      gift5Clicked = false
+      gift6Clicked = false
+      group.getChildren.add(1, gift6Des)
+      gift6Clicked = true
+      setClickedStyle()
+    } else {
+      //      log.debug(s"remove des")
+      group.getChildren.remove(gift6Des)
+      gift6Clicked = false
+      setClickedStyle()
+    }
+  })*/
 
 
   //礼物栏

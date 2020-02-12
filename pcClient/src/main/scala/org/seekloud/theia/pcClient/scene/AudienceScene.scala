@@ -1,5 +1,6 @@
 package org.seekloud.theia.pcClient.scene
 
+import com.sun.glass.ui.View.EventHandler
 import javafx.animation.{Animation, KeyFrame, Timeline}
 import javafx.collections.{FXCollections, ObservableList}
 import javafx.geometry.{Insets, Pos}
@@ -172,7 +173,36 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
   val commentFiled = new TextField()
   val sendIcon: ImageView = Common.getImageView("img/confirm.png", 20, 20)
   val sendBtn = new Button("发送", sendIcon)
+  val gift = new GiftBar(group)
+  val linkBtn = new Button("申请连线", new ImageView("img/link.png"))
+  val exitBtn = new Button("中断连线", new ImageView("img/shutdown.png"))
+  val emojiBtn = new Button("\uD83D\uDE00")
 
+  val effectOptions: ObservableList[String] =
+    FXCollections.observableArrayList(
+      "普通弹幕",
+      "放大缩小",
+      "闪入闪出",
+      "定点放缩"
+    )
+  val effectChoiceCBx = new ComboBox(effectOptions)
+
+  def BtnDis():Unit = {
+    sendBtn.setDisable(true)
+    likeBtn.setDisable(true)
+    linkBtn.setDisable(true)
+    exitBtn.setDisable(true)
+    emojiBtn.setDisable(true)
+    effectChoiceCBx.setDisable(true)
+    gift.gift1.removeEventHandler(MouseEvent.MOUSE_CLICKED,gift.EventHandler1)
+    gift.gift2.removeEventHandler(MouseEvent.MOUSE_CLICKED,gift.EventHandler2)
+    gift.gift3.removeEventHandler(MouseEvent.MOUSE_CLICKED,gift.EventHandler3)
+    gift.gift4.removeEventHandler(MouseEvent.MOUSE_CLICKED,gift.EventHandler4)
+    gift.gift5.removeEventHandler(MouseEvent.MOUSE_CLICKED,gift.EventHandler5)
+    gift.gift6.removeEventHandler(MouseEvent.MOUSE_CLICKED,gift.EventHandler6)
+
+
+  }
   /*屏幕下方功能条*/
   val liveBar: LiveBar = if(!isRecord){
     //看直播
@@ -265,6 +295,7 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
   }
 
   def resetBack(): Unit = {
+    gc.clearRect(0,0,gc.getCanvas.getWidth, gc.getCanvas.getHeight)
     gc.drawImage(connectionBg, 0, 0, gc.getCanvas.getWidth, gc.getCanvas.getHeight)
     val sWidth = gc.getCanvas.getWidth
     val sHeight = gc.getCanvas.getHeight
@@ -275,6 +306,14 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
     gc.fillText(s"连线中", imgView.getWidth / 2 - 40, imgView.getHeight / 8)
   }
 
+
+  def resetBack2():Unit={
+    gc.clearRect(0,0,gc.getCanvas.getWidth, gc.getCanvas.getHeight)
+    gc.drawImage(connectionBg, 0, 0, gc.getCanvas.getWidth, gc.getCanvas.getHeight)
+    gc.setFont(Font.font(emojiFont, 25))
+    gc.setFill(Color.BLACK)
+    gc.fillText(s"连线中", imgView.getWidth / 2 - 40, imgView.getHeight / 8)
+  }
 
   def loadingBack(): Unit = {
     gc.drawImage(waitPulling, 0, 0, gc.getCanvas.getWidth, gc.getCanvas.getHeight)
@@ -290,6 +329,10 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
         resetBack()
     }
 
+  }
+
+  def autoReset2():Unit={
+    resetBack2()
   }
 
   /*弹幕*/
@@ -429,7 +472,7 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
     }
 
     def createButtonBox: HBox = {
-      val linkBtn = new Button("申请连线", new ImageView("img/link.png"))
+//      val linkBtn = new Button("申请连线", new ImageView("img/link.png"))
       linkBtn.getStyleClass.add("audienceScene-leftArea-linkBtn")
       linkBtn.setOnAction{ _ =>
         if(!hasReqJoin) {
@@ -440,7 +483,7 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
       }
       Common.addButtonEffect(linkBtn)
 
-      val exitBtn = new Button("中断连线", new ImageView("img/shutdown.png"))
+//      val exitBtn = new Button("中断连线", new ImageView("img/shutdown.png"))
       exitBtn.getStyleClass.add("audienceScene-leftArea-linkBtn")
       exitBtn.setOnAction(_ => listener.quitJoin(album.roomId))
       Common.addButtonEffect(exitBtn)
@@ -533,7 +576,7 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
       //        playerPane.removeTopAndBottom()
     })
 
-    val gift = new GiftBar(group)
+//    val gift = new GiftBar(group)
 
     def sendGiftAction(input: TextField, btn: Button, name: String, giftDes: VBox, giftType: Int): Unit = {
       btn.setOnAction(_ => {
@@ -563,14 +606,14 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
 
     def createWriteLiveComment: HBox = {
 
-      val effectOptions: ObservableList[String] =
+     /* val effectOptions: ObservableList[String] =
         FXCollections.observableArrayList(
           "普通弹幕",
           "放大缩小",
           "闪入闪出",
           "定点放缩"
           )
-      val effectChoiceCBx = new ComboBox(effectOptions)
+      val effectChoiceCBx = new ComboBox(effectOptions)  */
       effectChoiceCBx.setValue("普通弹幕")
 
       effectChoiceCBx.setOnAction {
@@ -603,7 +646,7 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
         }
       }
 
-      val emojiBtn = new Button("\uD83D\uDE00")
+//      val emojiBtn = new Button("\uD83D\uDE00")
       emojiBtn.setStyle("-fx-background-radius: 5px;")
       emojiBtn.setFont(Font.font(emojiFont, 15))
       val emojiArea = emoji.getEmojiGridPane
@@ -619,21 +662,21 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
       }
       Common.addButtonEffect(emojiBtn)
 
-      val sendIcon = Common.getImageView("img/confirm.png", 20, 20)
-      val sendBtn = new Button("发送", sendIcon)
+//      val sendIcon = Common.getImageView("img/confirm.png", 20, 20)
+//      val sendBtn = new Button("发送", sendIcon)
       sendBtn.getStyleClass.add("audienceScene-leftArea-sendBtn")
       sendBtn.setOnAction { _ =>
-        if (commentFiled.getText != null) {
-          if (RmManager.userInfo.nonEmpty) {
-            val comment = Comment(RmManager.roomInfo.get.userId, album.roomId, s"${commentFiled.getText}", extension = Some(commentPrefix))
-            listener.sendCmt(comment)
-            commentFiled.clear()
+          if (commentFiled.getText != null) {
+            if (RmManager.userInfo.nonEmpty) {
+              val comment = Comment(RmManager.roomInfo.get.userId, album.roomId, s"${commentFiled.getText}", extension = Some(commentPrefix))
+              listener.sendCmt(comment)
+              commentFiled.clear()
+            } else {
+              WarningDialog.initWarningDialog("请先登录哦~")
+            }
           } else {
-            WarningDialog.initWarningDialog("请先登录哦~")
+            WarningDialog.initWarningDialog("评论输入不能为空！")
           }
-        } else {
-          WarningDialog.initWarningDialog("评论输入不能为空！")
-        }
       }
       Common.addButtonEffect(sendBtn)
 
