@@ -62,6 +62,7 @@ object AuthActor {
             RMClient.getLiveInfo(userId,rtmpToken).map{
               case Right(rsp) =>
                 if(rsp.errCode == 0){
+                  log.info("getLiveInfo success")
                   sender ! 0
                   ctx.self ! VerifyToken4Broadcaster(rsp.liveInfo.get, userId, rtmpToken, password, sender)
                 }else{

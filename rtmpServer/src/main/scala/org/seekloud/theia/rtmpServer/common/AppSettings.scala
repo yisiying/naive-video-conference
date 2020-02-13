@@ -92,7 +92,7 @@ object AppSettings {
     )
   }
 
-
+  val fileLocation = appConfig.getString("fileLocation")
   val magicIp = appConfig.getString("magic.ip")
   val magicPushPort = appConfig.getInt("magic.pushPort")
   val magicPullPort = appConfig.getInt("magic.pullPort")

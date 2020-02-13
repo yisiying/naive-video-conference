@@ -51,7 +51,7 @@ object GrabberManager {
         msg match {
 
           case NewObsGrabber(liveInfo, obsUrl, replyTo) =>
-            log.debug(s"NewObsGrabber")
+            log.info(s"NewObsGrabber")
             val grabberActor = getGrabber(ctx, liveInfo.liveId)
             grabberActor ! InitGrabber(obsUrl, replyTo)
             Behaviors.same
@@ -68,7 +68,7 @@ object GrabberManager {
     val childName = s"GrabberActor-$count-$liveId"
     count +=1
     ctx.child(childName).getOrElse{
-      log.info(s"create convert actor $childName")
+      log.info(s"create grabber actor $childName")
       val actor = ctx.spawn(Grabber.create(liveId), childName)
       ctx.watchWith(actor, ChildDead(childName, actor))
       actor

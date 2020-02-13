@@ -21,6 +21,7 @@ import java.nio.Buffer
 import java.nio.channels.{Channels, Pipe}
 
 import org.bytedeco.ffmpeg.global.avcodec
+import org.bytedeco.javacpp.Loader
 import org.opencv.video.Video
 import org.seekloud.theia.protocol.ptcl.CommonInfo.LiveInfo
 import org.seekloud.theia.rtmpServer.common.AppSettings
@@ -36,6 +37,7 @@ object ConvertActor {
 
   private val log = LoggerFactory.getLogger(this.getClass)
   private final val InitTime = Some(5.minutes)
+//  var process: Process = _
 
   case class MediaInfo(
                         imageWidth: Int,
@@ -59,9 +61,9 @@ object ConvertActor {
 
   case object Start extends Command
 
-  case object StopOver extends Command
+  case object StartTest extends Command
 
-  case object StopGrab extends Command
+  case object StopOver extends Command
 
   case object Stop extends Command
 
@@ -82,12 +84,17 @@ object ConvertActor {
   def idle(liveInfo:LiveInfo, obsUrl:String):Behavior[Command] = {
     Behaviors.withTimers[Command] { timer =>
       Behaviors.receive[Command] { (ctx, msg) =>
-        log.info(s"${ctx.self} rev $msg")
+        log.info(s"${ctx.self} rev msg:$msg")
         msg match {
           case Start =>
             val pipe = Pipe.open() //ts流通道
 
-            rtpClientActor ! RtpClientActor.AuthInit(liveInfo, pipe.source(), ctx.self)
+//            rtpClientActor ! RtpClientActor.AuthInit(liveInfo, pipe.source(), ctx.self)
+//            log.info(s"${liveInfo.liveId} start convert")
+//            val ffmpeg = Loader.load(classOf[org.bytedeco.ffmpeg.ffmpeg])
+//            val cmd = ffmpeg + s" -f mpegts -i $obsUrl -b:v 1M -bufsize 1M ${AppSettings.fileLocation}${liveInfo.liveId}/out.flv"
+//            val pb = new ProcessBuilder(cmd)
+//            process = pb.inheritIO().start()
 
             val rspFuture: Future[(MediaInfo, ActorRef[Grabber.Command])] = grabberManager ? (GrabberManager.NewObsGrabber(liveInfo, obsUrl, _))
             rspFuture.map { r =>
@@ -97,10 +104,6 @@ object ConvertActor {
               r._2 ! InitEncode(encoder)
             }
 
-            Behaviors.same
-
-          case StopGrab =>
-            ctx.self ! StopOver
             Behaviors.same
 
           case ChildDead(name, childRef) =>
@@ -128,7 +131,7 @@ object ConvertActor {
       Behaviors.receiveMessage[FrameCommand] {
         case m: NextFrame =>
           if (m.f != null) {
-            recorder.setTimestamp(m.f.timestamp)
+//            recorder.setTimestamp(m.f.timestamp)
             recorder.record(m.f)
           }
           Behaviors.same
@@ -152,8 +155,7 @@ object ConvertActor {
     recorder.setAudioQuality(0)
     recorder.setAudioBitrate(192000)
     recorder.setSampleRate(44100)
-    recorder.setAudioChannels(1)
-
+    recorder.setAudioChannels(2)
     recorder.setFormat("mpegts")
     recorder.startUnsafe()
     recorder

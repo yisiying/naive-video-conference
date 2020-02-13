@@ -13,6 +13,8 @@ import org.seekloud.theia.protocol.ptcl.CommonInfo.LiveInfo
 import org.seekloud.theia.rtmpServer.common.AppSettings
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable
+
 /**
   * Author: wqf
   * Date: 2019/8/13
@@ -21,6 +23,7 @@ import org.slf4j.LoggerFactory
 
 object RtpClientActor{
   private val log = LoggerFactory.getLogger(this.getClass)
+//  private val liveCountMap = mutable.HashMap[String, Int] = mutable.HashMap.empty
 
   case class Ready(client: PushStreamClient) extends Protocol.Command
   case class AuthInit(liveInfo: LiveInfo, source: SourceChannel, convertActor: ActorRef[ConvertActor.Command]) extends Protocol.Command
@@ -37,8 +40,8 @@ object RtpClientActor{
         authChannel.bind(new InetSocketAddress(AppSettings.magicIp, AppSettings.magicPushPort))
         authChannel.socket().setReuseAddress(true)
         val pushStreamDst = new InetSocketAddress(AppSettings.rtpServerIp, AppSettings.rtpServerPushPort)
-
-        val client = new PushStreamClient(AppSettings.magicIp, AppSettings.magicPushPort, pushStreamDst, ctx.self)
+        val rtpServerDst = "http://10.1.29.246:30390"
+        val client = new PushStreamClient(AppSettings.magicIp, AppSettings.magicPushPort, pushStreamDst, ctx.self,rtpServerDst)
         ctx.self ! Ready(client)
         waiting()
       }
@@ -51,7 +54,7 @@ object RtpClientActor{
     Behaviors.receive[Protocol.Command] { (ctx, msg) =>
       msg match {
         case Ready(client) =>
-          stashBuffer.unstashAll(ctx, work(client))
+          stashBuffer.unstashAll(ctx, work(client,mutable.HashMap.empty))
 
         case x =>
           stashBuffer.stash(x)
@@ -60,7 +63,7 @@ object RtpClientActor{
     }
   }
 
-  def work(client: PushStreamClient)
+  def work(client: PushStreamClient, liveCount:mutable.HashMap[String,Int])
     (implicit timer: TimerScheduler[Protocol.Command],
       stashBuffer: StashBuffer[Protocol.Command]): Behavior[Protocol.Command] = {
     Behaviors.setup[Protocol.Command] { context =>
@@ -76,6 +79,7 @@ object RtpClientActor{
           println(liveId + " auth " + ifSuccess)
           if(ifSuccess){
             log.info(s"push-102 $liveId")
+            liveCount.put(liveId, 0)
             SendPipeline.sourcePool.get(liveId) match {
               case Some(s) =>
                 val sp = new Thread(new SendPipeline(s._1, liveId))
@@ -94,6 +98,10 @@ object RtpClientActor{
           Behaviors.same
 
         case PushStream(liveId, data) =>
+          if (liveCount.contains(liveId) && liveCount(liveId) < 5) {
+            log.info(s"push $liveId: ${liveCount(liveId)}")
+            liveCount(liveId) += 1
+          }
           client.pushStreamData(liveId, data)
           Behaviors.same
 

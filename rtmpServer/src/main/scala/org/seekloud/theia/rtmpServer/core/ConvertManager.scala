@@ -27,6 +27,8 @@ object ConvertManager {
 
   case class NewLive(liveInfo:LiveInfo, obsUrl: String) extends Command
 
+  case class NewTest(obsUrl:String) extends Command
+
   case class StopPublish(roomId:Long) extends Command
 
   case class StartConvertActor(liveInfo:LiveInfo, obsUrl:String) extends Command
@@ -84,7 +86,7 @@ object ConvertManager {
   }
 
   private def getConvertActor(ctx: ActorContext[Command], liveInfo:LiveInfo, obsUrl:String): ActorRef[ConvertActor.Command] = {
-    val childName = s"UserActor-$count-${liveInfo.liveId}"
+    val childName = s"convertActor-$count-${liveInfo.liveId}"
     count +=1
     ctx.child(childName).getOrElse{
       log.info(s"create convert actor $childName")
