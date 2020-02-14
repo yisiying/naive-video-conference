@@ -113,8 +113,8 @@ object StreamPuller {
       msg match {
         case msg: InitRtpClient =>
           log.info(s"StreamPuller-$liveId init rtpClient.")
-          socket = new DatagramSocket()
-          port = NetUtil.getFreePort
+//          socket = new DatagramSocket()
+//          port = NetUtil.getFreePort
           msg.pullClient.pullStreamStart()
           timer.startSingleTimer(PullStartTimeOut, PullStartTimeOut, 5.seconds)
           audienceScene.foreach(_.startPackageLoss())

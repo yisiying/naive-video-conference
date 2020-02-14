@@ -41,10 +41,10 @@ class HostController(
   }
 
   hostScene.setListener(new HostSceneListener {
-    override def startLive(rtmpSelected: Boolean, rtpSelected: Boolean, rtmpServer: Option[String]): Unit = {
+    override def startLive(biliSelected:Boolean,rtmpSelected: Boolean, rtpSelected: Boolean, rtmpServer: Option[String]): Unit = {
       //test define
       //val test="rtmp://txy.live-send.acg.tv/live-txy/?streamname=live_44829093_50571972&key=faf3125e8c84c88ad7f05e4fcc017149"
-      rmManager ! RmManager.HostLiveReq(rtmpSelected, rtpSelected, rtmpServer)
+      rmManager ! RmManager.HostLiveReq(biliSelected,rtmpSelected, rtpSelected, rtmpServer)
     }
 
     override def stopLive(): Unit = {
@@ -153,18 +153,6 @@ class HostController(
       }
     }
 
-    override def ShowDesktop(): Unit = {
-      //rmManager ! RmManager.ShowDesktop
-    }
-
-    override def ShowPerson(): Unit = {
-      //rmManager ! RmManager.ShowPerson
-    }
-
-    override def ShowBoth(): Unit = {
-      //rmManager ! RmManager.ShowBoth
-    }
-
     override def deleteRecord(recordId: Long) : Unit = {
       RMClient.deleteRecord(recordId).map{
         case Right(rst)=>
@@ -215,11 +203,6 @@ class HostController(
         hostScene.recordList = Nil
         getRecordList()
     }
-
-    override def pushRtmpStream(): Unit = {
-      val url = "123"
-//      rmManager
-    }
   })
 
 
@@ -239,6 +222,16 @@ class HostController(
             WarningDialog.initWarningDialog(s"${msg.msg}")
           }
         }
+
+      case msg:GetTokenRsp =>
+        log.info("gotTokenRsp")
+//        if (msg.errCode == 0) {
+          rmManager ! RmManager.RtmpLiveReq(msg.tokenOpt.get,msg.SecureKeyOpt.get)
+//        } else {
+//          Boot.addToPlatform {
+//            WarningDialog.initWarningDialog(s"${msg.msg}")
+//          }
+//        }
 
       case msg: ModifyRoomRsp =>
         //若失败，信息改成之前的信息

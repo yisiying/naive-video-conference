@@ -70,7 +70,7 @@ object HostScene {
 
   trait HostSceneListener {
 
-    def startLive(rtmpSelected: Boolean, rtpSelected: Boolean, rtmpServer: Option[String] = None)
+    def startLive(biliSelected:Boolean,rtmpSelected: Boolean, rtpSelected: Boolean, rtmpServer: Option[String] = None)
 
     def stopLive()
 
@@ -111,13 +111,6 @@ object HostScene {
 
     def refresh()
 
-    def ShowPerson()
-
-    def ShowDesktop()
-
-    def ShowBoth()
-
-    def pushRtmpStream()
   }
 
 }
@@ -249,21 +242,28 @@ class HostScene(stage: Stage) {
   /*直播方式选择*/
   val sendWay = new Text("直播方式（开始直播前必选）:")
   sendWay.getStyleClass.add("hostScene-leftArea-text")
-  val chooseWayOne = new CheckBox("b站 ")
+  val chooseWayOne = new CheckBox("第三方rtmp")
   chooseWayOne.getStyleClass.add("hostScene-leftArea-checkBox")
 
 
   val pcDes =  new CheckBox("本站")
   pcDes.getStyleClass.add("hostScene-leftArea-checkBox")
+  pcDes.setSelected(true)
+  val rBox = new VBox()
+  rBox.setSpacing(10)
+  rBox.getChildren.add(pcDes)
 
   val chooseWay = new VBox()
   chooseWay.setPadding(new Insets(15, 0, 0, 0))
   chooseWay.setSpacing(10)
-  chooseWay.getChildren.addAll(sendWay, pcDes, chooseWayOne)
+  chooseWay.getChildren.addAll(sendWay,rBox, chooseWayOne)
 
   val rtmpDes = new TextField()
   rtmpDes.setPrefWidth(width * 0.15)
-  rtmpDes.setText("rtmp://js.live-send.acg.tv/live-js/")
+//  rtmpDes.setText("rtmp://txy.live-send.acg.tv/live-txy/")
+  rtmpDes.setText("rtmp://10.1.29.247:42037/live/")
+//  rtmpDes.setText("rtmp://media.seekloud.com:62040/live?rtmpToken=9KTRwdF6CDcLJUElfv8aA2zfoGyb9sUG4WfDeZ6H&userId=100136")
+
   val rtmpText = new Text("rtmp地址：")
   rtmpText.getStyleClass.add("hostScene-leftArea-passText")
   val rtmpLine = new HBox()
@@ -272,7 +272,9 @@ class HostScene(stage: Stage) {
 
   val passWord = new PasswordField()
   passWord.setPrefWidth(width * 0.15)
-  passWord.setText("?streamname=live_46800250_88676236&key=017ade101eaf1c5ddb2c86b6e1c051c0")
+//  passWord.setText("?streamname=live_44829093_50571972&key=faf3125e8c84c88ad7f05e4fcc017149")
+  passWord.setText("123456")
+//  passWord.setText("ozPulPpJUGvwI35o1nz6A0kP6yJ9v0JOzAZUVdUH")
   val passText = new Text("rtmp密钥：")
   passText.getStyleClass.add("hostScene-leftArea-passText")
   val passLine = new HBox()
@@ -281,7 +283,7 @@ class HostScene(stage: Stage) {
 
   val passArea = new VBox()
   passArea.setSpacing(6)
-  passArea.setPadding(new Insets(10,10,0,0))
+  passArea.setPadding(new Insets(5,10,10,30))
   passArea.getChildren.addAll(rtmpLine,passLine)
 
   chooseWayOne.setOnAction(
@@ -292,6 +294,32 @@ class HostScene(stage: Stage) {
         chooseWay.getChildren.remove(passArea)
       }
   )
+
+  val tGroup = new ToggleGroup()
+  val rtpWay = new RadioButton("rtp直播")
+  rtpWay.setToggleGroup(tGroup)
+  rtpWay.getStyleClass.add("hostScene-leftArea-passText")
+  val rtmpWay = new RadioButton("rtmp直播")
+  rtmpWay.setToggleGroup(tGroup)
+  rtmpWay.setSelected(true)
+  rtmpWay.getStyleClass.add("hostScene-leftArea-passText")
+  val rArea = new VBox()
+  rArea.setSpacing(6)
+  rArea.setPadding(new Insets(0,10,10,30))
+  rArea.getChildren.addAll(rtpWay, rtmpWay)
+  rBox.getChildren.add(rArea)
+
+  pcDes.setOnAction(
+    _=>
+      if(pcDes.isSelected){
+        rBox.getChildren.add(rArea)
+        rtpWay.setSelected(true)
+      }else{
+        rBox.getChildren.remove(rArea)
+        rtpWay.setSelected(false)
+      }
+  )
+
 
   /**
     * 左侧导航栏
@@ -344,6 +372,7 @@ class HostScene(stage: Stage) {
   val connectionBg = new Image("img/connectionBg.jpg")
   gc.drawImage(backImg, 0, 0, Constants.DefaultPlayer.width, Constants.DefaultPlayer.height)
 
+  //liveImage.addEventHandler(MouseEvent.MOUSE_CLICKED,)
 
   val barrage: Barrage = new Barrage(Constants.WindowStatus.HOST, liveImage.getWidth, liveImage.getHeight)
   val barrageCanvas: Canvas = barrage.barrageView
@@ -352,6 +381,8 @@ class HostScene(stage: Stage) {
   val ctx: GraphicsContext = statisticsCanvas.getGraphicsContext2D
 
   val waitPulling = new Image("img/waitPulling.gif")
+
+
 
   def resetBack(): Unit = {
     val sWidth = gc.getCanvas.getWidth
@@ -572,7 +603,7 @@ class HostScene(stage: Stage) {
       val sendWay = new Text("直播方式:")
       sendWay.getStyleClass.add("hostScene-leftArea-text")
 
-      val wayOne = new Text("b站:")
+      val wayOne = new Text("第三方rtmp:")
       wayOne.getStyleClass.add("hostScene-leftArea-text")
 
       val wayTwo = new Text("本站:")
@@ -697,6 +728,7 @@ class HostScene(stage: Stage) {
       toggleIcon3.setFitHeight(20)
       toggleIcon3.setFitWidth(30)
 
+//      mm
       val toggleGroup = new ToggleGroup()
       val rb1 = new RadioButton("对等窗口")
       rb1.setSelected(true)
@@ -1326,12 +1358,21 @@ class HostScene(stage: Stage) {
       _ =>
         if (liveBar.liveToggleButton.isSelected) {
           if(chooseWayOne.isSelected||pcDes.isSelected){
-            val (rtmpSelected,url) = if(chooseWayOne.isSelected) (true, rtmpDes.getText()+passWord.getText()) else (false, "")
-            val rtpSelected = if(pcDes.isSelected) true else false
-            listener.startLive(rtmpSelected, rtpSelected, Some(url))
-            liveBar.resetStartLiveTime(System.currentTimeMillis())
-            isLive = true
-            Tooltip.install(liveBar.liveToggleButton, new Tooltip("点击停止直播"))
+            if(pcDes.isSelected && !rtpWay.isSelected && !rtmpWay.isSelected){
+              liveBar.liveToggleButton.setSelected(false)
+              Boot.addToPlatform {
+                WarningDialog.initWarningDialog("请选择本站直播的直播方式")
+              }
+            }else{
+              println(handleUrl(rtmpDes.getText(), passWord.getText()))
+              val (biliSelected,url) = if(chooseWayOne.isSelected) (true, handleUrl(rtmpDes.getText(), passWord.getText())) else (false, "")
+              val rtpSelected = if(rtpWay.isSelected) true else false
+              val rtmpSelected = if(rtmpWay.isSelected) true else false
+              listener.startLive(biliSelected,rtmpSelected, rtpSelected, Some(url))
+              liveBar.resetStartLiveTime(System.currentTimeMillis())
+              isLive = true
+              Tooltip.install(liveBar.liveToggleButton, new Tooltip("点击停止直播"))
+            }
           }else{
             liveBar.liveToggleButton.setSelected(false)
             Boot.addToPlatform {
@@ -1348,6 +1389,18 @@ class HostScene(stage: Stage) {
           Tooltip.install(liveBar.liveToggleButton, new Tooltip("点击开始直播"))
         }
 
+        def handleUrl(url: String, key: String): String = {
+          val param = url.split('?')
+          if(param.length>1) {
+            val rtmpUrl = param(0) + "/" + key + "?" + param(1)
+            rtmpUrl
+          }
+          else {
+            val rtmpUrl = url + key
+            rtmpUrl
+          }
+        }
+
     }
 
     liveBar.recordToggleButton.setDisable(false)
@@ -1360,7 +1413,7 @@ class HostScene(stage: Stage) {
             case "录制自己" => "self"
             case "录制别人" => "others"
           }
-          listener.recordOption(recordOrNot = true, recordType, Some(pathField.getText + s"\\theia-$fix-${TimeUtil.timeStamp2DetailDate(System.currentTimeMillis()).replaceAll("-", "").replaceAll(":", "").replaceAll(" ", "")}.ts"))
+          listener.recordOption(recordOrNot = true, recordType, Some(pathField.getText + s"\\theia-$fix-${TimeUtil.timeStamp2DetailDate(System.currentTimeMillis()).replaceAll("-", "").replaceAll(":", "").replaceAll(" ", "")}.flv"))
           liveBar.resetStartRecTime(System.currentTimeMillis())
           Tooltip.install(liveBar.recordToggleButton, new Tooltip("点击停止录像"))
         } else {
@@ -1368,6 +1421,7 @@ class HostScene(stage: Stage) {
           liveBar.isRecording = false
           Tooltip.install(liveBar.recordToggleButton, new Tooltip("点击开始录像"))
         }
+
 
     }
   }

@@ -11,6 +11,7 @@ import org.seekloud.theia.pcClient.common.AppSettings
 import org.seekloud.theia.pcClient.core.collector.CaptureActor
 import org.seekloud.theia.pcClient.core.rtp._
 import org.seekloud.theia.pcClient.core.RmManager
+import org.seekloud.theia.pcClient.core.RmManager.ImgLayout
 import org.seekloud.theia.pcClient.core.stream.StreamPuller.{PackageLossInfo, PullCommand}
 import org.seekloud.theia.pcClient.scene.{AudienceScene, HostScene}
 import org.seekloud.theia.pcClient.utils.{GetAllPixel, NetUtil, RtpUtil}
@@ -60,7 +61,7 @@ object LiveManager {
   final case class ChangeMediaOption(bit: Option[Int], re: Option[String], frameRate: Option[Int],
     needImage: Boolean = true, needSound: Boolean = true, reset: () => Unit) extends LiveCommand with CaptureActor.CaptureCommand
 
-  final case class ChangeCaptureMode(mediaSource: Int, cameraPosition: Int) extends LiveCommand
+  final case class ChangeCaptureMode(mediaSource: Int, cameraPosition: Int, imgLayout: Option[ImgLayout]=None) extends LiveCommand
 
   final case class RecordOption(recordOrNot: Boolean, path: Option[String] = None, reset: () => Unit)  extends LiveCommand with CaptureActor.CaptureCommand
 
@@ -90,6 +91,19 @@ object LiveManager {
 
   private object PULL_RETRY_TIMER_KEY
 
+  case class EncodeConfig(
+                          imgWidth: Int,
+                          imgHeight: Int,
+                          frameRate: Int,
+                          sampleRate: Float,
+                          sampleSizeInBit: Int,
+                          channels: Int,
+                          audioCodec: Int,
+                          videoCodec: Int,
+                          audioBitRate: Int,
+                          videoBitRate: Int
+                          )
+
 
   def create(parent: ActorRef[RmManager.RmCommand], mediaPlayer: MediaPlayer): Behavior[LiveCommand] =
     Behaviors.setup[LiveCommand] { ctx =>
@@ -117,20 +131,26 @@ object LiveManager {
     Behaviors.receive[LiveCommand] { (ctx, msg) =>
       msg match {
         case msg: DevicesOn =>
-          val captureActor = getCaptureActor(ctx, msg.gc, msg.isJoin, msg.callBackFunc,ctx.self)
-          val mediaCapture = MediaCapture(captureActor, debug = AppSettings.captureDebug, needTimestamp = AppSettings.needTimestamp)
-          val availableDevices = GetAllPixel.getAllDevicePixel()
           var pixel = (640,360)
+          val availableDevices = GetAllPixel.getAllDevicePixel()
           if(availableDevices.nonEmpty && !availableDevices.contains("640x360")){
             pixel = DeviceUtil.parseImgResolution(availableDevices.max)
           }
+          val encodeConfig = new EncodeConfig(
+            pixel._1, pixel._2,
+            30, 44100.0f, 16, 2,
+            avcodec.AV_CODEC_ID_AAC, avcodec.AV_CODEC_ID_H264,
+//            avcodec.AV_CODEC_ID_MP2, avcodec.AV_CODEC_ID_MPEG2VIDEO,
+            192000, 2000000
+          )
+          val captureActor = getCaptureActor(ctx, msg.gc, msg.isJoin, msg.callBackFunc,ctx.self, encodeConfig=encodeConfig)
+          val mediaCapture = MediaCapture(captureActor, debug = AppSettings.captureDebug, needTimestamp = AppSettings.needTimestamp)
           log.info("availableDevices pixels: "+availableDevices)
-//          mediaCapture.setAudioCodec(avcodec.AV_CODEC_ID_AAC)
-          mediaCapture.setVideoCodec(avcodec.AV_CODEC_ID_MPEG2VIDEO)
-//          mediaCapture.setVideoCodec(avcodec.AV_CODEC_ID_H264)
-          mediaCapture.setAudioCodec(avcodec.AV_CODEC_ID_MP2)
-          mediaCapture.setImageWidth(pixel._1)
-          mediaCapture.setImageHeight(pixel._2)
+          mediaCapture.setAudioCodec(encodeConfig.audioCodec)
+//          mediaCapture.setVideoCodec(avcodec.AV_CODEC_ID_MPEG2VIDEO)
+          mediaCapture.setVideoCodec(encodeConfig.videoCodec)
+          mediaCapture.setImageWidth(encodeConfig.imgWidth)
+          mediaCapture.setImageHeight(encodeConfig.imgHeight)
           captureActor ! CaptureActor.GetMediaCapture(mediaCapture)
           mediaCapture.start()
           idle(parent, mediaPlayer, Some(captureActor), streamPusher, streamPuller, Some(mediaCapture), isStart = isStart, isRegular = isRegular)
@@ -153,13 +173,17 @@ object LiveManager {
           msg.mediaSource match {
             case 0 =>
               mediaCapture.foreach(_.showCamera())
+              captureActor.foreach(_ ! CaptureActor.ChangeCaptureMode(msg.mediaSource, msg.cameraPosition, msg.imgLayout))
             case 1 =>
               mediaCapture.foreach(_.showDesktop())
+              captureActor.foreach(_ ! CaptureActor.ChangeCaptureMode(msg.mediaSource, msg.cameraPosition, msg.imgLayout))
             case 2 =>
               mediaCapture.foreach { me =>
-                me.changeCameraPosition(msg.cameraPosition)
+//                me.changeCameraPosition(msg.cameraPosition)
                 me.showBoth()
               }
+              val imgLayout = new ImgLayout(true, true, 0, 0, 100, 100)
+              captureActor.foreach(_ ! CaptureActor.ChangeCaptureMode(msg.mediaSource, msg.cameraPosition, Some(imgLayout)))
           }
           Behaviors.same
 
@@ -273,11 +297,12 @@ object LiveManager {
     isJoin: Boolean,
     callBackFunc: Option[() => Unit],
     parent: ActorRef[LiveManager.LiveCommand],
-    frameRate: Int = 30
+    frameRate: Int = 30,
+    encodeConfig: EncodeConfig
   ) = {
     val childName = s"captureActor-${System.currentTimeMillis()}"
     ctx.child(childName).getOrElse {
-      val actor = ctx.spawn(CaptureActor.create(frameRate, gc, isJoin, callBackFunc,parent), childName)
+      val actor = ctx.spawn(CaptureActor.create(frameRate, gc, isJoin,encodeConfig,  callBackFunc,parent), childName)
       ctx.watchWith(actor, ChildDead(childName, actor))
       actor
     }.unsafeUpcast[CaptureActor.CaptureCommand]

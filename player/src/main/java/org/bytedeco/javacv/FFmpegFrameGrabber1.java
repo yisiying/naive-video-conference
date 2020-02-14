@@ -812,7 +812,6 @@ public class FFmpegFrameGrabber1 extends FrameGrabber {
             oc = avformat_alloc_context();
             avio = avio_alloc_context(new BytePointer(av_malloc(4096)), 4096, 0, oc, readCallback, null, seekCallback);
             oc.pb(avio);
-
             filename = inputStream.toString();
             inputStreams.put(oc, inputStream);
         }

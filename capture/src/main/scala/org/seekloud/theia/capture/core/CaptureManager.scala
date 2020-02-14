@@ -320,7 +320,7 @@ object CaptureManager {
           if (targetFrame != null) {
             replyTo ! Messages.FrameRsp(LatestFrame(targetFrame.frame, targetFrame.ts))
           } else {
-            log.info(s"No frame captured yet.")
+//            log.info(s"No frame captured yet.")
             replyTo ! Messages.NoFrame
           }
           Behaviors.same
@@ -330,7 +330,7 @@ object CaptureManager {
           if (targetFrame != null) {
             replyTo ! Messages.DesktopFrameRsp(LatestFrame(targetFrame.frame, targetFrame.ts))
           } else {
-            log.info(s"No desktop frame captured yet.")
+//            log.info(s"No desktop frame captured yet.")
             replyTo ! Messages.NoFrame
           }
           Behaviors.same

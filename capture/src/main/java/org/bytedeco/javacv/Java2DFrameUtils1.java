@@ -30,7 +30,7 @@ import org.bytedeco.opencv.opencv_core.Mat;
  * @author Sam West, Joel Wong, Sep 2016.
  *
  */
-public class Java2DFrameUtils {
+public class Java2DFrameUtils1 {
 
     private static OpenCVFrameConverter.ToIplImage  iplConv = new OpenCVFrameConverter.ToIplImage();
     private static OpenCVFrameConverter.ToMat       matConv = new OpenCVFrameConverter.ToMat();
@@ -44,23 +44,23 @@ public class Java2DFrameUtils {
      * @param source
      * @return
      */
-    public static BufferedImage deepCopy(BufferedImage source) {
+    public  BufferedImage deepCopy(BufferedImage source) {
         return Java2DFrameConverter.cloneBufferedImage(source);
     }
 
-    public synchronized static BufferedImage toBufferedImage(IplImage src) {
+    public synchronized  BufferedImage toBufferedImage(IplImage src) {
         return deepCopy(biConv.getBufferedImage(iplConv.convert(src).clone()));
     }
 
-    public synchronized static BufferedImage toBufferedImage(Mat src) {
+    public synchronized  BufferedImage toBufferedImage(Mat src) {
         return deepCopy(biConv.getBufferedImage(matConv.convert(src).clone()));
     }
 
-    public synchronized static BufferedImage toBufferedImage(Frame src) {
+    public synchronized  BufferedImage toBufferedImage(Frame src) {
         return deepCopy(biConv.getBufferedImage(src.clone()));
     }
 
-    public synchronized static IplImage toIplImage(Mat src){
+    public synchronized  IplImage toIplImage(Mat src){
         return iplConv.convertToIplImage(matConv.convert(src)).clone();
     }
 
@@ -92,7 +92,7 @@ public class Java2DFrameUtils {
         return matConv.convert(src).clone();
     }
 
-    public synchronized static Frame toFrame(BufferedImage src){
+    public synchronized  Frame toFrame(BufferedImage src){
         return biConv.convert(src).clone();
     }
 }

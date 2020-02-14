@@ -6,7 +6,7 @@ import javafx.scene.Scene
 import javafx.scene.image.{Image, ImageView, WritableImage}
 import javafx.scene.layout.BorderPane
 import javafx.stage.Stage
-import org.bytedeco.javacv.{Java2DFrameUtils, JavaFXFrameConverter1, JavaUtils}
+import org.bytedeco.javacv.{Java2DFrameUtils1, JavaFXFrameConverter1, JavaUtils}
 import org.bytedeco.opencv.global.opencv_imgcodecs.imread
 import org.bytedeco.opencv.opencv_core.Mat
 
@@ -63,7 +63,7 @@ class testRemoveBlackInImage extends Application {
     val imgsrc :Mat = imread("/Users/hewro/Downloads/Jietu20191015-144557@2x.jpg")
     val  startTime = System.currentTimeMillis();
     val result2 = new JavaUtils().removeBlackEdge(imgsrc)
-    val bufferedImage = Java2DFrameUtils.toBufferedImage(result2)
+    val bufferedImage = Java2DFrameUtils1.toBufferedImage(result2)
     val image2 = SwingFXUtils.toFXImage(bufferedImage, null)
     val endTime2=System.currentTimeMillis();
     System.err.println("运行时间"+(endTime2-startTime))

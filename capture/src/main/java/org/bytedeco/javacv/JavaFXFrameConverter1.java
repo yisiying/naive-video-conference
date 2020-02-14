@@ -3,10 +3,6 @@ package org.bytedeco.javacv;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.*;
 import javafx.scene.paint.Color;
-import org.bytedeco.javacpp.BytePointer;
-import org.bytedeco.opencv.opencv_core.Mat;
-import org.bytedeco.opencv.opencv_core.Rect;
-import org.opencv.core.CvType;
 
 import java.awt.image.BufferedImage;
 import java.nio.Buffer;
@@ -48,24 +44,25 @@ public abstract class JavaFXFrameConverter1 extends FrameConverter<Image> {
         int iw = frame.imageWidth;
         int ih = frame.imageHeight;
         PixelReader pr = new FramePixelReader(frame);
-        if (isFirst) {
+        /*if (isFirst) {
             isFirst = false;
             answer = new WritableImage(pr, iw, ih);
         } else {
             if (iw != answer.getWidth() || ih != answer.getHeight()) {
                 answer = new WritableImage(pr, iw, ih);
             } else {
-                BufferedImage bufferedImage = converter.convert(frame);
+                BufferedImage bufferedImage=converter.convert(frame);
                 if (needTimestamp) {
                     Long timeStamp = getTime();
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S");
                     String sd = sdf.format(new Date(Long.parseLong(String.valueOf(timeStamp))));
                     bufferedImage.getGraphics().drawString(sd, iw / 10, ih / 10);
                 }
-                    SwingFXUtils.toFXImage(bufferedImage, answer);
-                    answer = javaUtils.removeBlackEdge(answer);
+                SwingFXUtils.toFXImage(bufferedImage, answer);
+                answer = javaUtils.removeBlackEdge(answer);
             }
-        }
+        }*/
+        answer = new WritableImage(pr, iw, ih);
         return answer;
     }
 
