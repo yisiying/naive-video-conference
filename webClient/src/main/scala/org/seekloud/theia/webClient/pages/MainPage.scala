@@ -26,7 +26,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object MainPage extends PageSwitcher {
   //TODO 其他页面共用的数据都存在localStorage里面
   //用户信息，直播房间信息，录像信息，弹窗信息窗口
-  var recordInfo = RecordInfo(-1l,-1l,"","",-1l,"",-1l,"","",-1,-1)
+  var recordInfo = RecordInfo(-1l,-1l,"","",-1l,"",-1l,"","",-1,-1,"")
   var userShowName = if (dom.window.localStorage.getItem("userName") == null | dom.window.localStorage.getItem("isTemUser") != null) Var("") else Var(dom.window.localStorage.getItem("userName"))
   var userShowImg = if (dom.window.localStorage.getItem("userHeaderImgUrl") == null | dom.window.localStorage.getItem("isTemUser") != null) Var("") else Var(dom.window.localStorage.getItem("userHeaderImgUrl"))
   var adminShowName = if(dom.window.localStorage.getItem("adminName") == null) Var("") else Var(dom.window.localStorage.getItem("adminName"))
@@ -392,6 +392,7 @@ object MainPage extends PageSwitcher {
     //在home界面不需要任何操作
     if(dom.window.location.hash.contains("Home")){
       goHome
+      dom.window.location.reload()
     }
     //live界面登出后以游客方式进入房间，在live里面refresh只用reload就行了
     if(dom.window.location.hash.contains("Live")){
@@ -417,6 +418,7 @@ object MainPage extends PageSwitcher {
         openOrClose()
 //        dom.window.location.reload()
       }
+      dom.window.location.reload()
     }
     if(dom.window.location.hash.contains("Admin")){
       goHome

@@ -5,6 +5,7 @@ import akka.http.scaladsl.server.Route
 import org.seekloud.theia.protocol.ptcl.CommonRsp
 import org.seekloud.theia.protocol.ptcl.client2Manager.http.RecordCommentProtocol
 import org.seekloud.theia.protocol.ptcl.client2Manager.http.RecordCommentProtocol.CommentInfo
+import org.seekloud.theia.protocol.ptcl.distributor2Manager.DistributorProtocol.{ErrorRsp, SuccessRsp}
 import org.seekloud.theia.roomManager.models.dao.{RecordCommentDAO, RecordDao, UserInfoDao}
 import org.seekloud.theia.roomManager.models.SlickTables._
 /**
@@ -34,7 +35,7 @@ trait RecordCommentService extends ServiceUtils{
                             if(a){
                               dealFutureResult{
                                 RecordCommentDAO.addRecordComment(rRecordComment(-1l,req.roomId,req.recordTime,req.comment,req.commentTime,req.commentUid,req.authorUidOpt,req.relativeTime)).map{r =>
-                                  complete(CommonRsp())
+                                  complete(CommonRsp(msg=r.toString))
                                 }.recover{
                                   case e:Exception =>
                                     log.debug(s"增加记录评论失败，error=$e")
@@ -170,9 +171,21 @@ trait RecordCommentService extends ServiceUtils{
     }
   }
 
+  private val deleteComment = (path("deleteComment") & post) {
+    entity(as[Either[Error,RecordCommentProtocol.DeleteCommentReq]]){
+      case Right(req)=>
+        dealFutureResult{
+          RecordCommentDAO.deleteComment(req.roomId,req.startTime,req.commentId,req.operatorId).map{res=>
+            if(res==1) complete(SuccessRsp(errCode = 200))
+            else if(res== -1) complete(ErrorRsp(201,"你没有权限删除评论"))
+            else complete(ErrorRsp(202,"删除评论时发生错误"))
+          }
+        }
+    }
+  }
 
   val recordComment = pathPrefix("recordComment"){
-    addRecordComment ~ getRecordCommentList ~ addCommentAccess ~ deleteCommentAccess
+    addRecordComment ~ getRecordCommentList ~ addCommentAccess ~ deleteCommentAccess ~ deleteComment
 
   }
 }

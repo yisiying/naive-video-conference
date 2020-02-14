@@ -60,4 +60,11 @@ object RecordCommentProtocol {
                                      deleteUserID: Long
                                 )
 
+  case class DeleteCommentReq(
+    roomId:Long,
+    startTime:Long,
+    commentId:Long,
+    operatorId:Long
+  ) extends Request
+
 }

@@ -76,6 +76,23 @@ object CommonProtocol {
     msg: String = "ok"
   ) extends Response
 
+  /**
+   * 检查权限
+   */
+
+  case class CheckAuthorityReq(
+    roomId:Long,
+    startTime: Long,
+    userIdOpt:Option[Long] = None
+  ) extends Request
+
+  case class CheckAuthorityRsp(
+    userType:Int,
+    errCode: Int =200,
+    msg :String = "ok"
+  )
+
+
 
   /**
     * 录像
@@ -96,7 +113,7 @@ object CommonProtocol {
   ) extends Request
 
   case class SearchRecordRsp(
-    url: String = "",
+    url: String,
     recordInfo: RecordInfo,
     errCode: Int = 0,
     msg: String = "ok"
@@ -124,6 +141,18 @@ object CommonProtocol {
     recordId: Long,
     recordAddr: String
   ) extends Request
+
+  case class GetAudienceListReq(
+    roomId: Long,
+    startTime: Long,
+    userId: Long
+  ) extends Request
+
+  case class GetAudienceListRsp(
+    users: List[UserDes],
+    errCode: Int = 200,
+    msg: String = "ok"
+  ) extends Response
 
   /**
     *
