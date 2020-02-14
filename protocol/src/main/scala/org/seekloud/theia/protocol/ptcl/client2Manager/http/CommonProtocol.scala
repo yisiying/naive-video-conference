@@ -92,6 +92,12 @@ object CommonProtocol {
     msg :String = "ok"
   )
 
+  case class AddRecordAccessReq(
+    roomId: Long,
+    startTime: Long,
+    operatorId: Long,
+    addUserEmail: String
+  )
 
 
   /**

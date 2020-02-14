@@ -258,6 +258,38 @@ object MainPage extends PageSwitcher {
     }.foreach(_ => openOrClose())
   }
 
+  def inviteUser(e:Event, popId:String, roomId:Long,time:Long):Unit = {
+    PopWindow.inviteButton := <img src="/theia/roomManager/static/img/loading.gif"></img>
+    val emailInput = dom.document.getElementById("invite-user").asInstanceOf[Input].value
+    val userId =
+      if (isTemUser()) dom.window.sessionStorage.getItem("userId")
+      else dom.window.localStorage.getItem("userId")
+    val userOption = {
+      (dom.window.localStorage.getItem("isTemUser"), userId) match {
+        case (null, null) => None
+        case (null, b) => Some(b.toLong)
+        case _ => None
+      }
+    }
+
+    val data = AddRecordAccessReq(roomId, time, userOption.getOrElse(-1L), emailInput).asJson.noSpaces
+
+    Http.postJsonAndParse[CommonRsp](Routes.UserRoutes.addAccessAuth,data).map{
+      case Right(rsp)=>
+        if(rsp.errCode==200){
+          PopWindow.commonPop("添加成功")
+          dom.window.sessionStorage.setItem("invite-user","")
+          PopWindow.getAudienceList(roomId,time)//更新列表
+        }else{
+          PopWindow.commonPop(rsp.msg)
+        }
+        PopWindow.inviteButton := PopWindow.inviteButtonGenerator(roomId,time)
+      case Left(e)=>
+        PopWindow.commonPop(s"error: $e")
+        PopWindow.inviteButton := PopWindow.inviteButtonGenerator(roomId,time)
+    }
+  }
+
   def login(e: Event, popId: String): Unit = {
     PopWindow.loginButton := <img src="/theia/roomManager/static/img/loading.gif"></img>
     val account = dom.document.getElementById("login-account").asInstanceOf[Input].value

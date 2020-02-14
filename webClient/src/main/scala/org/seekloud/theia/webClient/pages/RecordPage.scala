@@ -50,7 +50,6 @@ class RecordPage(roomId:Long,time:Long) extends Page{
 
   //用户权限 1 无访问权限， 2 参会人员权限， 3 主持人
   private val userAuthority:Var[Int] = Var(1)
-  private val audienceLists = Var(List[UserDes]())
 
   private var watchRecordEndInfo = WatchRecordEnd()
   private val roomCoverImg = Var(dom.window.sessionStorage.getItem("recordCoverImg"))
@@ -215,27 +214,6 @@ class RecordPage(roomId:Long,time:Long) extends Page{
     }
   }
 
-  private def getAudienceList = {
-    val audienceData = GetAudienceListReq(roomId, time, userOption.getOrElse(-1L)).asJson.noSpaces
-    Http.postJson(Routes.UserRoutes.getAudienceList, audienceData).map { json =>
-      decode[GetAudienceListRsp](json) match {
-        case Right(rsp) =>
-          if (rsp.errCode == 200) {
-            audienceLists := rsp.users.map(u => UserDes(u.userId, u.userName, u.headImgUrl))
-          } else {
-            println(s"无法获取参会人员名单: ${rsp.msg}")
-          }
-        case Left(error) =>
-          decode[CommonRsp](json) match {
-            case Right(rsp) =>
-              println(s"无法获取参会人员名单: ${rsp.msg}")
-            case Left(e) =>
-              println(s"获取参会人员名单时，json解析失败,error:${e.getMessage}")
-          }
-      }
-    }
-  }
-
   private def checkAuthority = {
     val recordData = CheckAuthorityReq(roomId, time, userOption).asJson.noSpaces
     Http.postJson(Routes.UserRoutes.checkAuthority, recordData).map { json =>
@@ -289,7 +267,6 @@ class RecordPage(roomId:Long,time:Long) extends Page{
   def init() = {
     watchRecord()
     checkAuthority
-    getAudienceList
     s = dom.window.setInterval(()=>{
       if(dom.document.getElementById("comment-submit")!=null){
         if(dom.window.localStorage.getItem("isTemUser") != null){
@@ -364,7 +341,7 @@ class RecordPage(roomId:Long,time:Long) extends Page{
               <div class="recordTime" style="color: #808080;font-size: 12px;margin-top: 10px;">{videoTime.map(i=>TimeTool.dateFormatDefault(i.toLong)) }</div>
             </div>
             <label class="audienceList" id="audience-list" for="pop-audience-list">参会人员</label>
-            {PopWindow.audienceLists(audienceLists)}
+            {PopWindow.audienceLists(roomId,time)}
           </div>
         </div>
         <div style="padding-bottom:20px!important" class="dash-video-player anchor-all" id="dash-video-player">

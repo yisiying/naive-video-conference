@@ -1,27 +1,28 @@
 package org.seekloud.theia.webClient.common.Components
 
-import mhtml.Var
+import mhtml.{Var, _}
 import org.scalajs.dom
 import org.scalajs.dom.Event
 import org.scalajs.dom.html.{Image, Input}
 import org.seekloud.theia.webClient.pages.{AnchorPage, MainPage}
-import mhtml._
 import io.circe.syntax._
 import io.circe.generic.auto._
+import io.circe.parser.decode
 
 import scala.xml.Elem
-import MainPage.{showAdminLogin, showPersonCenter, showRtmpInfo, userShowName}
+import MainPage.{isTemUser, showAdminLogin, showPersonCenter, showRtmpInfo, userShowName}
 import org.scalajs.dom.html
 import org.scalajs.dom.raw.{File, FileList, FileReader, FormData, HTMLElement}
 import org.seekloud.theia.protocol.ptcl.CommonInfo.UserDes
 import org.seekloud.theia.protocol.ptcl.CommonRsp
-import org.seekloud.theia.protocol.ptcl.client2Manager.http.CommonProtocol.ImgChangeRsp
+import org.seekloud.theia.protocol.ptcl.client2Manager.http.CommonProtocol.{GetAudienceListReq, GetAudienceListRsp, ImgChangeRsp}
 import org.seekloud.theia.webClient.actors.WebSocketRoom
 import org.seekloud.theia.webClient.common.Routes
 import org.seekloud.theia.webClient.util.{Http, JsFunc}
 import org.seekloud.theia.webClient.util.RtmpStreamerJs._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 /**
   * create by 13
   * 2019/7/19  12:17 AM
@@ -74,7 +75,51 @@ object PopWindow {
     }
   }
 
-  def audienceLists(audienceLists:Var[List[UserDes]]): Elem =
+
+  /**
+   * 会议人员名单弹窗
+   */
+
+  val inviteButton: Var[Elem] = Var(<div></div>)
+  def inviteButtonGenerator(roomId:Long,startTime:Long): Elem =
+    <div class="pop-button" onclick={(e: Event) => MainPage.inviteUser(e, "pop-login",roomId,startTime)}>邀请</div>
+
+  val audienceLists: Var[List[UserDes]] = Var(List[UserDes]())
+  val userId: String =
+    if (isTemUser()) dom.window.sessionStorage.getItem("userId")
+    else dom.window.localStorage.getItem("userId")
+  val userOption: Option[Long] = {
+    (dom.window.localStorage.getItem("isTemUser"), userId) match {
+      case (null, null) => None
+      case (null, b) => Some(b.toLong)
+      case _ => None
+    }
+  }
+
+  def getAudienceList(roomId:Long,time:Long) = {
+    val audienceData = GetAudienceListReq(roomId, time, userOption.getOrElse(-1L)).asJson.noSpaces
+    Http.postJson(Routes.UserRoutes.getAudienceList, audienceData).map { json =>
+      decode[GetAudienceListRsp](json) match {
+        case Right(rsp) =>
+          if (rsp.errCode == 200) {
+            audienceLists := rsp.users.map(u => UserDes(u.userId, u.userName, u.headImgUrl))
+          } else {
+            println(s"无法获取参会人员名单: ${rsp.msg}")
+          }
+        case Left(error) =>
+          decode[CommonRsp](json) match {
+            case Right(rsp) =>
+              println(s"无法获取参会人员名单: ${rsp.msg}")
+            case Left(e) =>
+              println(s"获取参会人员名单时，json解析失败,error:${e.getMessage}")
+          }
+      }
+    }
+  }
+
+  def audienceLists(roomId:Long,time:Long): Elem = {
+    inviteButton := inviteButtonGenerator(roomId,time)
+    getAudienceList(roomId,time)
     <div>
       <input id="pop-audience-list" style="display: none;" type="checkbox"></input>
       <label class="pop-background" for="pop-audience-list" onclick={(e: Event)=>closeReport(e,"pop-audience-list")}>
@@ -91,11 +136,16 @@ object PopWindow {
           <div class="roomContain">
             {lists.map(createAudienceList)}
           </div>}}
+          <div class="message">
+            <input class="pop-input" id="invite-user" placeholder="请输入被邀请人的邮箱" ></input>
+          </div>
           <div class="pop-confirm">
+            {inviteButton}
           </div>
         </div>
       </label>
     </div>
+  }
 
   // 'for' is 'pop-login'
   def loginPop: Elem =
