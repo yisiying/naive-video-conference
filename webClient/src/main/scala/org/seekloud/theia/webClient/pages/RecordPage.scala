@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit
 import mhtml._
 import io.circe.syntax._
 import io.circe.generic.auto._
+import io.circe.parser.decode
 
 import scala.xml.{Elem, Node}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -17,7 +18,7 @@ import org.seekloud.theia.protocol.ptcl.CommonRsp
 import org.seekloud.theia.webClient.common.{Page, Routes}
 import org.seekloud.theia.webClient.util._
 import org.seekloud.theia.protocol.ptcl.client2Manager.http.CommonProtocol._
-import org.seekloud.theia.protocol.ptcl.client2Manager.http.RecordCommentProtocol.{AddRecordCommentReq, CommentInfo, GetRecordCommentListReq, GetRecordCommentListRsp}
+import org.seekloud.theia.protocol.ptcl.client2Manager.http.RecordCommentProtocol.{AddRecordCommentReq, CommentInfo, DeleteCommentReq, GetRecordCommentListReq, GetRecordCommentListRsp}
 import org.seekloud.theia.protocol.ptcl.client2Manager.http.StatisticsProtocol.WatchRecordEndReq
 import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol._
 import org.seekloud.theia.webClient.actors.WebSocketRoom
@@ -47,11 +48,14 @@ class RecordPage(roomId:Long,time:Long) extends Page{
     dom.window.localStorage.getItem("isTemUser") != null
   }
 
+  //用户权限 1 无访问权限， 2 参会人员权限， 3 主持人
+  private val userAuthority:Var[Int] = Var(1)
+
   private var watchRecordEndInfo = WatchRecordEnd()
   private val roomCoverImg = Var(dom.window.sessionStorage.getItem("recordCoverImg"))
   private val videoTime = Var(dom.window.sessionStorage.getItem("recordStartTime"))
   private val videoName = Var(dom.window.sessionStorage.getItem("recordName"))
-  val commentInfo = Var(List.empty[CommentInfo])
+  var commentInfo: Var[List[CommentInfo]] = Var(List.empty[CommentInfo])
 
   def exitRecord(): Future[Unit] ={
     val userId =
@@ -97,7 +101,7 @@ class RecordPage(roomId:Long,time:Long) extends Page{
                   dom.window.localStorage.getItem("userName"),
                   dom.window.localStorage.getItem("userHeaderImgUrl"))
               }
-            commentInfo.update(c=>c:+CommentInfo(-1,
+            commentInfo.update(c=>c:+CommentInfo(rsp.msg.toLong,
               roomId,time,b_area.value,currentTime,-1,userId,
               userName,userHeaderImgUrl))
             b_area.value = ""
@@ -126,48 +130,108 @@ class RecordPage(roomId:Long,time:Long) extends Page{
 
   private var mp4Url = Var("")
   //https://www.runoob.com/try/demo_source/mov_bbb.mp4
+
+  val userId =
+    if (isTemUser()) dom.window.sessionStorage.getItem("userId")
+    else dom.window.localStorage.getItem("userId")
+  val userOption = {
+    (dom.window.localStorage.getItem("isTemUser"), userId) match {
+      case (null, null) => None
+      case (null, b) => Some(b.toLong)
+      case _ => None
+    }
+  }
+
   def watchRecord():Unit = {
     if(isTemUser()){
       PopWindow.commonPop(s"you are temporary user, please login!")
-    }else{
-      val userId =
-        if(isTemUser()) dom.window.sessionStorage.getItem("userId")
-        else dom.window.localStorage.getItem("userId")
-      val userOption = {
-        (dom.window.localStorage.getItem("isTemUser"), userId) match {
-          case (null, null) => None
-          case (null, b) => Some(b.toLong)
-          case _ => None
-        }
-      }
+    }else {
       val newData = new Date().getTime
       val data = SearchRecord(roomId,time,newData,userOption).asJson.noSpaces
-      Http.postJsonAndParse[SearchRecordRsp](Routes.UserRoutes.getOneRecord,data).map{
+      Http.postJson(Routes.UserRoutes.getOneRecord, data).map { json=>
+        decode[SearchRecordRsp](json) match {
+          case Right(rsp)=>
+            if(rsp.errCode==0){
+              //获得了url
+              mp4Url := rsp.url
+
+              dom.window.sessionStorage.setItem("recordName", rsp.recordInfo.recordName)
+              dom.window.sessionStorage.setItem("recordCoverImg", rsp.recordInfo.coverImg)
+              dom.window.sessionStorage.setItem("recordStartTime", rsp.recordInfo.startTime.toString)
+
+              watchRecordEndInfo = WatchRecordEnd(rsp.recordInfo.recordId, newData)
+              roomCoverImg := rsp.recordInfo.coverImg
+              videoTime := rsp.recordInfo.startTime.toString
+              videoName := rsp.recordInfo.recordName
+              val v = dom.document.getElementById("recordVideo").asInstanceOf[Video]
+              v.load()
+              v.play()
+            }
+            else{
+              PopWindow.commonPop(s"get url error in watchRecord: ${rsp.msg}")
+            }
+          case Left(error)=>
+            decode[CommonRsp](json) match {
+              case Right(rsp)=>
+                if (rsp.errCode == 100110) {
+                  PopWindow.commonPop(s"请您先登录")
+                } else if (rsp.errCode == 100100) {
+                  PopWindow.commonPop(s"您没有权限查看该录像")
+                }
+                else {
+                  PopWindow.commonPop(s"get url error in watchRecord: ${rsp.msg}")
+                }
+              case Left(e)=>
+                println(s"获取视频地址时，json解析失败,error:${e.getMessage}")
+            }
+        }
+      }
+//      Http.postJsonAndParse[SearchRecordRsp](Routes.UserRoutes.getOneRecord,data).map{
+//        case Right(rsp) =>
+//          if(rsp.errCode==0){
+//            //获得了url
+//            mp4Url := rsp.url
+//
+//            dom.window.sessionStorage.setItem("recordName", rsp.recordInfo.recordName)
+//            dom.window.sessionStorage.setItem("recordCoverImg", rsp.recordInfo.coverImg)
+//            dom.window.sessionStorage.setItem("recordStartTime", rsp.recordInfo.startTime.toString)
+//
+//            watchRecordEndInfo = WatchRecordEnd(rsp.recordInfo.recordId, newData)
+//            roomCoverImg := rsp.recordInfo.coverImg
+//            videoTime := rsp.recordInfo.startTime.toString
+//            videoName := rsp.recordInfo.recordName
+//            val v = dom.document.getElementById("recordVideo").asInstanceOf[Video]
+//            v.load()
+//            v.play()
+//          }
+//          else{
+//            PopWindow.commonPop(s"get url error in watchRecord: ${rsp.msg}")
+//          }
+//        case Left(e) =>
+//            e.printStackTrace()
+////          PopWindow.commonPop(s"get url error in watchRecord: $e")
+//      }
+    }
+  }
+
+  private def checkAuthority = {
+    val recordData = CheckAuthorityReq(roomId, time, userOption).asJson.noSpaces
+    Http.postJson(Routes.UserRoutes.checkAuthority, recordData).map { json =>
+      decode[CheckAuthorityRsp](json) match {
         case Right(rsp) =>
-          if(rsp.errCode==0){
-            //获得了url
-            mp4Url := rsp.url
-
-            dom.window.sessionStorage.setItem("recordName", rsp.recordInfo.recordName)
-            dom.window.sessionStorage.setItem("recordCoverImg", rsp.recordInfo.coverImg)
-            dom.window.sessionStorage.setItem("recordStartTime", rsp.recordInfo.startTime.toString)
-
-            watchRecordEndInfo = WatchRecordEnd(rsp.recordInfo.recordId, newData)
-            roomCoverImg := rsp.recordInfo.coverImg
-            videoTime := rsp.recordInfo.startTime.toString
-            videoName := rsp.recordInfo.recordName
-            val v = dom.document.getElementById("recordVideo").asInstanceOf[Video]
-            v.load()
-            v.play()
-          }else if(rsp.errCode == 100110){
-            PopWindow.commonPop(s"请您先登录")
-          }else if(rsp.errCode == 100100){
-            PopWindow.commonPop(s"您没有权限查看该录像")
-          }else{
-            PopWindow.commonPop(s"get url error in watchRecord: ${rsp.msg}")
+          if (rsp.errCode == 200) {
+            if (rsp.userType == 2 || rsp.userType == 3) getCommentInfo()
+            userAuthority := rsp.userType
+          } else {
+            PopWindow.commonPop(s"无法获取用户权限, ${rsp.msg}")
           }
-        case Left(e) =>
-          PopWindow.commonPop(s"get url error in watchRecord: $e")
+        case Left(error) =>
+          decode[CommonRsp](json) match {
+            case Right(rsp) =>
+              println("获取用户权限时发生错误，" + rsp.msg)
+            case Left(e) =>
+              println(s"获取用户权限失败，json解析失败,error:${e.getMessage}")
+          }
       }
     }
   }
@@ -202,6 +266,7 @@ class RecordPage(roomId:Long,time:Long) extends Page{
   var s = 0
   def init() = {
     watchRecord()
+    checkAuthority
     s = dom.window.setInterval(()=>{
       if(dom.document.getElementById("comment-submit")!=null){
         if(dom.window.localStorage.getItem("isTemUser") != null){
@@ -213,7 +278,33 @@ class RecordPage(roomId:Long,time:Long) extends Page{
       }
     },100)
   }
-  val comments:Rx[Node] = commentInfo.map{ cf =>
+
+  def deleteComment(commentId: Long): Unit = {
+    val userId =
+      if (isTemUser()) dom.window.sessionStorage.getItem("userId")
+      else dom.window.localStorage.getItem("userId")
+    val userOption = {
+      (dom.window.localStorage.getItem("isTemUser"), userId) match {
+        case (null, null) => None
+        case (null, b) => Some(b.toLong)
+        case _ => None
+      }
+    }
+
+    val data = DeleteCommentReq(roomId, time, commentId, userOption.getOrElse(-1)).asJson.noSpaces
+    Http.postJsonAndParse[CommonRsp](Routes.UserRoutes.deleteComment,data).map{
+      case Right(rsp)=>
+        if (rsp.errCode==200) {
+          PopWindow.commonPop("删除成功")
+          commentInfo.update(c=>c.filter(_.commentId!=commentId))
+        } else PopWindow.commonPop(s"删除失败，${rsp.msg}")
+      case Left(e) =>
+        PopWindow.commonPop(s"删除评论时发生错误，$e")
+    }
+  }
+
+
+  val comments:Rx[Node] = commentInfo.flatMap{ cf =>
     def createCommentItem(item:CommentInfo) = {
       <div class="rcl-item">
         <div class="user-face">
@@ -224,17 +315,22 @@ class RecordPage(roomId:Long,time:Long) extends Page{
           <div class="rcl-con-con">{item.comment}</div>
           <div class="rcl-con-time">{TimeTool.dateFormatDefault(item.commentTime)}</div>
         </div>
+        <div style="position:relative;">{userAuthority.map{
+          case 3=>
+            <p class="rcl-con-delete" onclick={() => deleteComment(item.commentId)}>删除</p>
+          case _=>
+            emptyHTML
+        }}</div>
       </div>
     }
-    <div class="comment-list">
+    Rx(<div class="comment-list">
       {cf.map(createCommentItem)}
-    </div>
+    </div>)
   }
 
 
   override def render: Elem = {
     init()
-    getCommentInfo()
     <div>
       <div class="audienceInfo" style="margin-left: 250px;margin-top: 20px;width:60%">
         <div class="anchorInfo">
@@ -244,6 +340,8 @@ class RecordPage(roomId:Long,time:Long) extends Page{
               <div class="recordName">{videoName}</div>
               <div class="recordTime" style="color: #808080;font-size: 12px;margin-top: 10px;">{videoTime.map(i=>TimeTool.dateFormatDefault(i.toLong)) }</div>
             </div>
+            <label class="audienceList" id="audience-list" for="pop-audience-list">参会人员</label>
+            {PopWindow.audienceLists(roomId,time)}
           </div>
         </div>
         <div style="padding-bottom:20px!important" class="dash-video-player anchor-all" id="dash-video-player">
@@ -287,9 +385,8 @@ class RecordPage(roomId:Long,time:Long) extends Page{
             {comments}
           </div>
 
+          </div>
         </div>
-
-      </div>
     </div>
   }
 }

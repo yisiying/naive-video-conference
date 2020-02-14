@@ -7,6 +7,7 @@ import org.seekloud.theia.roomManager.models.SlickTables._
 import org.seekloud.theia.roomManager.utils.DBUtil.db
 import slick.jdbc.PostgresProfile.api._
 import org.seekloud.theia.roomManager.Boot.executor
+import org.seekloud.theia.roomManager.models.SlickTables
 import org.seekloud.theia.roomManager.utils.SecureUtil
 
 import scala.concurrent.Future
@@ -46,6 +47,10 @@ object UserInfoDao {
 
   def searchByName(name:String) = {
     db.run(tUserInfo.filter(i => i.userName === name).result.headOption)
+  }
+
+  def searchByEmail(email:String): Future[Option[SlickTables.rUserInfo]] = {
+    db.run(tUserInfo.filter(_.email===email).result.headOption)
   }
 
   def searchById(uid:Long) = {

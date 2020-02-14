@@ -19,6 +19,8 @@ object Routes {
 
     val userLogin = urlbase + "/signIn"
 
+    val addAccessAuth:String = urlbase + "/addAccessAuth"
+
     val userLoginByMail = urlbase + "/signInByMail"
 
     val getRoomList = urlbase + "/getRoomList"

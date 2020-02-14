@@ -19,6 +19,7 @@ import org.seekloud.theia.roomManager.models.dao.{RecordCommentDAO, RecordDao, S
 import org.seekloud.theia.roomManager.utils.HestiaClient
 import akka.http.scaladsl.model.headers._
 import org.seekloud.theia.protocol.ptcl.CommonInfo.{RoomInfo, UserInfo}
+import org.seekloud.theia.protocol.ptcl.client2Manager.http.RecordCommentProtocol
 import org.seekloud.theia.roomManager.common.{AppSettings, Common}
 import org.seekloud.theia.roomManager.core.RoomManager.{GetRoomList, UserInfoChange}
 import org.seekloud.theia.roomManager.http.SessionBase.UserSession
@@ -372,8 +373,53 @@ trait UserService extends ServiceUtils {
     }
   }
 
+  /**
+   * 添加用户访问权限
+   */
+  private val addAccessAuth = (path("addAccessAuth") & post){
+    entity(as[Either[Error,AddRecordAccessReq]]){
+      case Right(req) =>
+        dealFutureResult{
+          RecordCommentDAO.checkHostAccess(req.roomId, req.startTime, req.operatorId).flatMap{a =>
+            if(a){
+              val emailReg = "^([a-z0-9A-Z]+[-|\\.]?)+[a-z0-9A-Z]@([a-z0-9A-Z]+(-[a-z0-9A-Z]+)?\\.)+[a-zA-Z]{2,}$"
+              req.addUserEmail.matches(emailReg) match {
+                case true=>
+                  UserInfoDao.searchByEmail(req.addUserEmail).flatMap{userOpt=>
+                    if(userOpt.isEmpty){
+                      Future(complete(CommonRsp(222,"该用户不存在")))
+                    } else {
+                      RecordCommentDAO.checkAccess(req.roomId,req.startTime,userOpt.get.uid).flatMap {
+                        case true=>
+                          Future(complete(CommonRsp(222,s"不能重复添加")))
+                        case false=>
+                          RecordCommentDAO.addCommentAccess(req.roomId,req.startTime,req.operatorId,userOpt.get.uid).map{
+                            case 1=>
+                              //添加成功
+                              complete(CommonRsp(200,"ok"))
+                            case _=>
+                              complete(CommonRsp(222,s"添加失败"))
+                          }
+                      }
+                    }
+                  }
+                case false=>
+                  Future(complete(CommonRsp(222,s"邮箱地址不合法")))
+              }
+            }else{
+              Future(complete(CommonRsp(222,s"您没有添加用户的权限")))
+            }
+          }
+        }
+      case Left(error) =>
+        log.debug(s"增加用户评论权限失败，请求错误，error=$error")
+        complete(CommonRsp(100001,s"增加用户评论权限失败，请求错误，error=$error"))
+    }
+  }
+
   val userRoutes: Route = pathPrefix("user") {
     signUp ~ signIn ~ deleteUserByEmail ~
-    nickNameChange ~ getRoomList ~ searchRoom ~ setupWebSocket ~ temporaryUser ~ signInByMail ~ getRoomInfo ~ checkAuthority
+    nickNameChange ~ getRoomList ~ searchRoom ~ setupWebSocket ~ temporaryUser ~ signInByMail ~ getRoomInfo ~ checkAuthority ~
+    addAccessAuth
   }
 }
