@@ -336,13 +336,14 @@ class RecordPage(roomId:Long,time:Long) extends Page{
         <div class="rcl-con">
           <div class="rcl-con-name">{item.commentUserName}</div>
           <div class="rcl-con-con">{item.comment}</div>
-          <div class="rcl-con-time">{TimeTool.dateFormatDefault(item.commentTime)}</div>{userAuthority.map{
+          <div class="rcl-con-time">{TimeTool.dateFormatDefault(item.commentTime)}</div>
+        </div>
+        <div style="position:relative;">{userAuthority.map{
           case 3=>
-      <p class="rcl-con-time" style="cursor:pointer;color:#00a1d6" onclick={() => deleteComment(item.commentId)}>删除</p>
+            <p class="rcl-con-delete" onclick={() => deleteComment(item.commentId)}>删除</p>
           case _=>
             emptyHTML
-      }}
-        </div>
+        }}</div>
       </div>
     }
     Rx(<div class="comment-list">
@@ -361,9 +362,9 @@ class RecordPage(roomId:Long,time:Long) extends Page{
             <div style="margin-left:20px;color:#222">
               <div class="recordName">{videoName}</div>
               <div class="recordTime" style="color: #808080;font-size: 12px;margin-top: 10px;">{videoTime.map(i=>TimeTool.dateFormatDefault(i.toLong)) }</div>
-              <label class="header-login" id="audience-list" for="pop-audience-list">参会人员</label>
-              {PopWindow.audienceLists(audienceLists)}
             </div>
+            <label class="audienceList" id="audience-list" for="pop-audience-list">参会人员</label>
+            {PopWindow.audienceLists(audienceLists)}
           </div>
         </div>
         <div style="padding-bottom:20px!important" class="dash-video-player anchor-all" id="dash-video-player">

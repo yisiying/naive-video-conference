@@ -413,6 +413,7 @@ body{
     margin-left: 10px;
 }
 .showInfo{
+    position: relative;
     width: 100%;
     display: flex;
     align-items: center;
@@ -1218,6 +1219,20 @@ ul,li{
 .playback-point:hover .playback-button{
     transform: scale(1.08);
 }
+
+.audienceList {
+    position: absolute;
+    right: 0;
+    padding: 0 10px;
+    margin-right: 10px;
+    background: #ef7d41;
+    color: white;
+    text-align: center;
+    line-height: 60px;
+    border-radius: 0 0 3px 3px;
+    cursor: pointer;
+}
+
 /** 评论**/
 div#r-comment {
     background-color: #fff;
@@ -1337,6 +1352,15 @@ button.n-comment-submit{
     /* padding-top: 10px; */
 }
 
+.rcl-con-delete {
+    line-height: 26px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #00a1d6;
+    position: absolute;
+    bottom: 0;
+    width: 40px
+}
 
 
 
