@@ -170,13 +170,13 @@ object RmManager {
 
   final case class ExitJoin(roomId: Long) extends RmCommand //主动关闭和主播的连线
 
-  final case class StartRecord(outFilePath: String) extends RmCommand //开始录制
+//  final case class StartRecord(outFilePath: String) extends RmCommand //开始录制
 
-  final case object StopRecord extends RmCommand //结束录制
+//  final case object StopRecord extends RmCommand //结束录制
 
-  final case class PausePlayRec(recordInfo: RecordInfo) extends RmCommand //暂停播放录像
+//  final case class PausePlayRec(recordInfo: RecordInfo) extends RmCommand //暂停播放录像
 
-  final case class ContinuePlayRec(recordInfo: RecordInfo) extends RmCommand //继续播放录像
+//  final case class ContinuePlayRec(recordInfo: RecordInfo) extends RmCommand //继续播放录像
 
   private object ASK4STATE_RETRY_TIMER_KEY
 
@@ -346,8 +346,8 @@ object RmManager {
           if (msg.roomInfo.rtmp.nonEmpty) {
             audienceScene.liveId = msg.roomInfo.rtmp
             val info = WatchInfo(msg.roomInfo.roomId, audienceScene.gc)
-            //            liveManager ! LiveManager.PullStream(msg.roomInfo.rtmp.get, watchInfo = Some(info), audienceScene = Some(audienceScene))
-            liveManager ! LiveManager.PullStream("rtmp://10.1.29.247:42037/live/123456", watchInfo = Some(info), audienceScene = Some(audienceScene))
+            liveManager ! LiveManager.PullStream(msg.roomInfo.rtmp.get, watchInfo = Some(info), audienceScene = Some(audienceScene))
+//            liveManager ! LiveManager.PullStream("rtmp://10.1.29.247:42037/live/123456", watchInfo = Some(info), audienceScene = Some(audienceScene))
 
             ctx.self ! AudienceWsEstablish
 
@@ -527,20 +527,20 @@ object RmManager {
         case msg: HostLiveReq =>
           log.debug(s"Host req live.")
           assert(userInfo.nonEmpty && roomInfo.nonEmpty)
-          if (msg.rtpSelected) {
-            sender.foreach(_ ! StartLiveReq(userInfo.get.userId, userInfo.get.token, ClientType.PC))
-          }
-          if (msg.rtmpSelected) {
+//          if (msg.rtpSelected) {
+//            sender.foreach(_ ! StartLiveReq(userInfo.get.userId, userInfo.get.token, ClientType.PC))
+//          }
+//          if (msg.rtmpSelected) {
             log.info("HostLiveReq")
             sender.foreach(_ ! StartLiveReq(userInfo.get.userId, userInfo.get.token, ClientType.PC))
             //            sender.foreach(_ ! GetTokenReq(userInfo.get.userId))
-          }
+//          }
 
           // log.debug(s"rtmpselected   ${msg.rtmpSelected}  ==== ${msg.rtmpServer}  ")
-          if (msg.biliSelected && msg.rtmpServer.nonEmpty) {
-            liveManager ! LiveManager.PushRtmpStream(msg.rtmpServer.get)
-            hostController.isLive = true
-          }
+//          if (msg.biliSelected && msg.rtmpServer.nonEmpty) {
+//            liveManager ! LiveManager.PushRtmpStream(msg.rtmpServer.get)
+//            hostController.isLive = true
+//          }
           hostBehavior(stageCtx, homeController, hostScene, hostController, liveManager, mediaPlayer, sender, hostStatus, joinAudience, Some(msg.rtmpSelected), Some(msg.rtpSelected), Some(msg.biliSelected))
 
         case msg: RtmpLiveReq =>
@@ -558,14 +558,14 @@ object RmManager {
           Boot.addToPlatform {
             hostScene.allowConnect()
           }
-          if (rtpLive.get) {
-            log.info("rtp live")
-            liveManager ! LiveManager.PushStream(msg.liveId, msg.liveCode)
-          }
-          if (rtmpLive.get) {
+//          if (rtpLive.get) {
+//            log.info("rtp live")
+//            liveManager ! LiveManager.PushStream(msg.liveId, msg.liveCode)
+//          }
+//          if (rtmpLive.get) {
             log.info("rtmp live")
             sender.foreach(_ ! GetTokenReq(userInfo.get.userId))
-          }
+//          }
           Behaviors.same
 
         case StopLive =>
@@ -580,15 +580,15 @@ object RmManager {
           hostController.isLive = false
           Behaviors.same
 
-        case StartRecord(outFilePath) =>
-          mediaPlayer.startRecord(outFilePath)
-          log.debug(s"rmManager send startRecord.")
-          Behaviors.same
-
-        case StopRecord =>
-          mediaPlayer.stopRecord()
-          log.debug(s"rmManager send stopRecord.")
-          Behaviors.same
+//        case StartRecord(outFilePath) =>
+//          mediaPlayer.startRecord(outFilePath)
+//          log.debug(s"rmManager send startRecord.")
+//          Behaviors.same
+//
+//        case StopRecord =>
+//          mediaPlayer.stopRecord()
+//          log.debug(s"rmManager send stopRecord.")
+//          Behaviors.same
 
         case msg: ModifyRoom =>
           sender.foreach(_ ! ModifyRoomInfo(msg.name, msg.des))
@@ -1028,31 +1028,31 @@ object RmManager {
           audienceBehavior(stageCtx, homeController, roomController, audienceScene, audienceController, liveManager, mediaPlayer, sender, isStop, audienceLiveInfo, audienceStatus = AudienceStatus.LIVE, anchorLiveId)
 
 
-        case StartRecord(outFilePath) =>
-          mediaPlayer.startRecord(outFilePath)
-          log.debug(s"rmManager send startRecord.")
-          Behaviors.same
-
-        case GetPackageLoss =>
-          liveManager ! LiveManager.GetPackageLoss
-          Behaviors.same
-
-        case StopRecord =>
-          mediaPlayer.stopRecord()
-          log.debug(s"rmManager send stopRecord.")
-          Behaviors.stopped
-
-        case msg: PausePlayRec =>
-          val playId = Ids.getPlayId(AudienceStatus.RECORD, roomId = Some(msg.recordInfo.roomId), startTime = Some(msg.recordInfo.startTime))
-          mediaPlayer.pause(playId)
-          log.debug(s"pause playReC")
-          Behaviors.same
-
-        case msg: ContinuePlayRec =>
-          val playId = Ids.getPlayId(AudienceStatus.RECORD, roomId = Some(msg.recordInfo.roomId), startTime = Some(msg.recordInfo.startTime))
-          mediaPlayer.continue(playId)
-          log.debug(s"continue playReC")
-          Behaviors.same
+//        case StartRecord(outFilePath) =>
+//          mediaPlayer.startRecord(outFilePath)
+//          log.debug(s"rmManager send startRecord.")
+//          Behaviors.same
+//
+//        case GetPackageLoss =>
+//          liveManager ! LiveManager.GetPackageLoss
+//          Behaviors.same
+//
+//        case StopRecord =>
+//          mediaPlayer.stopRecord()
+//          log.debug(s"rmManager send stopRecord.")
+//          Behaviors.stopped
+//
+//        case msg: PausePlayRec =>
+//          val playId = Ids.getPlayId(AudienceStatus.RECORD, roomId = Some(msg.recordInfo.roomId), startTime = Some(msg.recordInfo.startTime))
+//          mediaPlayer.pause(playId)
+//          log.debug(s"pause playReC")
+//          Behaviors.same
+//
+//        case msg: ContinuePlayRec =>
+//          val playId = Ids.getPlayId(AudienceStatus.RECORD, roomId = Some(msg.recordInfo.roomId), startTime = Some(msg.recordInfo.startTime))
+//          mediaPlayer.continue(playId)
+//          log.debug(s"continue playReC")
+//          Behaviors.same
 
         case StopSelf =>
           log.info(s"rmManager stopped in audience.")

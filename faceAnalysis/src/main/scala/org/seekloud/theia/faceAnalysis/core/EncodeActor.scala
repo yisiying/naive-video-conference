@@ -10,7 +10,6 @@ import org.bytedeco.javacv.{FFmpegFrameRecorder, Frame}
 import org.seekloud.theia.faceAnalysis.BootJFx.{blockingDispatcher, captureActor}
 import org.slf4j.LoggerFactory
 import CaptureActor.{FrameSnapShot, audioChannels, frameDuration, frameRate}
-import org.bytedeco.ffmpeg.global.avcodec
 
 /**
   * Created by sky
@@ -30,9 +29,6 @@ object EncodeActor {
   trait EncodeCommand
 
   final case class EncodeInit(outputStream: OutputStream, camWidth: Int, camHeight: Int) extends EncodeCommand
-  //final case class EncodeInit(addr: String, camWidth: Int, camHeight: Int) extends EncodeCommand
-
-  final case class RtmpEncodeInit(rtmpServer: String, camWidth: Int, camHeight: Int) extends EncodeCommand
 
   trait VideoEncodeCommand
 
@@ -51,15 +47,13 @@ object EncodeActor {
         case msg: EncodeInit =>
           log.info(s"$logPrefix EncodeInit")
           val recorder = new FFmpegFrameRecorder(msg.outputStream, msg.camWidth, msg.camHeight, audioChannels)
-//          val recorder = new FFmpegFrameRecorder(s"test_${System.currentTimeMillis()}.ts", msg.camWidth, msg.camHeight, audioChannels)
-          //val recorder = new FFmpegFrameRecorder(msg.addr, msg.camWidth, msg.camHeight, audioChannels)
+          //          val recorder = new FFmpegFrameRecorder(s"test_${System.currentTimeMillis()}.ts", msg.camWidth, msg.camHeight, audioChannels)
           recorder.setVideoOption("preset", "ultrafast")
           recorder.setVideoOption("tune", "zerolatency")
           recorder.setVideoOption("crf", "25")
 
           recorder.setFrameRate(frameRate)
           recorder.setVideoBitrate(2000000)
-          recorder.setVideoCodec(avcodec.AV_CODEC_ID_H264)
           recorder.setMaxBFrames(0)
           //          recorder.setVideoOption("crf", "25")
 
@@ -68,7 +62,6 @@ object EncodeActor {
           recorder.setAudioQuality(0)
           recorder.setAudioBitrate(192000)
           recorder.setSampleRate(44100)
-          recorder.setAudioCodec(avcodec.AV_CODEC_ID_AAC)
           recorder.setAudioChannels(audioChannels)
           //          recorder.setAudioOption("crf", "0")
 
@@ -81,40 +74,6 @@ object EncodeActor {
           val audioEncoder = ctx.spawn(encodeAudioState("audioEncoder|", tsInfo, recorder, frameSnapShot), "audioEncoder", blockingDispatcher)
           captureActor ! CaptureActor.Encoder(videoEncoder, audioEncoder)
           idle("idle|", msg.outputStream, recorder)
-         // idle("idle|", msg.addr, recorder)
-
-        case msg: RtmpEncodeInit =>
-          log.info(s"$logPrefix RtmpEncodeInit")
-          val recorder = new FFmpegFrameRecorder(msg.rtmpServer, msg.camWidth, msg.camHeight, audioChannels)
-          recorder.setVideoOption("preset", "ultrafast")
-          recorder.setVideoOption("tune", "zerolatency")
-          recorder.setVideoOption("crf", "25")
-
-          recorder.setFrameRate(frameRate)
-          recorder.setVideoBitrate(2000000)
-          recorder.setVideoCodec(avcodec.AV_CODEC_ID_H264)
-          recorder.setMaxBFrames(0)
-          //          recorder.setVideoOption("crf", "25")
-
-          /*audio*/
-          recorder.setAudioOption("crf", "0")
-          recorder.setAudioQuality(0)
-          recorder.setAudioBitrate(192000)
-          recorder.setSampleRate(44100)
-          recorder.setAudioCodec(avcodec.AV_CODEC_ID_AAC)
-          recorder.setAudioChannels(audioChannels)
-          //          recorder.setAudioOption("crf", "0")
-
-          recorder.setFormat("flv")
-          recorder.setFrameNumber(0)
-          recorder.startUnsafe()
-
-          val tsInfo = SignalInfo(false, System.currentTimeMillis())
-          val videoEncoder = ctx.spawn(encodeVideoState("videoEncoder|", tsInfo, recorder, frameSnapShot), "videoEncoder", blockingDispatcher)
-          val audioEncoder = ctx.spawn(encodeAudioState("audioEncoder|", tsInfo, recorder, frameSnapShot), "audioEncoder", blockingDispatcher)
-          captureActor ! CaptureActor.Encoder(videoEncoder, audioEncoder)
-          idleRtmp(logPrefix, recorder)
-
 
         case unKnow =>
           log.warn(s"$logPrefix got unknown msg: $unKnow")
@@ -129,21 +88,7 @@ object EncodeActor {
         log.info(s"$logPrefix StopEncode")
         recorder.release()
         recorder.stop()
-//        outputStream.close()
-        Behaviors.stopped
-
-      case unKnow =>
-        log.warn(s"$logPrefix got unknown msg: $unKnow")
-        Behavior.same
-    }
-  }
-
-  private def idleRtmp(logPrefix: String, recorder: FFmpegFrameRecorder): Behavior[EncodeCommand] = {
-    Behaviors.receiveMessage[EncodeCommand] {
-      case StopEncode =>
-        log.info(s"$logPrefix StopEncode")
-        recorder.release()
-        recorder.stop()
+        outputStream.close()
         Behaviors.stopped
 
       case unKnow =>

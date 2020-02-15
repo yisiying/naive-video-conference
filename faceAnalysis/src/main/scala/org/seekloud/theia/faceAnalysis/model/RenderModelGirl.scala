@@ -1,8 +1,7 @@
 package org.seekloud.theia.faceAnalysis.model
 
 import com.jme3.animation.{Bone, Skeleton, SkeletonControl}
-import com.jme3.light.DirectionalLight
-import com.jme3.math.{ColorRGBA, Quaternion, Vector3f}
+import com.jme3.math.{Quaternion, Vector3f}
 import com.jme3.scene.Node
 
 /**
@@ -34,20 +33,6 @@ object RenderModelGirl extends RenderModel {
 
   private val EyeTopYChangeMax = 0f
 
-  private var CurrentFaceWidth=135f
-
-  private var CurrentFaceHeight=144f
-
-  private val StandardFaceWidth=135f
-
-  private val MaxFaceWidth=220f
-
-  private val MinFaceWidth=120f
-
-  private val MaxFaceHeight = 200f
-
-  private val MinFaceHeight = 120f
-
   RenderEngine.enqueueToEngine({
     /**
       * 加载Jaime的模型
@@ -57,9 +42,6 @@ object RenderModelGirl extends RenderModel {
     // 将Jaime放大一点点，这样我们能观察得更清楚。
     model.scale(6f)
     model.setLocalTranslation(0,-2.5f,0)
-
-//    val sun = RenderEngine.getRootNode.getLocalLightList.get(1).asInstanceOf[DirectionalLight]
-//    sun.setColor(new ColorRGBA(0.8f, 0.8f, 0.8f, 1f))
 
     // 获得SkeletonControl
     // 骨骼控制器
@@ -107,18 +89,9 @@ object RenderModelGirl extends RenderModel {
 
   override def headMove(xAngle: Float, yAngle: Float, zAngle: Float): Unit = {
     val move = new Quaternion
-    move.fromAngles(-xAngle,-yAngle,  zAngle)
+    move.fromAngles(-yAngle, -xAngle, zAngle)
     head.setUserTransforms(Vector3f.ZERO, move, Vector3f.UNIT_XYZ)
     ske.updateWorldVectors()
-  }
-
-  override def modelScale(rate:Float,fw:Float,fh:Float):Unit={
-    if(Math.abs(CurrentFaceWidth-fw)>2.0f && Math.abs(CurrentFaceHeight-fh)>2.0f && fw<=MaxFaceWidth && fw>=MinFaceWidth && fh <= MaxFaceHeight && fh >= MinFaceHeight){
-      model.setLocalScale(7f + (fw - StandardFaceWidth) * rate)
-      model.setLocalTranslation(0f,-2.5f+(StandardFaceWidth - fw) * rate * 0.95f,0f)
-      CurrentFaceWidth = fw
-      CurrentFaceHeight = fh
-    }
   }
 
   override def leftEyeLidChange(changeSize: Float): Unit = {

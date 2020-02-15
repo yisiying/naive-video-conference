@@ -205,15 +205,15 @@ class AudienceController(
       rmManager ! RmManager.GetPackageLoss
     }
 
-    override def continuePlayRec(recordInfo: RecordInfo): Unit = {
-      rmManager ! RmManager.ContinuePlayRec(recordInfo)
+//    override def continuePlayRec(recordInfo: RecordInfo): Unit = {
+//      rmManager ! RmManager.ContinuePlayRec(recordInfo)
+//
+//    }
 
-    }
-
-    override def pausePlayRec(recordInfo: RecordInfo): Unit = {
-      rmManager ! RmManager.PausePlayRec(recordInfo)
-
-    }
+//    override def pausePlayRec(recordInfo: RecordInfo): Unit = {
+//      rmManager ! RmManager.PausePlayRec(recordInfo)
+//
+//    }
 
     override def sendRecCmt(comment:String, commentTime:Long, relativeTime: Long, authorUidOpt:Option[Long]): Unit = {
       log.debug(s"audience send recCommend: comment:$comment, commentTime: $commentTime, relativeTime: $relativeTime, authorUidOpt: $authorUidOpt")

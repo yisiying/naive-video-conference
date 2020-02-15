@@ -21,17 +21,16 @@ object TestActor {
   trait Command
 
   case class Test(t: Long) extends Command
-  case class Test2(t:Long) extends Command
 
   case object Change extends Command
 
   def create(): Behavior[Command] = Behaviors.setup[Command] { ctx =>
     log.info("create| start..")
-//    if (System.currentTimeMillis() % 2 == 0) {
+    if (System.currentTimeMillis() % 2 == 0) {
       idle("idle|")
-//    } else {
-//      work("work|")
-//    }
+    } else {
+      work("work|")
+    }
   }
 
   private def idle(
@@ -39,15 +38,9 @@ object TestActor {
                   ): Behavior[Command] = Behaviors.receive[Command] { (ctx, msg) =>
     msg match {
       case m: Test =>
-        log.info(s"$logPrefix :${m.t}")
-        ctx.self ! Test(123)
-        ctx.self ! Test2(456)
+        log.info(s"$logPrefix ${System.nanoTime()-m.t}")
 //        ctx.self ! Test(System.nanoTime())
-        work("work|")
-      case m:Test2 =>
-        log.info(s"$logPrefix :${m.t}")
         Behaviors.same
-
       case Change =>
         log.info(s"$logPrefix change")
         work("work|")
@@ -59,12 +52,8 @@ object TestActor {
                   ): Behavior[Command] = Behaviors.receive[Command] { (ctx, msg) =>
     msg match {
       case m: Test =>
-        log.info(s"$logPrefix ${m.t}")
-
+        log.info(s"$logPrefix ${System.nanoTime()-m.t}")
 //        ctx.self ! Test(System.nanoTime())
-        idle("idle|")
-      case m:Test2=>
-        log.info(s"$logPrefix ${m.t}")
         Behaviors.same
       case Change =>
         log.info(s"$logPrefix change")
@@ -77,9 +66,9 @@ object TestActor {
     import BootJFx._
     val testActor = system.spawn(create(), "testActor")
     testActor ! Test(1)
-//    testActor ! Test(2)
-//    testActor ! Change
-//    testActor ! Test(3)
-//    testActor ! Test(4)
+    testActor ! Test(2)
+    testActor ! Change
+    testActor ! Test(3)
+    testActor ! Test(4)
   }
 }

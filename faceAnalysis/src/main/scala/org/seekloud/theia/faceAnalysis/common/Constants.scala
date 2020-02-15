@@ -18,16 +18,12 @@ object Constants {
   val loginInfoCachePath: String = cachePath + "/login"
 
   object AppWindow {
-    val width = 1200
-    val height = 920
+    val width = 1152
+    val height = 864
   }
   object DefaultPlayer {
     val width = 640
     val height = 480
-  }
-  object Like{
-    val up=1
-    val down=0
   }
 
   val loginInfoCache = new File(loginInfoCachePath)

@@ -50,20 +50,6 @@ object RenderModelJaime extends RenderModel {
 
   private val EyeZChangeMax = 0.015f
 
-  private var CurrentFaceWidth=135f
-
-  private var CurrentFaceHeight=144f
-
-  private val StandardFaceWidth=135f
-
-  private val MaxFaceWidth=220f
-
-  private val MinFaceWidth=120f
-
-  private val MaxFaceHeight = 220f
-
-  private val MinFaceHeight = 120f
-
   private var animControl: AnimControl = null
   private var animChannel: AnimChannel = null
 
@@ -179,20 +165,10 @@ object RenderModelJaime extends RenderModel {
 
   override def headMove(xAngle: Float, yAngle: Float, zAngle: Float): Unit = {
     val move = new Quaternion
-    move.fromAngles( -xAngle,-yAngle, zAngle)
+    move.fromAngles(-yAngle, -xAngle, zAngle)
     head.setUserTransforms(Vector3f.ZERO, move, Vector3f.UNIT_XYZ)
     ske.updateWorldVectors()
   }
-
-  override def modelScale(rate:Float,fw:Float,fh:Float):Unit={
-    if(Math.abs(CurrentFaceWidth-fw)>2.0f && Math.abs(CurrentFaceHeight-fh)>2.0f && fw<=MaxFaceWidth && fw>=MinFaceWidth && fh <= MaxFaceHeight && fh >= MinFaceHeight){
-      model.setLocalScale(7f+(fw-StandardFaceWidth)*rate)
-      model.setLocalTranslation(0f,-2.5f+(StandardFaceWidth-fw)*rate*0.9f,0f)
-      CurrentFaceWidth=fw
-      CurrentFaceHeight=fh
-    }
-  }
-
 
   override def leftEyeLidChange(changeSize: Float): Unit = {
     val topVec = new Vector3f(0, changeSize * EyeTopYChangeMax, changeSize * EyeZChangeMax)

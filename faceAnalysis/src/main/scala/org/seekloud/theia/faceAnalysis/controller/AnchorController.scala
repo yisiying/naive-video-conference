@@ -50,8 +50,8 @@ class AnchorController(context: StageContext) extends AnchorScene with UserContr
     }
   }
 
-  override def startLive(rtpSelected: Boolean, rtmpSeleted: Boolean, rtmpurl: Option[String]): Unit = {
-    rmActor ! RMActor.AnchorLiveReq(rtpSelected, rtmpSeleted, rtmpurl) //向roomManager请求liveId、liveCode
+  override def startLive(): Unit = {
+    rmActor ! RMActor.AnchorLiveReq //向roomManager请求liveId、liveCode
   }
 
   override def stopLive(): Unit = {
@@ -81,22 +81,6 @@ class AnchorController(context: StageContext) extends AnchorScene with UserContr
     }
   }
 
-  override protected def changeLiveModel(liveModel: Int): Unit = {
-    if(liveModel == 1){
-      if(liveCheck2.isSelected && liveToggleButton.isSelected){
-        liveCheck1.setSelected(false)
-        WarningDialog.initWarningDialog("请先停止推流，再切换推流方式")
-      }
-    }
-    if(liveModel == 2) {
-      if(liveCheck1.isSelected && liveToggleButton.isSelected){
-        liveCheck2.setSelected(false)
-        WarningDialog.initWarningDialog("请先停止推流，再切换推流方式")
-      }
-    }
-
-  }
-
   //remind handle msg from roomManager
   override def wsMessageHandler(msg: AuthProtocol.WsMsgRm): Unit = {
     msg match {
@@ -116,7 +100,6 @@ class AnchorController(context: StageContext) extends AnchorScene with UserContr
 
       case msg: RcvComment =>
         log.debug(s"get RcvComment: $msg")
-        log.info(s"get RcvComment: $msg")
         BootJFx.addToPlatform {
           updateComment(msg)
           updateBarrage(msg)
@@ -137,24 +120,12 @@ class AnchorController(context: StageContext) extends AnchorScene with UserContr
       liveToggleButton.setText("推流状态")
       liveToggleButton.setOnAction {
         _ =>
-          val liveRtpCheck = liveCheck1.isSelected
-          val liveRtmpCheck = liveCheck2.isSelected
-          val rtmpReg = rtmpText.getText().split("\\?", 2)
-          val rtmpServer = if(liveRtmpCheck) rtmpReg.head + "/" + passText.getText() + "?" + rtmpReg.last else ""
-          if(liveRtpCheck || liveRtmpCheck){
-            if(liveToggleButton.isSelected){
-              startLive(liveRtpCheck, liveRtmpCheck,Some(rtmpServer))
-            }else {
-              stopLive()
-            }
+          if (liveToggleButton.isSelected) {
+            startLive()
           } else {
-            liveToggleButton.setSelected(false)
-            WarningDialog.initWarningDialog("请先选择直播方式")
-
-            }
+            stopLive()
           }
-
-
       }
+    }
   }
 }

@@ -9,12 +9,11 @@ import akka.actor.typed.scaladsl.adapter._
 import javafx.application.Platform
 import javafx.scene.text.Font
 import javafx.stage.Stage
-import org.opencv.core.Core
 import org.seekloud.theia.faceAnalysis.common.StageContext
 import org.seekloud.theia.faceAnalysis.controller.HomeController
 import org.seekloud.theia.faceAnalysis.controller.AnchorController
 import org.seekloud.theia.faceAnalysis.core.{CaptureActor, RMActor, RtpPushActor}
-import org.seekloud.theia.faceAnalysis.model.{FaceAnalysis, TfModelFaceDetect}
+import org.seekloud.theia.faceAnalysis.model.FaceAnalysis
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
@@ -49,8 +48,8 @@ object BootJFx {
 
 class BootJFx extends javafx.application.Application {
   //fixme 测试内存溢出
-  System.setProperty("org.bytedeco.javacpp.maxphysicalbytes", "0")
-  System.setProperty("org.bytedeco.javacpp.maxbytes", "0")
+//  System.setProperty("org.bytedeco.javacpp.maxphysicalbytes", "0")
+//  System.setProperty("org.bytedeco.javacpp.maxbytes", "0")
 
   import BootJFx._
 
@@ -64,9 +63,9 @@ class BootJFx extends javafx.application.Application {
 
     val homeController = new HomeController(context)
     homeController.showScene()
-//    val anchorScene = new AnchorController(context)
-//    AnchorController.anchorControllerOpt = Some(anchorScene)
-//    anchorScene.showScene()
+    //    val anchorScene = new AnchorController(context)
+    //    AnchorController.anchorControllerOpt = Some(anchorScene)
+    //    anchorScene.showScene()
 
     addToPlatform {
       homeController.loginByTemp()

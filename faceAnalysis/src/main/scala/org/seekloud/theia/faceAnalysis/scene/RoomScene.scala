@@ -58,7 +58,7 @@ trait RoomScene extends SceneImpl {
 
   def gotoChooseScene(): Unit
 
-  def watching(roomInfo: AlbumInfo,index:Int) : Unit
+  def watching(roomId: Long) : Unit
 
   var roomList: List[RoomInfo] = Nil
 
@@ -106,7 +106,7 @@ trait RoomScene extends SceneImpl {
         roomIcon.setFitWidth(150)
         val roomLabel = new Label("",roomIcon)
         roomLabel.addEventHandler(MouseEvent.MOUSE_CLICKED, (_: MouseEvent) => {
-          watching(albumList(i - 1),i-1)
+          watching(albumList(i - 1).roomId)
         })
 
         val roomName = new Label(s"${albumList(i - 1).roomName}")
@@ -145,7 +145,7 @@ trait RoomScene extends SceneImpl {
         roomIcon.setFitWidth(150)
         val roomLabel = new Label("",roomIcon)
         roomLabel.addEventHandler(MouseEvent.MOUSE_CLICKED, (_: MouseEvent) => {
-          watching(albumList(i - 1),i-1)
+          watching(albumList(i - 1).roomId)
         })
 
         val roomName = new Label(s"${albumList(i - 1).roomName}")

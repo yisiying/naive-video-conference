@@ -14,7 +14,7 @@ import com.jme3.scene.Node
   */
 object RenderModelBoy extends RenderModel {
   override val id: Byte = 1
-  protected var model: Node = null
+  protected var model:Node = null
   private var ske: Skeleton = null
 
   private var head: Bone = null
@@ -36,20 +36,6 @@ object RenderModelBoy extends RenderModel {
 
   private val EyeTopYChangeMax = 0.005f
 
-  private var CurrentFaceWidth = 135f
-
-  private var CurrentFaceHeight = 144f
-
-  private val StandardFaceWidth = 135f
-
-  private val MaxFaceWidth = 220f
-
-  private val MinFaceWidth = 120f
-
-  private val MaxFaceHeight = 200f
-
-  private val MinFaceHeight = 140f
-
   RenderEngine.enqueueToEngine({
     /**
       * 加载Jaime的模型
@@ -58,10 +44,7 @@ object RenderModelBoy extends RenderModel {
     model = scene.getChild("boy").asInstanceOf[Node]
     // 将Jaime放大一点点，这样我们能观察得更清楚。
     model.scale(7f)
-    model.setLocalTranslation(0, -3.0f, 0)
-
-//    val sun = RenderEngine.getRootNode.getLocalLightList.get(1).asInstanceOf[DirectionalLight]
-//    sun.setColor(new ColorRGBA(0.8f, 0.8f, 0.8f, 1f).mult(2f))
+    model.setLocalTranslation(0,-2.5f,0)
 
     // 获得SkeletonControl
     // 骨骼控制器
@@ -109,20 +92,10 @@ object RenderModelBoy extends RenderModel {
 
   override def headMove(xAngle: Float, yAngle: Float, zAngle: Float): Unit = {
     val move = new Quaternion
-    move.fromAngles(-xAngle, -yAngle, zAngle)
+    move.fromAngles(-yAngle, -xAngle, zAngle)
     head.setUserTransforms(Vector3f.ZERO, move, Vector3f.UNIT_XYZ)
     ske.updateWorldVectors()
   }
-
-  override def modelScale(rate: Float, fw: Float, fh: Float): Unit = {
-    if (Math.abs(CurrentFaceWidth - fw) > 2.0f && Math.abs(CurrentFaceHeight - fh) > 2.0f && fw <= MaxFaceWidth && fw >= MinFaceWidth && fh <= MaxFaceHeight && fh >= MinFaceHeight) {
-      model.setLocalScale(7f + (fw - StandardFaceWidth) * rate)
-      model.setLocalTranslation(0f, -2.5f + (StandardFaceWidth - fw) * rate * 0.9f, 0f)
-      CurrentFaceWidth = fw
-      CurrentFaceHeight = fh
-    }
-  }
-
 
   override def leftEyeLidChange(changeSize: Float): Unit = {
     val topVec = new Vector3f(0, changeSize * EyeTopYChangeMax, changeSize * EyeTopZChangeMax)

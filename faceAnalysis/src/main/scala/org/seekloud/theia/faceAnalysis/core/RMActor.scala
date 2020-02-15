@@ -15,15 +15,14 @@ import javafx.scene.canvas.GraphicsContext
 import org.seekloud.theia.faceAnalysis.BootJFx
 import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol
 import org.slf4j.LoggerFactory
-import org.seekloud.theia.faceAnalysis.BootJFx.{captureActor, executor, materializer, system}
+import org.seekloud.theia.faceAnalysis.BootJFx.{executor, materializer, system}
 import org.seekloud.theia.faceAnalysis.common.{AppSettings, Routes}
 import org.seekloud.theia.faceAnalysis.component.WarningDialog
 import org.seekloud.theia.faceAnalysis.controller.{AnchorController, UserControllerImpl, ViewerController}
-import org.seekloud.theia.faceAnalysis.core.CaptureActor.PushRtmpStream
 import org.seekloud.theia.faceAnalysis.utils.{NetUtil, RMClient}
 import org.seekloud.theia.player.sdk.MediaPlayer
 import org.seekloud.theia.protocol.ptcl.CommonInfo.{ClientType, RoomInfo, UserInfo}
-import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol._
+import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol.{DecodeError, HostStopPushStream, StartLiveReq, TextMsg}
 import org.seekloud.theia.rtpClient.PullStreamClient
 
 import scala.concurrent.duration._
@@ -49,10 +48,7 @@ object RMActor {
 
   final case object ConnectRM extends Command
 
-  private final case object BehaviorChangeKey
-
-  //主播
-  final case class AnchorLiveReq(rtpSelected: Boolean, rtmpSelected: Boolean, rtmpServer: Option[String]) extends Command
+  final case object AnchorLiveReq extends Command
 
   final case object StopLive extends Command
 
@@ -61,10 +57,6 @@ object RMActor {
   final case class GoToWatch(userInfo: UserInfo,roomInfo: RoomInfo, viewerController: ViewerController) extends Command
 
   final case class EstablishWs4Viewer(roomInfo: RoomInfo) extends Command
-
-  final case class PullStream(liveId: String) extends Command
-
-  final case object StopPull extends Command
 
   final case object PullerStopped extends Command
 
@@ -82,14 +74,7 @@ object RMActor {
 
   final case object ConnectTimerKey
 
-  //观众
-  final case class SendLike(like:AuthProtocol.LikeRoom) extends Command
-
-  final case class SendJudgeLike(judgelike:AuthProtocol.JudgeLike) extends Command
-
-
-
-  private object PULL_RETRY_TIMER_KEY
+  private final case object BehaviorChangeKey
 
   final case class SwitchBehavior(
                                    name: String,
@@ -122,8 +107,7 @@ object RMActor {
 
   //todo 整理本部分代码
   private def init(logPrefix: String,
-    mediaPlayer: MediaPlayer,
-    rtpPullActor: Option[(String, ActorRef[RtpPullActor.PullCommand])] = None)(
+    mediaPlayer: MediaPlayer)(
     implicit stashBuffer: StashBuffer[Command],
     timer: TimerScheduler[Command]
   ): Behavior[Command] = Behaviors.receive[Command] { (ctx, msg) =>
@@ -131,7 +115,7 @@ object RMActor {
       case msg: GotoAnchor =>
         log.info(s"$logPrefix receive $msg")
         ctx.self ! ConnectRM
-        idle("RMActor idle|", msg.userInfo, msg.roomInfo, Some(mediaPlayer), rtpPullActor, Some(msg.anchorController))
+        idle("idle|", msg.userInfo, msg.roomInfo, Some(mediaPlayer),Some(msg.anchorController))
 
       case msg:GetRoomDetail =>
         log.info(s"$logPrefix receive a GetRoomDetail")
@@ -158,40 +142,19 @@ object RMActor {
 
       case msg: GoToWatch =>
         if(msg.roomInfo.rtmp.nonEmpty) {
+          val info = WatchInfo(msg.roomInfo.roomId,msg.viewerController.gc)
+          val pullChannel = new InetSocketAddress(AppSettings.rtpServerIp, AppSettings.rtpServerPullPort)
+          val puller = getStreamPuller(ctx, msg.roomInfo.rtmp.get, mediaPlayer, Some(info), Some(msg.viewerController))
+          val client = new PullStreamClient(AppSettings.host, NetUtil.getFreePort, pullChannel, puller, AppSettings.rtpServerDst)
+          puller ! RtpPullActor.InitRtpClient(client)
           ctx.self ! EstablishWs4Viewer(msg.roomInfo)
-          switchBehavior(ctx, "idle", idle("RMActor idle|", msg.userInfo, msg.roomInfo, Some(mediaPlayer), rtpPullActor  ,None, Some(msg.viewerController)))
+          idle("idle|", msg.userInfo, msg.roomInfo, Some(mediaPlayer),None, Some(msg.viewerController))
         } else {
           BootJFx.addToPlatform{
             WarningDialog.initWarningDialog("processor没有给我们liveId哦~~")
           }
           Behaviors.same
         }
-
-      case ViewerLeft =>
-        timer.cancel(HeartBeat)
-        timer.cancel(PingTimeOut)
-        rtpPullActor.foreach{
-          puller =>
-            puller._2 ! RtpPullActor.StopPull
-        }
-        System.gc()
-        Behaviors.same
-
-      case PullerStopped =>
-        log.info(s"rmActor|idle  got pullerStopped")
-        BootJFx.addToPlatform{
-          WarningDialog.initWarningDialog("已断开连接")
-        }
-        System.gc()
-        Behaviors.same
-
-      case ChildDead(name,childRef) =>
-        log.info(s"rmActor unwatch child-$childRef")
-        ctx.unwatch(childRef)
-        Behaviors.same
-
-      case SwitchBehavior(name, behavior, durationOpt, timeOut) =>
-        switchBehavior(ctx, name, behavior, durationOpt, timeOut)
 
       case unKnown =>
         log.error(s"$logPrefix receive a unknown $unKnown")
@@ -203,7 +166,6 @@ object RMActor {
                    userInfo: UserInfo,
                    roomInfo: RoomInfo,
                    mediaPlayer: Option[MediaPlayer] = None,
-                   rtpPullActor: Option[(String, ActorRef[RtpPullActor.PullCommand])] = None,
                    anchorController: Option[AnchorController] = None,
                    viewerController: Option[ViewerController] = None
                   )(
@@ -227,21 +189,21 @@ object RMActor {
         val connected = response.flatMap { upgrade =>
           if (upgrade.response.status == StatusCodes.SwitchingProtocols) {
             ctx.self ! SwitchBehavior("anchorBehavior", anchorBehavior("RMActor anchorWork|", userInfo, roomInfo ,anchorController.get, stream))
-            Future.successful(s"${ctx.self.path} connect success.")
+            Future.successful(s"$logPrefix connect success.")
           } else {
-            throw new RuntimeException(s"${ctx.self.path} connection failed: ${upgrade.response.status}")
+            throw new RuntimeException(s"$logPrefix connection failed: ${upgrade.response.status}")
           }
         } //链接建立时
         connected.onComplete { i => log.info(i.toString) }
         closed.onComplete { i =>
           log.info(s"${ctx.self.path} connect closed! try again 1 minutes later")
           //remind 此处存在失败重试
-          ctx.self ! SwitchBehavior("idle", idle(logPrefix, userInfo, roomInfo, mediaPlayer, rtpPullActor, anchorController), InitTime)
+          ctx.self ! SwitchBehavior("idle", idle(logPrefix, userInfo, roomInfo, mediaPlayer, anchorController), InitTime)
           timer.startSingleTimer(ConnectTimerKey, msg, 1.minutes)
         } //链接断开时
         switchBehavior(ctx, "busy", busy(), InitTime)
 
-      case msg: EstablishWs4Viewer =>
+      case msg:EstablishWs4Viewer =>
         val url = Routes.linkRoomManager(userInfo.userId, userInfo.token, roomInfo.roomId)
         val webSocketFlow = Http().webSocketClientFlow(WebSocketRequest(url))
         val source = getSource
@@ -253,11 +215,8 @@ object RMActor {
             .run()
         val connected = response.flatMap { upgrade =>
           if (upgrade.response.status == StatusCodes.SwitchingProtocols) {
-            ctx.self ! SwitchBehavior("viewerBehavior", viewerBehavior("RMActor viewWork|", userInfo, roomInfo, mediaPlayer.get,rtpPullActor, viewerController.get, stream))
-            ctx.self ! PullStream(msg.roomInfo.rtmp.get)
-            ctx.self ! SendJudgeLike(JudgeLike(userInfo.userId, roomInfo.roomId))
-            switchBehavior(ctx, "viewerBehavior", viewerBehavior("RMActor viewWork|", userInfo, msg.roomInfo, mediaPlayer.get, rtpPullActor,viewerController.get, stream))
-            Future.successful(s"${ctx.self.path} connect success.")
+            ctx.self ! SwitchBehavior("viewerBehavior", viewerBehavior("RMActor viewWork|", userInfo, roomInfo, mediaPlayer.get,viewerController.get, stream))
+            Future.successful(s"$logPrefix  connect success.")
           } else {
             throw new RuntimeException(s"$logPrefix connection failed: ${upgrade.response.status}")
           }
@@ -266,13 +225,27 @@ object RMActor {
           //ctx.self ! StartPull(msg.roomInfo.rtmp.get) //fixme startPull消息的顺序
         }
         closed.onComplete { i =>
-          log.info(s"${ctx.self.path} connect closed!")
+          log.info(s"$logPrefix connect closed! try again 1 minutes later")
           //remind 此处存在失败重试
-          //ctx.self ! SwitchBehavior("idle", idle(logPrefix, userInfo, roomInfo, mediaPlayer, rtpPullActor, anchorController), InitTime)
-          ctx.self ! SwitchBehavior("init", init(logPrefix, mediaPlayer.get), InitTime)
-        //  timer.startSingleTimer(ConnectTimerKey, msg, 1.minutes)
+          ctx.self ! SwitchBehavior("idle", idle(logPrefix, userInfo, roomInfo, mediaPlayer, anchorController), InitTime)
+          timer.startSingleTimer(ConnectTimerKey, msg, 1.minutes)
         } //链接断开时
         switchBehavior(ctx, "busy", busy(), InitTime)
+
+      case PullerStopped =>
+        log.info(s"rmActor got pullerStoped")
+        BootJFx.addToPlatform{
+          WarningDialog.initWarningDialog("已断开连接")
+        }
+        Behaviors.stopped
+
+      case ChildDead(name,childRef) =>
+        log.info(s"rmActor unwatch child-$childRef")
+        ctx.unwatch(childRef)
+        Behaviors.same
+
+      case SwitchBehavior(name, behavior, durationOpt, timeOut) =>
+        switchBehavior(ctx, name, behavior, durationOpt, timeOut)
 
       case unKnown =>
         log.error(s"$logPrefix receive a unknown $unKnown")
@@ -285,17 +258,17 @@ object RMActor {
                     userInfo: UserInfo,
                     roomInfo: RoomInfo,
                     anchorController: AnchorController,
-                    rmServer: ActorRef[AuthProtocol.WsMsgFront],
-                    rtpLive: Option[Boolean] = Some(false),
-                    rtmpLive: Option[Boolean] = Some(false))(
+                    rmServer: ActorRef[AuthProtocol.WsMsgFront])(
                     implicit stashBuffer: StashBuffer[Command],
                     timer: TimerScheduler[Command]
                   ): Behavior[Command] =
     Behaviors.receive[Command] { (ctx, msg) =>
       msg match {
         case HeartBeat =>
+          //          sender.foreach(_ ! PingPackage)
           timer.cancel(PingTimeOut)
           timer.startSingleTimer(PingTimeOut, PingTimeOut, 30.seconds)
+          //          timer.startSingleTimer(HeartBeat, HeartBeat, 10.second)
           Behaviors.same
 
         case PingTimeOut =>
@@ -305,29 +278,19 @@ object RMActor {
           BootJFx.addToPlatform {
             WarningDialog.initWarningDialog("连接断开！")
           }
-          idle("idle|", userInfo, roomInfo, None, None, Some(anchorController))
+          idle("idle|", userInfo, roomInfo, None, Some(anchorController))
 
         case msg: SendComment =>
           rmServer ! msg.comment
           Behaviors.same
 
-        case msg:AnchorLiveReq =>
-          if(msg.rtpSelected){
-            rmServer ! StartLiveReq(userInfo.userId, userInfo.token, ClientType.PC)
-          }
-          if(msg.rtmpSelected && msg.rtmpServer.get.nonEmpty){
-            captureActor ! PushRtmpStream(msg.rtmpServer.get)
-          }
-          anchorBehavior(logPrefix, userInfo, roomInfo, anchorController, rmServer,  Some(msg.rtpSelected), Some(msg.rtmpSelected))
+        case AnchorLiveReq =>
+          rmServer ! StartLiveReq(userInfo.userId, userInfo.token, ClientType.PC)
+          Behaviors.same
 
         //todo 断开直播
         case StopLive =>
-          if(rtpLive.nonEmpty && rtpLive.get){
-            rmServer ! HostStopPushStream(roomInfo.roomId)
-          }
-          if(rtmpLive.nonEmpty && rtmpLive.get){
-            //todo
-          }
+          rmServer ! HostStopPushStream(roomInfo.roomId)
           Behaviors.same
 
         case DeviceReady =>
@@ -346,7 +309,6 @@ object RMActor {
     userInfo: UserInfo,
     roomInfo: RoomInfo,
     mediaPlayer: MediaPlayer,
-    rtpPullActor: Option[(String, ActorRef[RtpPullActor.PullCommand])] = None,
     viewerController: ViewerController,
     rmServer: ActorRef[AuthProtocol.WsMsgFront])(
     implicit stashBuffer: StashBuffer[Command],
@@ -361,75 +323,26 @@ object RMActor {
 
         case PingTimeOut =>
           //ws断了
-          timer.cancel(HeartBeat)
+          //          timer.cancel(HeartBeat)
           log.error("连接断开！")
           BootJFx.addToPlatform {
             WarningDialog.initWarningDialog("连接断开！")
           }
-          idle("idle|", userInfo, roomInfo, Some(mediaPlayer),None, None,Some(viewerController))
-
-        case msg: PullStream =>
-          if(rtpPullActor.isEmpty){
-            val info = WatchInfo(roomInfo.roomId, viewerController.gc)
-            val pullChannel = new InetSocketAddress(AppSettings.rtpServerIp, AppSettings.rtpServerPullPort)
-            val puller = getStreamPuller(ctx, msg.liveId, mediaPlayer, Some(info), Some(viewerController))
-            val client = new PullStreamClient(AppSettings.host, NetUtil.getFreePort, pullChannel, puller, AppSettings.rtpServerDst) //todo 修改行为
-            puller ! RtpPullActor.InitRtpClient(client)
-            viewerBehavior("RMActor viewWork|", userInfo, roomInfo, mediaPlayer, Some((msg.liveId, puller)), viewerController, rmServer)
-          } else {
-            log.info(s"waiting for old puller-${rtpPullActor.get._1} stopped")
-            ctx.self ! StopPull
-            timer.startSingleTimer(PULL_RETRY_TIMER_KEY, msg, 100.millis)
-            Behaviors.same
-          }
-
-        case msg:SendJudgeLike =>
-          log.info("send judgeLike")
-          rmServer ! msg.judgelike
-          Behaviors.same
-
-        case msg:SendLike =>
-          rmServer ! msg.like
-          Behaviors.same
-
+          idle("idle|", userInfo, roomInfo, Some(mediaPlayer),None, Some(viewerController))
 
         case msg: SendComment =>
           rmServer ! msg.comment
           Behaviors.same
 
         case ViewerLeft =>
-          timer.cancel(HeartBeat)
-          timer.cancel(PingTimeOut)
-          rmServer ! CompleteMsgClient
-          rtpPullActor.foreach{
-            puller =>
-              puller._2 ! RtpPullActor.StopPull
-          }
-          System.gc()
-          switchBehavior(ctx, "init",init("init|",  mediaPlayer))
-
-
-        case StopPull =>
-          log.info(s"rmActor Stop pull")
-          rtpPullActor.foreach{
-            puller =>
-              log.info(s"stopping puller-${puller._1}")
-              puller._2 ! RtpPullActor.StopPull
-          }
-          switchBehavior(ctx, "init",init("init|",  mediaPlayer))
+          init("init|",  mediaPlayer)//fixme 退出后的操作
 
         case PullerStopped =>
-          log.info(s"rmActor|idle  got pullerStopped")
+          log.info(s"rmActor got puller Stopped")
           BootJFx.addToPlatform{
             WarningDialog.initWarningDialog("已断开连接")
           }
-          Behaviors.same
-
-        case ChildDead(name,childRef) =>
-          log.info(s"rmActor unwatch child-$childRef")
-          ctx.unwatch(childRef)
-          Behaviors.same
-
+          init("init|",  mediaPlayer) //fixme 退出后的操作
 
         case unKnown =>
           log.error(s"$logPrefix receive a unknown $unKnown")
@@ -439,6 +352,8 @@ object RMActor {
     }
 
   }
+
+
 
   private def busy()(
     implicit stashBuffer: StashBuffer[Command],
@@ -458,6 +373,7 @@ object RMActor {
           Behavior.same
       }
     }
+
 
   import org.seekloud.byteobject.ByteObject._
   import org.seekloud.byteobject.MiddleBufferInJvm
@@ -543,7 +459,7 @@ object RMActor {
   ) = {
     val childName = s"StreamPuller liveId=$liveId"
     ctx.child(childName).getOrElse{
-      val actor = ctx.spawn(RtpPullActor.create(liveId, watchInfo, ctx.self, mediaPlayer, viewerController), "rtpPullActor")
+      val actor = ctx.spawn(RtpPullActor.create(liveId, watchInfo, ctx.self, mediaPlayer, viewerController), "pullActor")
       ctx.watchWith(actor, ChildDead(childName, actor))
       actor
     }.unsafeUpcast[RtpPullActor.PullCommand]

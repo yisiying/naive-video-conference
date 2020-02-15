@@ -1,22 +1,14 @@
 package org.seekloud.theia.faceAnalysis.scene
 
-import javafx.collections.FXCollections
 import javafx.geometry.{Insets, Pos}
 import javafx.scene.canvas.{Canvas, GraphicsContext}
-import javafx.scene.control.{Button, ChoiceBox, Label, ToggleButton}
-import javafx.scene.effect.DropShadow
+import javafx.scene.control.Button
 import javafx.scene.image.{Image, ImageView}
-import javafx.scene.input.MouseEvent
 import javafx.scene.layout.{BorderPane, HBox, StackPane, VBox}
-import javafx.scene.paint.Color
 import org.seekloud.theia.faceAnalysis.common.Constants
-import org.seekloud.theia.faceAnalysis.common.Constants.Like
 import org.seekloud.theia.faceAnalysis.component.Barrage.barrageView
 import org.seekloud.theia.faceAnalysis.component.UserBox.userBox
-import org.seekloud.theia.faceAnalysis.component.WarningDialog
-import org.seekloud.theia.faceAnalysis.controller.{HomeController, RoomController}
-import org.seekloud.theia.faceAnalysis.scene.panel.{RightPanel, SceneImpl, TopPanel}
-import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol.LikeRoom
+import org.seekloud.theia.faceAnalysis.scene.panel.{RightPanel, TopPanel}
 
 /**
   * User: shuai
@@ -24,12 +16,10 @@ import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol.Li
   * Time: 14:49
   */
 
-trait ViewerScene extends TopPanel with RightPanel with SceneImpl{
+trait ViewerScene extends TopPanel with RightPanel{
 
   protected def gotoRoomScene()
 
-
-  protected def sendLike(like:LikeRoom)
 
   scene.getStylesheets.addAll(
     this.getClass.getClassLoader.getResource("css/common.css").toExternalForm,
@@ -50,10 +40,6 @@ trait ViewerScene extends TopPanel with RightPanel with SceneImpl{
 
   var leftArea: VBox = _
   var rightArea: VBox = _
-
-  var likeBtn:ToggleButton= _
-  var unLikeIcon:ImageView= _
-  var likeIcon:ImageView= _
 
   def addBorderPane(): BorderPane = {
     leftArea = addLeftArea()
@@ -83,7 +69,7 @@ trait ViewerScene extends TopPanel with RightPanel with SceneImpl{
   def addLeftArea() : VBox ={
     val leftAreaBox = new VBox()
 
-    leftAreaBox.getChildren.addAll(topBox,createImageBox,createlikeBtn)
+    leftAreaBox.getChildren.addAll(topBox,createImageBox)
     leftAreaBox.setSpacing(15)
     leftAreaBox.setPadding(new Insets(5, 10, 15, 60))
     leftAreaBox.setPrefHeight(height)
@@ -93,49 +79,6 @@ trait ViewerScene extends TopPanel with RightPanel with SceneImpl{
       val stackPane = new StackPane()
       stackPane.getChildren.addAll(liveImage, barrageView)
       stackPane
-    }
-
-    //点赞部分
-    def createlikeBtn:ToggleButton={
-      unLikeIcon= new ImageView("img/like.png")
-      likeIcon = new ImageView("img/liked.png")
-      likeIcon.setFitWidth(30)
-      likeIcon.setFitHeight(30)
-      unLikeIcon.setFitWidth(30)
-      unLikeIcon.setFitHeight(30)
-
-      likeBtn = new ToggleButton("", unLikeIcon)
-
-      likeBtn.getStyleClass.add("hostScene-middleArea-tableBtn")
-//      val isRecord=false
-//      if (!isRecord) {
-      likeBtn.setOnAction(_ => {
-        if (HomeController.usersInfo.nonEmpty) {
-          if (likeBtn.isSelected) {
-            log.info(s"~~~userid:${HomeController.usersInfo.get.loginInfo.userId} roomid:${RoomController.currentRoomId}")
-            sendLike(LikeRoom(HomeController.usersInfo.get.loginInfo.userId,RoomController.currentRoomId,Like.down))
-            likeBtn.setGraphic(likeIcon)
-          } else {
-            sendLike(LikeRoom(HomeController.usersInfo.get.loginInfo.userId,RoomController.currentRoomId,Like.up))
-            likeBtn.setGraphic(unLikeIcon)
-          }
-        } else {
-          WarningDialog.initWarningDialog("请先登陆哦~")
-        }
-      }
-      )
-      val shadow = new DropShadow(10, Color.GRAY)
-      likeBtn.addEventHandler(MouseEvent.MOUSE_ENTERED, (_: MouseEvent) => {
-        likeBtn.setEffect(shadow)
-      })
-      likeBtn.addEventHandler(MouseEvent.MOUSE_EXITED, (_: MouseEvent) => {
-        likeBtn.setEffect(null)
-      })
-//      } else{
-//        likeBtn.setDisable(true)
-//      }
-      likeBtn
-
     }
 
     leftAreaBox

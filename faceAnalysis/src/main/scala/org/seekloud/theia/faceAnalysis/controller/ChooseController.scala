@@ -28,5 +28,6 @@ class ChooseController(context: StageContext) extends ChooseScene{
   override def gotoWatch(): Unit = {
     val roomScene = new RoomController(context)
     roomScene.showScene()
+
   }
 }

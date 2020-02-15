@@ -101,15 +101,15 @@ object HostScene {
 
     def changeOption(bit: Option[Int] = None, re: Option[String] = None, frameRate: Option[Int] = None, needImage: Boolean = true, needSound: Boolean = true)
 
-    def recordOption(recordOrNot: Boolean, recordType: String, path: Option[String] = None)
+//    def recordOption(recordOrNot: Boolean, recordType: String, path: Option[String] = None)
 
     def ask4Loss()
 
-    def getRecordList()
+//    def getRecordList()
 
-    def deleteRecord(recordId:Long)
+//    def deleteRecord(recordId:Long)
 
-    def refresh()
+//    def refresh()
 
   }
 
@@ -350,8 +350,8 @@ class HostScene(stage: Stage) {
   tb3.getStyleClass.add("hostScene-leftArea-toggleButton")
   val tb4 = new ToggleButton("观众 ", audienceIcon)
   tb4.getStyleClass.add("hostScene-leftArea-toggleButton")
-  val tb5 = new ToggleButton("我的录像 ",recordIcon)
-  tb5.getStyleClass.add("hostScene-leftArea-toggleButton")
+//  val tb5 = new ToggleButton("我的录像 ",recordIcon)
+//  tb5.getStyleClass.add("hostScene-leftArea-toggleButton")
 
   /**
     * emoji
@@ -508,17 +508,18 @@ class HostScene(stage: Stage) {
     tb2.setToggleGroup(group)
     tb3.setToggleGroup(group)
     tb4.setToggleGroup(group)
-    tb5.setToggleGroup(group)
+//    tb5.setToggleGroup(group)
 
     val tbBox = new HBox()
-    tbBox.getChildren.addAll(tb1, tb2, tb3, tb4,tb5)
+//    tbBox.getChildren.addAll(tb1, tb2, tb3, tb4,tb5)
+    tbBox.getChildren.addAll(tb1, tb2, tb3, tb4)
 
     //val content = new VBox()
     val left1Area = addLeftChild1Area()
     val left2Area = addLeftChild2Area()
     val left3Area = addLeftChild3Area()
     val left4Area = addLeftChild4Area()
-    val left5Area = addLeftChild5Area()
+//    val left5Area = addLeftChild5Area()
     content.getChildren.add(left1Area)
     content.setPrefSize(width * 0.20, height) //0.27
 
@@ -546,15 +547,15 @@ class HostScene(stage: Stage) {
       content.getChildren.add(left4Area)
     }
                     )
-    tb5.setOnAction(_ => {
-      tb5.setGraphic(recordIcon)
-      leftRecordBox.getChildren.clear()
-      leftRecordBox.getChildren.add(waitPane)
-      listener.refresh()
-      content.getChildren.clear()
-      content.getChildren.addAll(left5Area)
-    }
-    )
+//    tb5.setOnAction(_ => {
+//      tb5.setGraphic(recordIcon)
+//      leftRecordBox.getChildren.clear()
+//      leftRecordBox.getChildren.add(waitPane)
+//      listener.refresh()
+//      content.getChildren.clear()
+//      content.getChildren.addAll(left5Area)
+//    }
+//    )
 
 
 
@@ -1073,123 +1074,123 @@ class HostScene(stage: Stage) {
 
   //record page
 
-  def addLeftChild5Area(): VBox = {
-    val vBox = new VBox()
-    vBox.getChildren.addAll(leftRecordBox)
-    vBox
-  }
+//  def addLeftChild5Area(): VBox = {
+//    val vBox = new VBox()
+//    vBox.getChildren.addAll(leftRecordBox)
+//    vBox
+//  }
 
-  def updateRecordBox():Unit={
-    val scrollPane = new ScrollPane()
-    val allRecordPane = new VBox()
-    recordList match{
-      case Nil=>
-        leftRecordBox.getChildren.clear()
-        val nonRecord = new Label("暂无录像")
-        nonRecord.setFont(Font.font("Verdana", 30))
-        nonRecord.setPadding(new Insets(200, 0, 0, 0))
-        val noRecordPane = new BorderPane()
-        noRecordPane.setCenter(nonRecord)
-        leftRecordBox.getChildren.add(noRecordPane)
-
-      case record=>
-        leftRecordBox.getChildren.clear()
-        val albumList = record.map(a=>a.toAlbum)
-
-        for(i <- 1 to recordsSize) {
-          val totalBox = new HBox(2)
-          val roomBox = new VBox(3)
-          val roomPic = Pictures.getPic(albumList(i - 1).coverImgUrl, isHeader = false)
-          roomPic.setFitHeight(Constants.DefaultPlayer.height / 2.5)
-          roomPic.setFitWidth(Constants.DefaultPlayer.width / 2.5)
-          //是否需要点进去播放视频这个功能，先不写
-          //      roomPic.addEventHandler(MouseEvent.MOUSE_CLICKED, (_: MouseEvent) => {
-          //        listener.enter(albumList(i - 1).roomId, albumList(i - 1).timestamp)
-          //      })
-          val userName = new Label(s"${albumList(i - 1).userName}")
-          userName.setPrefWidth(120)
-          userName.getStyleClass.add("roomScene-userName")
-
-          val audienceNumIcon = Common.getImageView("img/roomScene-view.png", 25, 25)
-          val audienceNum = new Label(s"${albumList(i - 1).observerNum}", audienceNumIcon)
-          audienceNum.setPrefWidth(80)
-          audienceNum.getStyleClass.add("roomScene-userName")
-
-          val likeNumIcon = Common.getImageView("img/roomScene-like.png", 20, 20)
-          val likeNum = new Label(s"${albumList(i - 1).like}", likeNumIcon)
-          likeNum.setPrefWidth(80)
-          likeNum.getStyleClass.add("roomScene-userName")
-
-          val picBar = new HBox(userName, audienceNum, likeNum)
-          picBar.setMaxSize(roomPic.getFitWidth, roomPic.getFitHeight * 0.2)
-          picBar.setPadding(new Insets(3, 0, 3, 0))
-          picBar.setAlignment(Pos.CENTER_LEFT)
-          picBar.getStyleClass.add("roomScene-picBar")
-
-          val picPane = new StackPane()
-          picPane.setAlignment(Pos.BOTTOM_CENTER)
-          picPane.getChildren.addAll(roomPic)
-
-          //只看自己录像，不用xxx的直播间
-          // roomName
-          //      val roomName = new Label(s"${albumList(i - 1).roomName}")
-          //      roomName.setPrefWidth(200)
-          //      roomName.getStyleClass.add("roomScene-roomName")
-
-          // timeBox(startTime & duration)
-          val timeIcon = getImageView("img/date.png", 20, 20)
-          val liveTime = if (albumList(i - 1).timestamp != 0L) new Label(TimeUtil.timeStamp2DetailDate(albumList(i - 1).timestamp), timeIcon) else new Label("")
-          liveTime.setPrefWidth(160)
-          liveTime.getStyleClass.add("roomScene-time")
-
-          val durationIcon = getImageView("img/clock.png", 20, 20)
-          val duration = new Label(s"${albumList(i - 1).duration}", durationIcon)
-          duration.setPrefWidth(100)
-          duration.getStyleClass.add("roomScene-time")
-
-          val timeBox = new HBox(liveTime, duration)
-          timeBox.setAlignment(Pos.CENTER_LEFT)
-
-          //roomBox
-          roomBox.getChildren.addAll(picPane, timeBox)
-          roomBox.setStyle("-fx-cursor: hand;")
-          val shadow = new DropShadow(10, Color.GRAY)
-          roomBox.addEventHandler(MouseEvent.MOUSE_ENTERED, (_: MouseEvent) => {
-            picPane.getChildren.add(picBar)
-            roomPic.setEffect(shadow)
-          })
-          roomBox.addEventHandler(MouseEvent.MOUSE_EXITED, (_: MouseEvent) => {
-            picPane.getChildren.remove(picBar)
-            roomPic.setEffect(null)
-          })
-
-          //delete button
-          val deleteBtn = new Button("Delete")
-          //deleteBtn.setPadding(new Insets(50,50,0,0))
-          deleteBtn.setOnAction { _ =>
-            val record = albumList(i - 1).toRecordInfo
-            listener.deleteRecord(record.recordId)
-          }
-
-          //一行
-          totalBox.getChildren.addAll(roomBox, deleteBtn)
-          //s1.getChildren.add()
-          allRecordPane.getChildren.addAll(totalBox)
-        }
-
-        import javafx.beans.value.ObservableValue
-        import javafx.beans.value.ChangeListener
-        scrollPane.setVmax(440)
-        scrollPane.setPrefSize(width*0.9, height*0.9)
-        scrollPane.setContent(allRecordPane)
-        scrollPane.vvalueProperty().addListener(new ChangeListener[Number]() {
-          override def changed(ov: ObservableValue[_ <: Number], old_val: Number, new_val: Number): Unit = {
-            allRecordPane.setLayoutY(-new_val.doubleValue)
-          }
-        })
-        leftRecordBox.getChildren.addAll(scrollPane)
-    }
-  }
+//  def updateRecordBox():Unit={
+//    val scrollPane = new ScrollPane()
+//    val allRecordPane = new VBox()
+//    recordList match{
+//      case Nil=>
+//        leftRecordBox.getChildren.clear()
+//        val nonRecord = new Label("暂无录像")
+//        nonRecord.setFont(Font.font("Verdana", 30))
+//        nonRecord.setPadding(new Insets(200, 0, 0, 0))
+//        val noRecordPane = new BorderPane()
+//        noRecordPane.setCenter(nonRecord)
+//        leftRecordBox.getChildren.add(noRecordPane)
+//
+//      case record=>
+//        leftRecordBox.getChildren.clear()
+//        val albumList = record.map(a=>a.toAlbum)
+//
+//        for(i <- 1 to recordsSize) {
+//          val totalBox = new HBox(2)
+//          val roomBox = new VBox(3)
+//          val roomPic = Pictures.getPic(albumList(i - 1).coverImgUrl, isHeader = false)
+//          roomPic.setFitHeight(Constants.DefaultPlayer.height / 2.5)
+//          roomPic.setFitWidth(Constants.DefaultPlayer.width / 2.5)
+//          //是否需要点进去播放视频这个功能，先不写
+//          //      roomPic.addEventHandler(MouseEvent.MOUSE_CLICKED, (_: MouseEvent) => {
+//          //        listener.enter(albumList(i - 1).roomId, albumList(i - 1).timestamp)
+//          //      })
+//          val userName = new Label(s"${albumList(i - 1).userName}")
+//          userName.setPrefWidth(120)
+//          userName.getStyleClass.add("roomScene-userName")
+//
+//          val audienceNumIcon = Common.getImageView("img/roomScene-view.png", 25, 25)
+//          val audienceNum = new Label(s"${albumList(i - 1).observerNum}", audienceNumIcon)
+//          audienceNum.setPrefWidth(80)
+//          audienceNum.getStyleClass.add("roomScene-userName")
+//
+//          val likeNumIcon = Common.getImageView("img/roomScene-like.png", 20, 20)
+//          val likeNum = new Label(s"${albumList(i - 1).like}", likeNumIcon)
+//          likeNum.setPrefWidth(80)
+//          likeNum.getStyleClass.add("roomScene-userName")
+//
+//          val picBar = new HBox(userName, audienceNum, likeNum)
+//          picBar.setMaxSize(roomPic.getFitWidth, roomPic.getFitHeight * 0.2)
+//          picBar.setPadding(new Insets(3, 0, 3, 0))
+//          picBar.setAlignment(Pos.CENTER_LEFT)
+//          picBar.getStyleClass.add("roomScene-picBar")
+//
+//          val picPane = new StackPane()
+//          picPane.setAlignment(Pos.BOTTOM_CENTER)
+//          picPane.getChildren.addAll(roomPic)
+//
+//          //只看自己录像，不用xxx的直播间
+//          // roomName
+//          //      val roomName = new Label(s"${albumList(i - 1).roomName}")
+//          //      roomName.setPrefWidth(200)
+//          //      roomName.getStyleClass.add("roomScene-roomName")
+//
+//          // timeBox(startTime & duration)
+//          val timeIcon = getImageView("img/date.png", 20, 20)
+//          val liveTime = if (albumList(i - 1).timestamp != 0L) new Label(TimeUtil.timeStamp2DetailDate(albumList(i - 1).timestamp), timeIcon) else new Label("")
+//          liveTime.setPrefWidth(160)
+//          liveTime.getStyleClass.add("roomScene-time")
+//
+//          val durationIcon = getImageView("img/clock.png", 20, 20)
+//          val duration = new Label(s"${albumList(i - 1).duration}", durationIcon)
+//          duration.setPrefWidth(100)
+//          duration.getStyleClass.add("roomScene-time")
+//
+//          val timeBox = new HBox(liveTime, duration)
+//          timeBox.setAlignment(Pos.CENTER_LEFT)
+//
+//          //roomBox
+//          roomBox.getChildren.addAll(picPane, timeBox)
+//          roomBox.setStyle("-fx-cursor: hand;")
+//          val shadow = new DropShadow(10, Color.GRAY)
+//          roomBox.addEventHandler(MouseEvent.MOUSE_ENTERED, (_: MouseEvent) => {
+//            picPane.getChildren.add(picBar)
+//            roomPic.setEffect(shadow)
+//          })
+//          roomBox.addEventHandler(MouseEvent.MOUSE_EXITED, (_: MouseEvent) => {
+//            picPane.getChildren.remove(picBar)
+//            roomPic.setEffect(null)
+//          })
+//
+//          //delete button
+//          val deleteBtn = new Button("Delete")
+//          //deleteBtn.setPadding(new Insets(50,50,0,0))
+//          deleteBtn.setOnAction { _ =>
+//            val record = albumList(i - 1).toRecordInfo
+//            listener.deleteRecord(record.recordId)
+//          }
+//
+//          //一行
+//          totalBox.getChildren.addAll(roomBox, deleteBtn)
+//          //s1.getChildren.add()
+//          allRecordPane.getChildren.addAll(totalBox)
+//        }
+//
+//        import javafx.beans.value.ObservableValue
+//        import javafx.beans.value.ChangeListener
+//        scrollPane.setVmax(440)
+//        scrollPane.setPrefSize(width*0.9, height*0.9)
+//        scrollPane.setContent(allRecordPane)
+//        scrollPane.vvalueProperty().addListener(new ChangeListener[Number]() {
+//          override def changed(ov: ObservableValue[_ <: Number], old_val: Number, new_val: Number): Unit = {
+//            allRecordPane.setLayoutY(-new_val.doubleValue)
+//          }
+//        })
+//        leftRecordBox.getChildren.addAll(scrollPane)
+//    }
+//  }
 
   def addRightArea(): VBox = {
 
@@ -1406,24 +1407,24 @@ class HostScene(stage: Stage) {
     liveBar.recordToggleButton.setDisable(false)
 
     //    recordToggleButton.textProperty.bind(Bindings.when(recordToggleButton.selectedProperty).then("录制中").otherwise("点击录制"))
-    liveBar.recordToggleButton.setOnAction {
-      _ =>
-        if (liveBar.recordToggleButton.isSelected) {
-          val fix = recordType match {
-            case "录制自己" => "self"
-            case "录制别人" => "others"
-          }
-          listener.recordOption(recordOrNot = true, recordType, Some(pathField.getText + s"\\theia-$fix-${TimeUtil.timeStamp2DetailDate(System.currentTimeMillis()).replaceAll("-", "").replaceAll(":", "").replaceAll(" ", "")}.flv"))
-          liveBar.resetStartRecTime(System.currentTimeMillis())
-          Tooltip.install(liveBar.recordToggleButton, new Tooltip("点击停止录像"))
-        } else {
-          listener.recordOption(recordOrNot = false, recordType)
-          liveBar.isRecording = false
-          Tooltip.install(liveBar.recordToggleButton, new Tooltip("点击开始录像"))
-        }
-
-
-    }
+//    liveBar.recordToggleButton.setOnAction {
+//      _ =>
+//        if (liveBar.recordToggleButton.isSelected) {
+//          val fix = recordType match {
+//            case "录制自己" => "self"
+//            case "录制别人" => "others"
+//          }
+//          listener.recordOption(recordOrNot = true, recordType, Some(pathField.getText + s"\\theia-$fix-${TimeUtil.timeStamp2DetailDate(System.currentTimeMillis()).replaceAll("-", "").replaceAll(":", "").replaceAll(" ", "")}.flv"))
+//          liveBar.resetStartRecTime(System.currentTimeMillis())
+//          Tooltip.install(liveBar.recordToggleButton, new Tooltip("点击停止录像"))
+//        } else {
+//          listener.recordOption(recordOrNot = false, recordType)
+//          liveBar.isRecording = false
+//          Tooltip.install(liveBar.recordToggleButton, new Tooltip("点击开始录像"))
+//        }
+//
+//
+//    }
   }
 
   def drawPackageLoss(info: mutable.Map[String, PackageLossInfo], bandInfo: Map[String, BandWidthInfo]): Unit = {

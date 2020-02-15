@@ -81,7 +81,7 @@ public class TestSpatialAnim extends SimpleApplication {
 
         rootNode.attachChild(model);
 
-        //predict animation
+        //run animation
         control.createChannel().setAnim("anim");
     }
 }

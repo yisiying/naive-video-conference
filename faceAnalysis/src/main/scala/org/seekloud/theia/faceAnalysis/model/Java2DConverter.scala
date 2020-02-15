@@ -1,11 +1,10 @@
 package org.seekloud.theia.faceAnalysis.model
 
 import java.awt.image.BufferedImage
-import java.nio.{ByteBuffer, FloatBuffer}
+import java.nio.ByteBuffer
 
 import org.bytedeco.javacpp.indexer.{ByteIndexer, UByteIndexer}
-import org.bytedeco.opencv.global.{opencv_imgcodecs, opencv_imgproc}
-import org.bytedeco.opencv.opencv_core.{Mat, Size}
+import org.bytedeco.opencv.opencv_core.Mat
 
 /**
   * Created by sky
@@ -26,52 +25,16 @@ import org.bytedeco.opencv.opencv_core.{Mat, Size}
   *
   */
 object Java2DConverter {
-  def buffer2mat(buffer: ByteBuffer, mat: Mat): Unit = {
-    //    val t1 = System.currentTimeMillis()
+  def image2mat(buffer: ByteBuffer, mat: Mat): Unit = {
+//    val t1 = System.currentTimeMillis()
     val indexer: UByteIndexer = mat.createIndexer()
     val rows = mat.rows()
     val cols = mat.cols()
     for (i <- 0 until rows * cols) {
       indexer.put((i * 3).toLong, buffer.get(i * 4 + 2))
       indexer.put((i * 3 + 1).toLong, buffer.get(i * 4 + 1))
-      indexer.put((i * 3 + 2).toLong, buffer.get(i * 4))
+      indexer.put((i * 3 + 2).toLong, buffer.get(i * 4 ))
     }
-    //    println(System.currentTimeMillis() - t1)
-  }
-
-  def mat2Buffer(byteBuffer: ByteBuffer, mat: Mat) = {
-    //    val t1 = System.currentTimeMillis()
-    val indexer: UByteIndexer = mat.createIndexer()
-    val w = mat.cols()
-    val h = mat.rows()
-    val s = 3 * w * h
-    for (i <- 0 until s) {
-      val d = indexer.get(i)
-      byteBuffer.put(d.toByte)
-    }
-    //    println(s"change use ${System.currentTimeMillis() - t1}")
-    byteBuffer.array()
-  }
-
-  def mat2FloatBuffer(buffer: FloatBuffer, mat: Mat, size: Int) = {
-    assert(mat.cols() * mat.rows() * 3 == size)
-    val indexer: UByteIndexer = mat.createIndexer()
-    for (i <- 0 until size) {
-      val d = indexer.get(i)
-      buffer.put(d)
-    }
-  }
-
-  def main(args: Array[String]): Unit = {
-    val mat = opencv_imgcodecs.imread("/Users/gaohan/Downloads/test_0.jpg")
-    val size = TfModelFaceDetect.width * TfModelFaceDetect.height * TfModelFaceDetect.channel
-    val ib = FloatBuffer.allocate(size)
-    mat2FloatBuffer(ib, mat, size)
-    ib.flip()
-//    t.predict(ib)
-    ib.flip()
-    //remind 测试时间
-//    t.predict(ib)
-    //        t.simple_predict(mat);
+//    println(System.currentTimeMillis() - t1)
   }
 }

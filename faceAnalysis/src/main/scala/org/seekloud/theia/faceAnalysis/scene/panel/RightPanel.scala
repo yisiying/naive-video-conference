@@ -25,11 +25,9 @@ import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol.{C
   * Date: 2019/9/25
   * Time: 15:21
   */
-trait RightPanel {
-  this: SceneImpl =>
+trait RightPanel extends SceneImpl {
 
   protected def sendCmt(comment: Comment)
-
   var rightCommentArea: VBox = _
   var rightContentPane: StackPane = _
   var scrollPane: ScrollPane = _
@@ -66,9 +64,9 @@ trait RightPanel {
     */
 
   case class WatchingListInfo(
-                               header: ObjectProperty[ImageView],
-                               userInfo: StringProperty
-                             ) {
+    header: ObjectProperty[ImageView],
+    userInfo: StringProperty
+  ) {
     def getHeader: ImageView = header.get()
 
     def setHeader(headerImg: ImageView): Unit = header.set(headerImg)
@@ -387,4 +385,4 @@ trait RightPanel {
       }
     }
   }
-}
+  }

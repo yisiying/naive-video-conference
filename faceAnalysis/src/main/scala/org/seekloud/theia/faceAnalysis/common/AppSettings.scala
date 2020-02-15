@@ -53,11 +53,6 @@ object AppSettings {
   val rtpServerPushPort = appConfig.getInt("rtp.pushPort")
   val rtpServerPullPort = appConfig.getInt("rtp.pullPort")
   val rtpServerDst = appConfig.getString("rtp.rtpServerDst")
-  val grpcHost = appConfig.getString("grpc.host")
-  val grpcPort = appConfig.getInt("grpc.port")
 
-  val alpha = appConfig.getDouble("trace.smooth_landmark")
-  val iou_thres = appConfig.getDouble("trace.iou_thres")
-  val thres = appConfig.getInt("trace.pixel_thres")
 
 }

@@ -14,15 +14,13 @@ import org.bytedeco.opencv.opencv_videoio.VideoCapture
 import org.seekloud.theia.faceAnalysis.BootJFx
 import org.seekloud.theia.faceAnalysis.common.{AppSettings, Constants, Pictures, Routes}
 import org.slf4j.LoggerFactory
-import org.seekloud.theia.faceAnalysis.BootJFx.{blockingDispatcher, executor, rmActor, rtpPushActor}
+import org.seekloud.theia.faceAnalysis.BootJFx.{blockingDispatcher, rmActor, rtpPushActor}
 import EncodeActor._
 import javafx.scene.canvas.GraphicsContext
 import javafx.scene.image.Image
 import javax.imageio.ImageIO
-import org.seekloud.theia.faceAnalysis.model.{FaceAnalysis, RenderEngine, TfModelFaceDetect}
-import org.seekloud.theia.faceAnalysis.model.TfModelLandmark
+import org.seekloud.theia.faceAnalysis.model.{FaceAnalysis, RenderEngine}
 import org.seekloud.theia.protocol.ptcl.CommonInfo.LiveInfo
-import org.seekloud.theia.faceAnalysis.utils.PicUtil
 
 import concurrent.duration._
 import scala.collection.mutable.ArrayBuffer
@@ -56,7 +54,6 @@ object CaptureActor {
   case class FrameSnapShot(
                             var frameNumber: Int = 0, //最新视频帧   编码视频帧=frameNumber-delay  delay=10
                             var encodeFrameNumber: Int = 0,
-                            var detectFrameNumber: Int = 0,
                             var aiBuffer: ArrayBuffer[FaceAnalysis.AiInfo] = ArrayBuffer[FaceAnalysis.AiInfo](), //定位数据
                             var mat: Mat = null, //实时采集数据
                             var frame: Frame = null
@@ -69,8 +66,6 @@ object CaptureActor {
   final case class ChangeAi(changeIndex: Byte, changeValue: Byte) extends Command
 
   final case class StartLive(liveId: String, liveCode: String) extends Command
-
-  final case class PushRtmpStream(rtmpServer: String) extends Command
 
   final case object PushAuthFailed extends Command
 
@@ -158,9 +153,9 @@ object CaptureActor {
           log.info(s"$logPrefix device width=${cam.get(opencv_videoio.CAP_PROP_FRAME_WIDTH)} height=${cam.get(opencv_videoio.CAP_PROP_FRAME_HEIGHT)} fps=${cam.get(opencv_videoio.CAP_PROP_FPS)}")
 
           val frameSnapShot = FrameSnapShot()
+          val detectActor = ctx.spawn(detect("detect|", frameSnapShot), "detectActor", blockingDispatcher)
           val drawActor = ctx.spawn(draw("draw|", msg.gc, frameSnapShot), "drawActor", blockingDispatcher)
-          val detectActor = ctx.spawn(detect("detect|", frameSnapShot, drawActor), "detectActor", blockingDispatcher)
-          val videoActor = ctx.spawn(videoCapture("videoCapture|", cam, frameSnapShot, detectActor, drawActor), "videoActor", blockingDispatcher)
+          val videoActor = ctx.spawn(videoCapture("videoCapture|", cam, frameSnapShot,detectActor,drawActor), "videoActor", blockingDispatcher)
           val audioActor = ctx.spawn(audioCapture("audioCapture|", frameSnapShot), "audioActor", blockingDispatcher)
 
           ctx.self ! DeviceOn
@@ -232,12 +227,6 @@ object CaptureActor {
           encodeActor ! EncodeActor.EncodeInit(Channels.newOutputStream(pipe.sink()), camWidth, camHeight)
           work(logPrefix, detectActor, drawActor, videoActor, audioActor, frameSnapShot, Some(encodeActor))
 
-        case msg: PushRtmpStream =>
-          log.info(s"$logPrefix receive $msg")
-          val streamEncoder = ctx.spawn(EncodeActor.create("create|", frameSnapShot), "enccodeActor", blockingDispatcher)
-          streamEncoder ! EncodeActor.RtmpEncodeInit(msg.rtmpServer, camWidth, camHeight)
-          work(logPrefix, detectActor, drawActor, videoActor, audioActor, frameSnapShot, Some(streamEncoder))
-
         case msg: Encoder =>
           log.info(s"$logPrefix receive Encoder")
           audioActor ! msg
@@ -272,10 +261,8 @@ object CaptureActor {
           val frame = new Mat
           if (cam.read(frame)) {
             frameSnapShot.mat = frame
-            //            detectActor ! Detect
-            if(aiMap.isEmpty){
-              drawActor ! DrawFrame
-            }
+            detectActor ! Detect
+            drawActor ! DrawFrame
             frameSnapShot.frameNumber += 1
           } else {
             //fixme 此处存在error
@@ -457,7 +444,7 @@ object CaptureActor {
                 val sHeight = gc.getCanvas.getHeight
                 gc.drawImage(image, 0.0, 0.0, sWidth, sHeight)
               }
-              //              log.debug(s"$logPrefix draw use: ${System.currentTimeMillis() - t1}")
+              log.debug(s"$logPrefix draw use: ${System.currentTimeMillis() - t1}")
             }
             Behaviors.same
 
@@ -495,18 +482,9 @@ object CaptureActor {
       }
     }
 
-
-  val tfModelFaceDetect = new TfModelFaceDetect()
-  //fixme 初始化模型
-  val mat = opencv_imgcodecs.imread(AppSettings.path + "test.jpg")
-  tfModelFaceDetect.predict(mat)
-
-  import collection.JavaConverters._
-
   private def detect(
                       logPrefix: String,
-                      frameSnapShot: FrameSnapShot,
-                      drawActor: ActorRef[DrawCommand]
+                      frameSnapShot: FrameSnapShot
                     ): Behavior[DetectCommand] =
     Behaviors.withTimers[DetectCommand] { timer =>
       Behaviors.receive[DetectCommand] { (ctx, msg) =>
@@ -515,91 +493,37 @@ object CaptureActor {
             if (frameSnapShot.mat != null) {
               if (aiMap.isEmpty) {
                 frameSnapShot.aiBuffer.clear()
-                ctx.self ! Detect
               } else {
-                if (frameSnapShot.frameNumber > frameSnapShot.detectFrameNumber) {
-                  val t1 = System.currentTimeMillis()
-                  //缓存根据实时采集mat分析得到的ai点
-                  val aiBuffer = new ArrayBuffer[FaceAnalysis.AiInfo]()
-                  frameSnapShot.detectFrameNumber = frameSnapShot.frameNumber
-                  //fixme 测试嵌入
-                  val figure = tfModelFaceDetect.predict(frameSnapShot.mat)
-                  val lms = figure.asScala.map(_.getLandmarks.asScala)
-                  val hps = figure.asScala.map(_.getHeadPose.asScala)
+                val t1 = System.currentTimeMillis()
+                //缓存根据实时采集mat分析得到的ai点
+                val aiBuffer = new ArrayBuffer[FaceAnalysis.AiInfo]()
+                FaceAnalysis.find64(frameSnapShot.mat).foreach { f =>
                   if (aiMap.contains(3)) {
-                    lms.headOption.foreach( lm =>
-                      hps.headOption.foreach( hp =>
-                        FaceAnalysis.detectModel(lm,hp, aiBuffer))
-                    )
+                    FaceAnalysis.detectModel(f.get(0), aiBuffer)
                   } else {
                     if (aiMap.get(0).nonEmpty) {
-                      FaceAnalysis.detectGlass(lms, aiBuffer)
+                      FaceAnalysis.detectGlass(f, aiBuffer)
                     }
                     if (aiMap.get(1).nonEmpty) {
-                      FaceAnalysis.detectBeard(lms, aiBuffer)
+                      FaceAnalysis.detectBeard(f, aiBuffer)
                     }
                     if (aiMap.get(2).nonEmpty) {
-                      FaceAnalysis.detectPoint(lms, aiBuffer)
+                      FaceAnalysis.detectPoint(f, aiBuffer)
                     }
                   }
-                  frameSnapShot.aiBuffer = aiBuffer
-                  log.debug(s"$logPrefix detect f=${frameSnapShot.detectFrameNumber} use ${System.currentTimeMillis() - t1}")
-                  ctx.self ! Detect
-                  drawActor ! DrawFrame
-                  //fixme 测试grpc
-                  //                  PicUtil.mat2byteArray(frameSnapShot.detectFrameNumber, frameSnapShot.mat).map { rsp =>
-                  //                    if (aiMap.contains(3)) {
-                  //                      FaceAnalysis.detectModel(rsp.l.head, aiBuffer)
-                  //                    } else {
-                  //                      if (aiMap.get(0).nonEmpty) {
-                  //                        FaceAnalysis.detectGlass(rsp.l, aiBuffer)
-                  //                      }
-                  //                      if (aiMap.get(1).nonEmpty) {
-                  //                        FaceAnalysis.detectBeard(rsp.l, aiBuffer)
-                  //                      }
-                  //                      if (aiMap.get(2).nonEmpty) {
-                  //                        FaceAnalysis.detectPoint(rsp.l, aiBuffer)
-                  //                      }
-                  //                    }
-                  //                    frameSnapShot.aiBuffer = aiBuffer
-                  //                    log.debug(s"$logPrefix detect f=${frameSnapShot.detectFrameNumber} use ${System.currentTimeMillis() - t1}")
-                  //                    ctx.self ! Detect
-                  //                  }
-                  //                  FaceAnalysis.find64(frameSnapShot.mat).foreach { f =>
-                  //                    if (aiMap.contains(3)) {
-                  //                      FaceAnalysis.detectModel(f.get(0), aiBuffer)
-                  //                    } else {
-                  //                      if (aiMap.get(0).nonEmpty) {
-                  //                        FaceAnalysis.detectGlass(f, aiBuffer)
-                  //                      }
-                  //                      if (aiMap.get(1).nonEmpty) {
-                  //                        FaceAnalysis.detectBeard(f, aiBuffer)
-                  //                      }
-                  //                      if (aiMap.get(2).nonEmpty) {
-                  //                        FaceAnalysis.detectPoint(f, aiBuffer)
-                  //                      }
-                  //                    }
-                  //                    //remind 释放内存
-                  //                    f.clear()
-                  //                    f.close()
-                  //                  }
-                  //                  ctx.self ! Detect
-                  //                  frameSnapShot.aiBuffer = aiBuffer
-                  //                  log.debug(s"$logPrefix detect f=${frameSnapShot.detectFrameNumber} use ${System.currentTimeMillis() - t1}")
-                } else {
-                  ctx.self ! Detect
+                  //remind 释放内存
+                  f.clear()
+                  f.close()
                 }
+                frameSnapShot.aiBuffer = aiBuffer
+                log.debug(s"$logPrefix detect use ${System.currentTimeMillis() - t1}")
               }
-            }
-            else {
-              ctx.self ! Detect
             }
             Behaviors.same
 
           case DeviceOn =>
             log.info(s"$logPrefix start")
             //            timer.startPeriodicTimer(TimerKey4Detect, Detect, frameDuration.millis)
-            ctx.self ! Detect
             Behaviors.same
 
           case DeviceOff =>

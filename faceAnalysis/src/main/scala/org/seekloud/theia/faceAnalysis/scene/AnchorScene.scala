@@ -2,14 +2,13 @@ package org.seekloud.theia.faceAnalysis.scene
 
 import javafx.collections.{FXCollections, ObservableList}
 import javafx.geometry.{Insets, Pos}
-import javafx.scene.text.Text
 import javafx.scene.canvas.{Canvas, GraphicsContext}
 import javafx.scene.control._
 import javafx.scene.image.{Image, ImageView}
 import javafx.scene.layout._
 import org.seekloud.theia.faceAnalysis.common.{Constants, Pictures}
 import org.seekloud.theia.faceAnalysis.component.Barrage.barrageView
-import org.seekloud.theia.faceAnalysis.scene.panel.{RightPanel, SceneImpl, TopPanel}
+import org.seekloud.theia.faceAnalysis.scene.panel.{RightPanel, TopPanel}
 
 import scala.util.Random
 
@@ -19,21 +18,19 @@ import scala.util.Random
   * Time at 下午4:08
   * anchor scene:start/stop/chat
   */
-trait AnchorScene extends TopPanel with RightPanel with SceneImpl{
+trait AnchorScene extends TopPanel with RightPanel {
 
   protected def startDevice()
 
   protected def stopDevice()
 
-  protected def startLive(rtpSelected: Boolean, rtmpSelected: Boolean, rtmpServer: Option[String])
+  protected def startLive()
 
   protected def stopLive()
 
   protected def gotoChooseScene()
 
   protected def changeAi(index: Byte, value: Byte)
-
-  protected def changeLiveModel(liveModel: Int)
 
 
   scene.getStylesheets.addAll(
@@ -44,32 +41,6 @@ trait AnchorScene extends TopPanel with RightPanel with SceneImpl{
   val liveToggleButton = new ToggleButton("设备未启动")
   liveToggleButton.getStyleClass.add("toggleButton")
   liveToggleButton.setDisable(true)
-
-  //推流方法选择
-  val liveDst = new Text("直播方式，推流前必选")
-  val liveCheck1 = new CheckBox("RTP")
-  val liveCheck2 = new CheckBox("RTMP")
-  val liveCheckBox = new HBox(liveCheck1, liveCheck2)
-  liveCheckBox.setSpacing(10)
-  liveCheck1.setOnAction{_ => changeLiveModel(1)}
-
-  val rtmpDes = new Text("rtmp地址")
-  val rtmpText = new TextField()
-  val rtmpLine = new HBox()
-  rtmpLine.setSpacing(5)
-  rtmpLine.getChildren.addAll(rtmpDes,rtmpText)
-
-  val passDes = new Text("rtmp密钥")
-  val passText = new PasswordField()
-  val passLine = new HBox()
-  passLine.setSpacing(5)
-  passLine.getChildren.addAll(passDes, passText)
-
-  val rtmpInfo = new VBox()
-  rtmpInfo.setSpacing(5)
-  rtmpInfo.setPadding(new Insets(5, 5, 0, 0))
-  rtmpInfo.getChildren.addAll(rtmpLine, passLine)
-
 
   val liveImage = new Canvas(Constants.DefaultPlayer.width * 0.9, Constants.DefaultPlayer.height * 0.9)
   val gc: GraphicsContext = liveImage.getGraphicsContext2D
@@ -154,33 +125,16 @@ trait AnchorScene extends TopPanel with RightPanel with SceneImpl{
           }
       }
 
-      val TDModelControlBox = new ChoiceBox(FXCollections.observableArrayList("无3d特效","男孩头像","女孩头像", "猪特效"))
+      val TDModelControlBox = new ChoiceBox(FXCollections.observableArrayList("无3d特效","男孩头像","女孩头像", "猴子特效"))
       TDModelControlBox.getSelectionModel.select(0)
       TDModelControlBox.setOnAction {
         _ =>
           changeAi(3, TDModelControlBox.getSelectionModel.getSelectedIndex.toByte)
       }
 
-      val liveDstControlBox = new VBox()
-      liveDstControlBox.setSpacing(5)
-      liveDstControlBox.getChildren.addAll(liveDst, liveCheckBox)
-      liveDstControlBox.setPrefWidth(150)
-
-      liveCheck2.setOnAction(
-        _ =>
-          if(liveCheck2.isSelected && !liveToggleButton.isSelected){
-            liveDstControlBox.getChildren.add(rtmpInfo)
-            changeLiveModel(2)
-          } else {
-            liveDstControlBox.getChildren.remove(rtmpInfo)
-            changeLiveModel(2)
-          }
-
-      )
-
       val leftControlBox = new VBox(deviceToggleButton, liveToggleButton)
       leftControlBox.setSpacing(10)
-      leftControlBox.setPrefWidth(165)
+      leftControlBox.setPrefWidth(180)
 
       val glassControlBox = new ChoiceBox(FXCollections.observableArrayList("无眼镜", "红色眼镜", "绿色眼镜", "蓝色眼镜"))
       glassControlBox.getSelectionModel.select(0)
@@ -197,17 +151,17 @@ trait AnchorScene extends TopPanel with RightPanel with SceneImpl{
       }
 
       val centreControlBox = new VBox(glassControlBox, beardControlBox)
-      centreControlBox.setPadding(new Insets(0,10,0,0))
-      centreControlBox.setSpacing(15)
+      centreControlBox.setSpacing(20)
 
       val rightControlBox = new VBox(pointToggleButton,TDModelControlBox)
-      rightControlBox.setSpacing(5)
+      rightControlBox.setSpacing(10)
 
-      val controlBox = new HBox(liveDstControlBox,leftControlBox, centreControlBox, rightControlBox)
-      controlBox.setSpacing(20)
+      val controlBox = new HBox(leftControlBox, centreControlBox, rightControlBox)
+      controlBox.setSpacing(55)
 
       controlBox
     }
+
     leftAreaBox
 
   }

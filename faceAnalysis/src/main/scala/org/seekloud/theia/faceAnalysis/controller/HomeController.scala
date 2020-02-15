@@ -24,8 +24,7 @@ import scala.util.{Failure, Success}
 object HomeController {
   case class User(username: String, loginInfo: UserInfo)
   var usersInfo: Option[User] = None
-//  var roomInfo:Option[RoomInfo]=None
-  var roomInfo:Option[RoomInfo]=Some(RoomInfo(0l,"","",0l,"","","",0,0,None,None))
+  var roomInfo:Option[RoomInfo]=None
 }
 class HomeController(
                       context: StageContext

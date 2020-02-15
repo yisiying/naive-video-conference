@@ -76,7 +76,7 @@ object RenderEngine extends SimpleApplication with SceneProcessor {
       * 要有光
       */
     rootNode.addLight(new AmbientLight(new ColorRGBA(0.2f, 0.2f, 0.2f, 1f)))
-    rootNode.addLight(new DirectionalLight(new Vector3f(-1, -2, -3), new ColorRGBA(0.8f, 0.8f, 0.8f, 1f).mult(1.5f)))
+    rootNode.addLight(new DirectionalLight(new Vector3f(-1, -2, -3), new ColorRGBA(0.8f, 0.8f, 0.8f, 1f)))
 
     //场景添加模型
     offView.attachScene(rootNode)
@@ -112,7 +112,7 @@ object RenderEngine extends SimpleApplication with SceneProcessor {
     cpuBuf.clear
     renderer.readFrameBuffer(offBuffer, cpuBuf)
     synchronized {
-      Java2DConverter.buffer2mat(cpuBuf, mat)
+      Java2DConverter.image2mat(cpuBuf, mat)
     }
   }
 

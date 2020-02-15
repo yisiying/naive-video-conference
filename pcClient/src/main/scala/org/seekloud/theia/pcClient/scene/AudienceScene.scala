@@ -68,9 +68,9 @@ object AudienceScene {
 
     def ask4Loss()
 
-    def pausePlayRec(recordInfo: RecordInfo)
+//    def pausePlayRec(recordInfo: RecordInfo)
 
-    def continuePlayRec(recordInfo: RecordInfo)
+//    def continuePlayRec(recordInfo: RecordInfo)
   }
 
 
@@ -234,11 +234,11 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
   liveBar.playToggleButton.setOnAction {
     _ =>
       if (liveBar.playToggleButton.isSelected) {
-        listener.continuePlayRec(album.toRecordInfo)
+//        listener.continuePlayRec(album.toRecordInfo)
         liveBar.resetStartPlayTime(System.currentTimeMillis())
         Tooltip.install(liveBar.playToggleButton, new Tooltip("点击暂停"))
       } else {
-        listener.pausePlayRec(album.toRecordInfo)
+//        listener.pausePlayRec(album.toRecordInfo)
         liveBar.isPlaying = false
         //        liveBar.hasplayedTime = liveBar.showedPlayTime
         Tooltip.install(liveBar.playToggleButton, new Tooltip("点击继续"))

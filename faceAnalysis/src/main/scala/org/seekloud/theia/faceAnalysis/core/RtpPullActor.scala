@@ -4,10 +4,11 @@ import java.nio.ByteBuffer
 import java.nio.channels.{Channels, Pipe}
 
 import akka.actor.typed.{ActorRef, Behavior}
-import akka.actor.typed.scaladsl.{ActorContext, StashBuffer, TimerScheduler}
+import akka.actor.typed.scaladsl.{ActorContext, Behaviors, StashBuffer, TimerScheduler}
 import akka.actor.typed.scaladsl.Behaviors
 import org.seekloud.theia.faceAnalysis.controller.ViewerController
 import org.seekloud.theia.faceAnalysis.core.RMActor.WatchInfo
+import org.seekloud.theia.player.core.PlayerManager.MediaSettings
 import org.seekloud.theia.player.sdk.MediaPlayer
 import org.seekloud.theia.rtpClient.{Protocol, PullStreamClient}
 import org.seekloud.theia.rtpClient.Protocol._
@@ -151,8 +152,6 @@ object RtpPullActor {
 
         case StopPull =>
           log.info(s"StreamPuller-$liveId stopped in init.")
-          val playId = s"roomId${watchInfo.get.roomId}"
-          mediaPlayer.stop(playId, viewerController.get.gotoRoomScene)
           rmActor ! RMActor.PullerStopped
           Behaviors.stopped
 

@@ -101,9 +101,9 @@ object PlayerActor {
             working(id, grabActor, imageQueue, samplesQueue, pF, sF, viewerController)
           }
 
-        case msg:GrabberInitFailed =>
-          log.warn(s"PlayerActor -$id got GrabberInitFailed:${msg.ex}")
-          Behaviors.stopped
+          case msg:GrabberInitFailed =>
+            log.warn(s"PlayerActor -$id got GrabberInitFailed:${msg.ex}")
+            Behaviors.stopped
 
         case StopVideoPlayer =>
           log.info(s"VideoPlayer is stopped.")

@@ -14,7 +14,7 @@ object RenderModel{
     val model= id match {
       case 1=> RenderModelBoy
       case 2=> RenderModelGirl
-      case 3=> RenderModelPig
+      case 3=> RenderModelJaime
       case _=> RenderModelBoy
     }
     RenderEngine.gamePause()
@@ -35,8 +35,6 @@ trait RenderModel {
   def lipSideChange(changeSize: Float): Unit
 
   def mouthChange(changeSize: Float): Unit
-
-  def modelScale(rate:Float,fw:Float,fh:Float):Unit
 
   def leftEyeLidChange(changeSize: Float): Unit
 

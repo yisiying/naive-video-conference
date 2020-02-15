@@ -1,5 +1,6 @@
 package org.seekloud.theia.faceAnalysis.controller
 
+import akka.actor.typed.ActorRef
 import org.seekloud.theia.faceAnalysis.BootJFx
 import org.seekloud.theia.faceAnalysis.BootJFx.{captureActor, rmActor}
 import org.seekloud.theia.faceAnalysis.common.{Constants, StageContext}
@@ -9,6 +10,7 @@ import org.seekloud.theia.faceAnalysis.core.{CaptureActor, RMActor}
 import org.seekloud.theia.faceAnalysis.scene.ViewerScene
 import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol
 import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol._
+import org.slf4j.LoggerFactory
 
 /**
   * User: shuai
@@ -16,11 +18,10 @@ import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol._
   * Time: 16:31
   */
 class ViewerController(
-                        context: StageContext,
-                        //  viewScene: ViewerScene,
-                        //  rmActor: ActorRef[RMActor.Command]
-                      ) extends ViewerScene with UserControllerImpl {
-
+  context: StageContext,
+//  viewScene: ViewerScene,
+//  rmActor: ActorRef[RMActor.Command]
+) extends ViewerScene with UserControllerImpl {
 
   override def showScene(): Unit = {
     BootJFx.addToPlatform(
@@ -61,33 +62,17 @@ class ViewerController(
             updateBarrage(msg)
           }
 
-        case msg: HostDisconnect =>
+        case HostDisconnect =>
           BootJFx.addToPlatform {
             WarningDialog.initWarningDialog("主播已断开连线~")
           }
-        //rmActor ! rmActor.StopJoinAndWatch
+          //rmActor ! rmActor.StopJoinAndWatch
 
         case HostStopPushStream2Client =>
           BootJFx.addToPlatform({
             WarningDialog.initWarningDialog("主播已停止直播，请换个房间观看哦~")
           })
 
-
-        case msg: LikeRoomRsp =>
-          log.info(s"get like rsp:${msg.msg}")
-
-        case msg: JudgeLikeRsp =>
-          BootJFx.addToPlatform(
-            if (msg.like) {
-              likeBtn.setSelected(true)
-              likeBtn.setGraphic(likeIcon)
-              log.info(s"inside get judgelikersp true")
-            } else {
-              likeBtn.setSelected(false)
-              likeBtn.setGraphic(unLikeIcon)
-              log.info(s"inside get judgelikersp false")
-            }
-          )
 
 
         case msg: UpdateAudienceInfo =>
@@ -99,10 +84,4 @@ class ViewerController(
       }
     }
   }
-
-  override protected def sendLike(like: LikeRoom): Unit = {
-    rmActor ! RMActor.SendLike(like)
-  }
-
-
 }

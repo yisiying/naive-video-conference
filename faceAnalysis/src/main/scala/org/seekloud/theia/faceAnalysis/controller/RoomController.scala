@@ -1,15 +1,12 @@
 package org.seekloud.theia.faceAnalysis.controller
 
 import org.seekloud.theia.faceAnalysis.BootJFx
-import org.seekloud.theia.faceAnalysis.BootJFx.captureActor
+import org.seekloud.theia.faceAnalysis.BootJFx.rmActor
 import org.seekloud.theia.faceAnalysis.common.StageContext
 import org.seekloud.theia.faceAnalysis.component.WarningDialog
-import org.seekloud.theia.faceAnalysis.core.{CaptureActor, RMActor}
+import org.seekloud.theia.faceAnalysis.core.RMActor
 import org.seekloud.theia.faceAnalysis.scene.RoomScene
 import org.seekloud.theia.faceAnalysis.utils.RMClient
-import org.seekloud.theia.faceAnalysis.BootJFx.rmActor
-import org.seekloud.theia.faceAnalysis.scene.RoomScene.AlbumInfo
-import org.seekloud.theia.protocol.ptcl.CommonInfo.RoomInfo
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -18,13 +15,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * Date: 2019/9/24
   * Time: 18:19
   */
-object RoomController{
-  var currentRoomId:Long = _
-}
 
 class RoomController(context: StageContext) extends RoomScene {
-
-  import RoomController._
 
   override def showScene(): Unit = {
     updateRoomList()
@@ -33,14 +25,12 @@ class RoomController(context: StageContext) extends RoomScene {
     )
   }
 
-  override def watching(roomInfo: AlbumInfo,index:Int): Unit = {
-    currentRoomId=roomInfo.roomId
-    if(roomList.exists(_.roomId == currentRoomId)){
-      currentRoomId=roomInfo.roomId
+  override def watching(roomId: Long): Unit = {
+
+    if(roomList.exists(_.roomId == roomId)){
       val viewerScene = new ViewerController(context)
       viewerScene.showScene()
-      //todo 开始观看直播
-      rmActor ! RMActor.GetRoomDetail(HomeController.usersInfo.get.loginInfo, roomList.find(_.roomId == currentRoomId).get, viewerScene)
+      rmActor ! RMActor.GetRoomDetail(HomeController.usersInfo.get.loginInfo, roomList.find(_.roomId == roomId).get, viewerScene)
     }
 
   }

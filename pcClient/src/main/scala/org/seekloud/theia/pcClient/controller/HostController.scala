@@ -133,12 +133,12 @@ class HostController(
       rmManager ! RmManager.ChangeOption(bit, re, frameRate, needImage, needSound)
     }
 
-    override def recordOption(recordOrNot: Boolean, recordType: String, path: Option[String] = None): Unit = {
-      recordType match {
-                  case "录制自己" => rmManager ! RmManager.RecordOption(recordOrNot, path)
-                  case "录制别人" => path.foreach(i => rmManager ! RmManager.StartRecord(i))
-                }
-    }
+//    override def recordOption(recordOrNot: Boolean, recordType: String, path: Option[String] = None): Unit = {
+//      recordType match {
+//                  case "录制自己" => rmManager ! RmManager.RecordOption(recordOrNot, path)
+//                  case "录制别人" => path.foreach(i => rmManager ! RmManager.StartRecord(i))
+//                }
+//    }
 
     override def ask4Loss(): Unit = {
       rmManager ! RmManager.GetPackageLoss
@@ -153,56 +153,56 @@ class HostController(
       }
     }
 
-    override def deleteRecord(recordId: Long) : Unit = {
-      RMClient.deleteRecord(recordId).map{
-        case Right(rst)=>
-          if(rst.errCode == 0){
-            refresh()
-          }else{
-            Boot.addToPlatform(
-              WarningDialog.initWarningDialog(s"${rst.msg}")
-            )
-          }
-        case Left(e) =>
-          log.error(s"get record list in host page error: $e")
-          Boot.addToPlatform {
-            WarningDialog.initWarningDialog("删除失败，请重试")
-          }
-      }
-    }
+//    override def deleteRecord(recordId: Long) : Unit = {
+//      RMClient.deleteRecord(recordId).map{
+//        case Right(rst)=>
+//          if(rst.errCode == 0){
+//            refresh()
+//          }else{
+//            Boot.addToPlatform(
+//              WarningDialog.initWarningDialog(s"${rst.msg}")
+//            )
+//          }
+//        case Left(e) =>
+//          log.error(s"get record list in host page error: $e")
+//          Boot.addToPlatform {
+//            WarningDialog.initWarningDialog("删除失败，请重试")
+//          }
+//      }
+//    }
 
-    override def getRecordList(): Unit ={
-      val roomId:Long = RmManager.roomInfo.get.roomId
-      log.debug(s"send userid ${roomId}")
-      RMClient.getRecordList2(roomId).map{
-        case Right(rst)=>
-          if (rst.errCode == 0) {
-            log.debug(s"getListwell ${rst.recordNum}")
-            Boot.addToPlatform {
-              hostScene.recordList =  rst.recordInfo
-              hostScene.recordsSize = rst.recordNum
-              hostScene.updateRecordBox()
-            }
-          } else {
-            //removeLoading()
-            Boot.addToPlatform(
-              WarningDialog.initWarningDialog(s"${rst.msg}")
-            )
-          }
-        case Left(e) =>
-          log.error(s"get record list in host page error: $e")
-          //removeLoading()
-          Boot.addToPlatform {
-            WarningDialog.initWarningDialog("该页面获取录像列表失败")
-          }
-      }
-    }
+//    override def getRecordList(): Unit ={
+//      val roomId:Long = RmManager.roomInfo.get.roomId
+//      log.debug(s"send userid ${roomId}")
+//      RMClient.getRecordList2(roomId).map{
+//        case Right(rst)=>
+//          if (rst.errCode == 0) {
+//            log.debug(s"getListwell ${rst.recordNum}")
+//            Boot.addToPlatform {
+//              hostScene.recordList =  rst.recordInfo
+//              hostScene.recordsSize = rst.recordNum
+//              hostScene.updateRecordBox()
+//            }
+//          } else {
+//            //removeLoading()
+//            Boot.addToPlatform(
+//              WarningDialog.initWarningDialog(s"${rst.msg}")
+//            )
+//          }
+//        case Left(e) =>
+//          log.error(s"get record list in host page error: $e")
+//          //removeLoading()
+//          Boot.addToPlatform {
+//            WarningDialog.initWarningDialog("该页面获取录像列表失败")
+//          }
+//      }
+//    }
 
-    override def refresh(): Unit = {
-        log.debug("refresh ==========")
-        hostScene.recordList = Nil
-        getRecordList()
-    }
+//    override def refresh(): Unit = {
+//        log.debug("refresh ==========")
+//        hostScene.recordList = Nil
+//        getRecordList()
+//    }
   })
 
 
