@@ -156,6 +156,7 @@ object StreamPuller {
 //          val freePort = NetUtil.getFreePort
 //          val inputStream = s"udp://127.0.0.1:$port"
           if (joinInfo.nonEmpty) {
+            log.info(s"in StreamPuller-PullStreamReqSuccess in joinInfo")
             audienceScene.foreach(_.autoReset())
             hostScene.foreach(_.resetBack())
             val playId = Ids.getPlayId(AudienceStatus.CONNECT, roomId = Some(joinInfo.get.roomId), audienceId = Some(joinInfo.get.audienceId))
@@ -168,6 +169,7 @@ object StreamPuller {
 
 
           if (watchInfo.nonEmpty) {
+            log.info(s"in StreamPuller-PullStreamReqSuccess in watchInfo")
             audienceScene.foreach(_.autoReset())
             val playId = Ids.getPlayId(AudienceStatus.LIVE, roomId = Some(watchInfo.get.roomId))
             println(s"===watchInfo playId:$playId")

@@ -1034,11 +1034,11 @@ object RmManager {
 //          mediaPlayer.startRecord(outFilePath)
 //          log.debug(s"rmManager send startRecord.")
 //          Behaviors.same
-//
-//        case GetPackageLoss =>
-//          liveManager ! LiveManager.GetPackageLoss
-//          Behaviors.same
-//
+
+        case GetPackageLoss =>
+          liveManager ! LiveManager.GetPackageLoss
+          Behaviors.same
+
 //        case StopRecord =>
 //          mediaPlayer.stopRecord()
 //          log.debug(s"rmManager send stopRecord.")
