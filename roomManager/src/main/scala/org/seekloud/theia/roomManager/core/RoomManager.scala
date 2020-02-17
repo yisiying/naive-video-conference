@@ -1,5 +1,7 @@
 package org.seekloud.theia.roomManager.core
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import akka.actor.typed.scaladsl.AskPattern._
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors, StashBuffer, TimerScheduler}
 import akka.actor.typed.{ActorRef, Behavior}
@@ -10,14 +12,13 @@ import org.seekloud.theia.protocol.ptcl.processer2Manager.ProcessorProtocol.Seek
 import org.seekloud.theia.roomManager.Boot.{executor, scheduler, timeout}
 import org.seekloud.theia.roomManager.common.AppSettings._
 import org.seekloud.theia.roomManager.common.Common
-import org.seekloud.theia.roomManager.models.dao.{RecordDao, UserInfoDao, RecordCommentDAO}
+import org.seekloud.theia.roomManager.models.dao.{RecordCommentDAO, RecordDao, UserInfoDao}
 import org.seekloud.theia.roomManager.core.RoomActor._
 import org.seekloud.theia.roomManager.protocol.ActorProtocol
 import org.seekloud.theia.roomManager.protocol.CommonInfoProtocol.WholeRoomInfo
 import org.seekloud.theia.roomManager.utils.{DistributorClient, ProcessorClient}
 import org.slf4j.LoggerFactory
 import org.seekloud.theia.roomManager.common.Common.{Like, Role}
-
 
 import scala.collection.mutable
 import scala.concurrent.duration.{FiniteDuration, _}
@@ -46,6 +47,8 @@ object RoomManager {
 
   case class AddAccess(roomId: Long, startTime: Long, invitationList: mutable.HashMap[Int, List[Long]]) extends Command
 
+  case class GenLiveIdAndLiveCode(replyTo: ActorRef[LiveInfo]) extends Command
+
   case class GetRtmpLiveInfo(roomId:Long, replyTo:ActorRef[GetLiveInfoRsp4RM]) extends Command with RoomActor.Command
 
   private final case object DelaySeekRecordKey
@@ -73,18 +76,27 @@ object RoomManager {
         log.debug(s"${ctx.self.path} ---===== ${roomInfo.rtmp}")
 
         getRoomActor(Common.TestConfig.TEST_ROOM_ID,ctx) ! TestRoom(roomInfo)
-        idle()
+        val seq = new AtomicInteger(100001)
+        idle(seq)
       }
     }
   }
 
   private def idle(
+                    seq: AtomicInteger
 //                    roomInUse:mutable.HashMap[Long,RoomInfo]
                   ) //roomId -> (roomInfo, liveInfo)
                   (implicit stashBuffer: StashBuffer[Command],timer:TimerScheduler[Command]):Behavior[Command] = {
 
     Behaviors.receive[Command]{(ctx,msg) =>
       msg match {
+        case GenLiveIdAndLiveCode(replyTo) =>
+          val liveId = s"user-${seq.getAndIncrement()}"
+          val liveCode = "123456"
+          log.info(s"gen liveId: $liveId success")
+          replyTo ! LiveInfo(liveId, liveCode)
+          Behaviors.same
+
         case GetRoomList(replyTo) =>
           val roomInfoListFuture = ctx.children.map(_.unsafeUpcast[RoomActor.Command]).map{r =>
             val roomInfoFuture:Future[RoomInfo] = r ? (GetRoomInfo(_))
