@@ -398,7 +398,7 @@ class LivePage(userId:Long, roomId:Long) extends Page{
           anchorName := rsp.roomInfo.get.userName
           anchorHeadImgUrl := rsp.roomInfo.get.headImgUrl
 //          val url = dom.window.location.protocol + "//" + dom.window.location.host + rsp.roomInfo.get.mpd.getOrElse("")
-          val url = dom.window.location.protocol + "//" + dom.window.location.host + rsp.roomInfo.get.mpd.getOrElse("")
+          val url = dom.window.location.protocol + "//" + dom.window.location.host + rsp.roomInfo.get.rtmp.getOrElse("")
           dashurl = url
           hlsurl = url.replace("index","master").replace("mpd","m3u8")
 //          dashStreamer = new DashType("http://10.1.120.144:80/dash/123.mpd")//测试用

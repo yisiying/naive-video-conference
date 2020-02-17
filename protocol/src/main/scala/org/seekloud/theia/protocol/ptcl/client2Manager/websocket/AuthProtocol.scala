@@ -70,6 +70,7 @@ object AuthProtocol {
   case class GetTokenRsp(
     tokenOpt: Option[String],
     SecureKeyOpt: Option[String],
+    startTimeOpt:Option[Long],
     errCode: Int = 0,
     msg: String = "ok"
   ) extends WsMsgRm2Host

@@ -118,7 +118,7 @@ object RmManager {
 
   final case class HostLiveReq(biliSelected: Boolean, rtmpSelected: Boolean, rtpSelected: Boolean, rtmpServer: Option[String] = None) extends RmCommand
 
-  final case class RtmpLiveReq(token: String, key: String) extends RmCommand
+  final case class RtmpLiveReq(token: String, key: String, startTime: Long) extends RmCommand
 
   final case class StartLive(liveId: String, liveCode: String) extends RmCommand
 
@@ -345,6 +345,7 @@ object RmManager {
           val audienceController = new AudienceController(stageCtx, audienceScene, ctx.self)
           if (msg.roomInfo.rtmp.nonEmpty) {
             audienceScene.liveId = msg.roomInfo.rtmp
+            println(s"111111111111111111111111111  ${msg.roomInfo.rtmp}")
             val info = WatchInfo(msg.roomInfo.roomId, audienceScene.gc)
             liveManager ! LiveManager.PullStream(msg.roomInfo.rtmp.get, watchInfo = Some(info), audienceScene = Some(audienceScene))
 //            liveManager ! LiveManager.PullStream("rtmp://10.1.29.247:42037/live/123456", watchInfo = Some(info), audienceScene = Some(audienceScene))
@@ -547,6 +548,7 @@ object RmManager {
           //          val url = s"rtmp://media.seekloud.com:62040/live/23456?rtmpToken=${msg.token}&userId=${userInfo.get.userId}"
           //          val url = s"rtmp://media.seekloud.com:62040/live/${msg.key}?rtmpToken=${msg.token}&userId=${userInfo.get.userId}"
           val url = s"rtmp://10.1.29.247:42037/live/123456"
+//          val url = s"rtmp://10.1.29.247:42037/live/${roomInfo.get.roomId}?startTime=${msg.startTime}&userId=${userInfo.get.userId}"
           log.info(s"rtmp_url: $url")
           liveManager ! LiveManager.PushRtmpStream(url)
           hostController.isLive = true

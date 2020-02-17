@@ -65,7 +65,7 @@ object CommonInfo {
     coverImgUrl:String,
     var observerNum:Int,
     var like:Int,
-    var mpd: Option[String] = None,
+//    var mpd: Option[String] = None,
     var rtmp: Option[String] = None
     //var liveAdd: Option[String] = None
   )

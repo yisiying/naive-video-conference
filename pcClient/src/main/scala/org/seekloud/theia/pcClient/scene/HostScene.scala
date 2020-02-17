@@ -350,8 +350,8 @@ class HostScene(stage: Stage) {
   tb3.getStyleClass.add("hostScene-leftArea-toggleButton")
   val tb4 = new ToggleButton("观众 ", audienceIcon)
   tb4.getStyleClass.add("hostScene-leftArea-toggleButton")
-//  val tb5 = new ToggleButton("我的录像 ",recordIcon)
-//  tb5.getStyleClass.add("hostScene-leftArea-toggleButton")
+  val tb5 = new ToggleButton("我的录像 ",recordIcon)
+  tb5.getStyleClass.add("hostScene-leftArea-toggleButton")
 
   /**
     * emoji
@@ -511,8 +511,8 @@ class HostScene(stage: Stage) {
 //    tb5.setToggleGroup(group)
 
     val tbBox = new HBox()
-//    tbBox.getChildren.addAll(tb1, tb2, tb3, tb4,tb5)
-    tbBox.getChildren.addAll(tb1, tb2, tb3, tb4)
+    tbBox.getChildren.addAll(tb1, tb2, tb3, tb4,tb5)
+//    tbBox.getChildren.addAll(tb1, tb2, tb3, tb4)
 
     //val content = new VBox()
     val left1Area = addLeftChild1Area()

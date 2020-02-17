@@ -26,7 +26,7 @@ package object common {
   ) {
     def toRoomInfo =
       RoomInfo(roomId, roomName, roomDes, userId, userName,
-        headImgUrl, coverImgUrl, observerNum, like, None, streamId)
+        headImgUrl, coverImgUrl, observerNum, like, streamId)
 
     def toRecordInfo =
       RecordInfo(recordId, roomId, roomName, roomDes, userId, userName,

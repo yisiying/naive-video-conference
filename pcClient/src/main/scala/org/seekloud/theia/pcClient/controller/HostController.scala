@@ -226,7 +226,7 @@ class HostController(
       case msg:GetTokenRsp =>
         log.info("gotTokenRsp")
 //        if (msg.errCode == 0) {
-          rmManager ! RmManager.RtmpLiveReq(msg.tokenOpt.get,msg.SecureKeyOpt.get)
+          rmManager ! RmManager.RtmpLiveReq(msg.tokenOpt.get,msg.SecureKeyOpt.get, msg.startTimeOpt.get)
 //        } else {
 //          Boot.addToPlatform {
 //            WarningDialog.initWarningDialog(s"${msg.msg}")

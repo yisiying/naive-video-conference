@@ -162,7 +162,8 @@ object StreamPuller {
             println(s"===joinInfo playId:$playId")
             mediaPlayer.setTimeGetter(playId, pullClient.get.getServerTimestamp)
             val videoPlayer = ctx.spawn(VideoPlayer.create(playId, audienceScene, None, None), s"videoPlayer$playId")
-            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(joinInfo.get.gc), None)
+//            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(joinInfo.get.gc), None)
+            mediaPlayer.start(playId, videoPlayer, Left("rtmp://10.1.29.247:42037/live/123456"), Some(joinInfo.get.gc), None)
           }
 
 
@@ -172,7 +173,8 @@ object StreamPuller {
             println(s"===watchInfo playId:$playId")
             mediaPlayer.setTimeGetter(playId, pullClient.get.getServerTimestamp)
             val videoPlayer = ctx.spawn(VideoPlayer.create(playId, audienceScene, None, None), s"videoPlayer$playId")
-            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
+//            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
+            mediaPlayer.start(playId, videoPlayer, Left("rtmp://10.1.29.247:42037/live/123456"), Some(watchInfo.get.gc), None)
 
           }
           stashBuffer.unstashAll(ctx, pulling(liveId, parent, pullClient.get, mediaPlayer, sink, source, audienceScene, hostScene))

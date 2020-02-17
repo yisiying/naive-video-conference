@@ -60,8 +60,8 @@ object RoomManager {
 //        idle(mutable.HashMap.empty[Long,RoomInfo])
         var roomInfo = RoomInfo(Common.TestConfig.TEST_ROOM_ID,"test_room","测试房间",Common.TestConfig.TEST_USER_ID,
           "byf1",UserInfoDao.getHeadImg(""),
-          UserInfoDao.getCoverImg(""),0,0,None,
-          Some("rtmp://10.1.29.247:42037/live/123456")
+          UserInfoDao.getCoverImg(""),0,0,
+          Some("test")
         )
         /*ProcessorClient.getmpd(Common.TestConfig.TEST_ROOM_ID).map{
           case Right(v) =>

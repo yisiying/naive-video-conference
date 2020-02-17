@@ -338,7 +338,7 @@ class LiveRoomPage() {
       case Right(rsp) =>
         if(rsp.errCode==0 && rsp.roomInfo.isDefined){
           anchorUserName:= rsp.roomInfo.get.userName
-          val url = rsp.roomInfo.get.mpd.get
+          val url = rsp.roomInfo.get.rtmp.get
           roomLike := rsp.roomInfo.get.like
           dashUrl = url
           hlsUrl = url.replace("index","master").replace("mpd","m3u8")

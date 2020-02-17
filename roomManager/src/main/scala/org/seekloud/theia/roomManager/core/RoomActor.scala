@@ -103,7 +103,7 @@ object RoomActor {
 
                   val roomInfo = RoomInfo(roomId, s"${userTableOpt.get.userName}的直播间", "", userTableOpt.get.uid, userTableOpt.get.userName,
                     UserInfoDao.getHeadImg(userTableOpt.get.headImg),
-                    UserInfoDao.getHeadImg(userTableOpt.get.coverImg), 0, 0, None,
+                    UserInfoDao.getHeadImg(userTableOpt.get.coverImg), 0, 0,
                     Some(rsp.liveInfo.liveId)
                   )
 
@@ -111,7 +111,7 @@ object RoomActor {
                     case Right(r) =>
                       log.info(s"distributor startPull succeed, get live address: ${r.liveAdd}")
                       dispatchTo(subscribers)(List((userId, false)), StartLiveRsp(Some(rsp.liveInfo)))
-                      roomInfo.mpd = Some(r.liveAdd)
+//                      roomInfo.mpd = Some(r.liveAdd)
                       val startTime = r.startTime
                         ctx.self ! SwitchBehavior("idle", idle(WholeRoomInfo(roomInfo), mutable.HashMap(Role.host -> mutable.HashMap(userId -> rsp.liveInfo)), subscribers, mutable.Set[Long](), startTime, 0, mutable.HashMap(Role.host -> List(userId))))
 
@@ -292,7 +292,7 @@ object RoomActor {
                   case Right(r) =>
                     log.info("distributor startPull succeed")
                     val startTime = r.startTime
-                    val newWholeRoomInfo = wholeRoomInfo.copy(roomInfo = wholeRoomInfo.roomInfo.copy(observerNum = 0, like = 0, mpd = Some(r.liveAdd), rtmp = Some(rsp.liveInfo.liveId)))
+                    val newWholeRoomInfo = wholeRoomInfo.copy(roomInfo = wholeRoomInfo.roomInfo.copy(observerNum = 0, like = 0, rtmp = Some(rsp.liveInfo.liveId)))
                     dispatchTo(subscribe)(List((wholeRoomInfo.roomInfo.userId, false)), StartLiveRsp(Some(rsp.liveInfo)))
                     ctx.self ! SwitchBehavior("idle", idle(newWholeRoomInfo, liveInfoMap, subscribe, liker, startTime, 0, invitationList, isJoinOpen))
                   case Left(e) =>
@@ -539,7 +539,7 @@ object RoomActor {
 //          ProcessorClient.closeRoom(roomId)
         liveInfoMap.clear()
 
-        val newroomInfo = wholeRoomInfo.copy(roomInfo = wholeRoomInfo.roomInfo.copy(rtmp = None, mpd = None))
+        val newroomInfo = wholeRoomInfo.copy(roomInfo = wholeRoomInfo.roomInfo.copy(rtmp = None))
         log.debug(s"${ctx.self.path} 主播userId=${userId}已经停止推流，更新房间信息，liveId=${newroomInfo.roomInfo.rtmp}")
         subscribers.get((wholeRoomInfo.roomInfo.userId, false)) match {
           case Some(hostActor) =>
@@ -678,10 +678,10 @@ object RoomActor {
           if (r.nonEmpty) {
             if (r.get.rtmpToken != "") {
               if(r.get.`sealed`){
-                dispatchTo(List((userId, false)), GetTokenRsp(None, None, 100038, "该用户已经被封号哦"))
+                dispatchTo(List((userId, false)), GetTokenRsp(None, None, None, 100038, "该用户已经被封号哦"))
               }
               else{
-                dispatchTo(List((userId, false)), GetTokenRsp(Some(r.get.rtmpToken), Some(nonceStr(40))))
+                dispatchTo(List((userId, false)), GetTokenRsp(Some(r.get.rtmpToken), Some(nonceStr(40)), Some(startTime)))
               }
             }
             else{
@@ -689,33 +689,33 @@ object RoomActor {
                 if (t.nonEmpty) {
                   log.debug(s"rtmp获取用户token成功")
                   if(r.get.`sealed`){
-                    dispatchTo(List((userId, false)), GetTokenRsp(None, None, 100038, "该用户已经被封号哦"))
+                    dispatchTo(List((userId, false)), GetTokenRsp(None, None, None, 100038, "该用户已经被封号哦"))
                   }
                   else{
-                    dispatchTo(List((userId, false)), GetTokenRsp(Some(r.get.rtmpToken), Some(nonceStr(40))))
+                    dispatchTo(List((userId, false)), GetTokenRsp(Some(r.get.rtmpToken), Some(nonceStr(40)), Some(startTime)))
 
                   }
                 }
                 else {
                   log.debug(s"rtmp获取用户token失败,数据库更新失败")
-                  dispatchTo(List((userId, false)), GetTokenRsp(None, None, 100037, "rtmp获取用户token失败,数据库更新失败"))
+                  dispatchTo(List((userId, false)), GetTokenRsp(None, None, None, 100037, "rtmp获取用户token失败,数据库更新失败"))
                 }
               }.recover {
                 case e: Exception =>
                   log.debug(s"rtmp获取用户token失败,数据库更新失败$e")
-                  dispatchTo(List((userId, false)), GetTokenRsp(None, None, 100037, s"rtmp获取用户token失败,数据库更新失败$e"))
+                  dispatchTo(List((userId, false)), GetTokenRsp(None, None , None, 100037, s"rtmp获取用户token失败,数据库更新失败$e"))
               }
 
 
             }
           }
           else {
-            dispatchTo(List((userId, false)), GetTokenRsp(None, None, 100034, "该用户不存在"))
+            dispatchTo(List((userId, false)), GetTokenRsp(None, None , None, 100034, "该用户不存在"))
           }
         }.recover {
           case e: Exception =>
             log.debug(s"获取token失败，inter error：$e")
-            dispatchTo(List((userId, false)), GetTokenRsp(None, None, 100036, s"获取token失败，inter error：$e"))
+            dispatchTo(List((userId, false)), GetTokenRsp(None, None , None, 100036, s"获取token失败，inter error：$e"))
         }
         Behaviors.same
 
