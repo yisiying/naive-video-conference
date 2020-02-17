@@ -767,7 +767,8 @@ object RmManager {
 
         case TestPlay =>
           log.info(s"in StreamPuller-PullStreamReqSuccess in watchInfo")
-          Some(audienceScene).foreach(_.autoReset())
+//          Some(audienceScene).foreach(_.autoReset())
+          audienceScene.autoReset()
           val playId = Ids.getPlayId(AudienceStatus.LIVE, roomId = Some(audienceScene.getRoomInfo.roomId))
           println(s"===watchInfo playId:$playId")
           mediaPlayer.setTimeGetter(playId, () => System.currentTimeMillis())
