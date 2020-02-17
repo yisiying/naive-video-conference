@@ -170,6 +170,8 @@ object RmManager {
 
   final case class ExitJoin(roomId: Long) extends RmCommand //主动关闭和主播的连线
 
+  final case object TestPlay extends RmCommand
+
 //  final case class StartRecord(outFilePath: String) extends RmCommand //开始录制
 
 //  final case object StopRecord extends RmCommand //结束录制
@@ -761,6 +763,17 @@ object RmManager {
             case Failure(error) =>
               log.error(s"userFuture failed in audience ws building: $error")
           }
+          Behaviors.same
+
+        case TestPlay =>
+          log.info(s"in StreamPuller-PullStreamReqSuccess in watchInfo")
+          Some(audienceScene).foreach(_.autoReset())
+          val playId = Ids.getPlayId(AudienceStatus.LIVE, roomId = Some(audienceScene.getRoomInfo.roomId))
+          println(s"===watchInfo playId:$playId")
+          mediaPlayer.setTimeGetter(playId, () => System.currentTimeMillis())
+          val videoPlayer = ctx.spawn(VideoPlayer.create(playId, Some(audienceScene), None, None), s"videoPlayer$playId")
+          //            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
+          mediaPlayer.start(playId, videoPlayer, Left("rtmp://10.1.29.247:42037/live/123456"), Some(audienceScene.gc), None)
           Behaviors.same
 
 
