@@ -914,17 +914,16 @@ public class FFmpegFrameGrabber1 extends FrameGrabber {
       inputStreams.put(oc, inputStream);
     }
     System.out.println("----- 2 +++++++++++++++++++++++++++++");
-    System.out.println("ret = " + avformat_open_input(oc, (String) null, null, options));
     //if ((ret = avformat_open_input(oc, filename, f, options)) < 0) {
-    if ((ret = avformat_open_input(oc, (String) null, null, options)) < 0) {
-      System.out.println("----- 2.1 +++++++++++++++++++++++++++++");
-      av_dict_set(options, "pixel_format", null, 0);
-      System.out.println("----- 2.2 +++++++++++++++++++++++++++++");
+//    if ((ret = avformat_open_input(oc, (String) null, null, options)) < 0) {
+//      System.out.println("----- 2.1 +++++++++++++++++++++++++++++");
+//      av_dict_set(options, "pixel_format", null, 0);
+//      System.out.println("----- 2.2 +++++++++++++++++++++++++++++");
       if ((ret = avformat_open_input(oc, filename, f, options)) < 0) {
         System.out.println("----- 2.3 +++++++++++++++++++++++++++++");
         throw new Exception("avformat_open_input() error " + ret + ": Could not open input \"" + filename + "\". (Has setFormat() been called?)");
       }
-    }
+//    }
     System.out.println("----- 3 +++++++++++++++++++++++++++++");
     av_dict_free(options);
 
