@@ -90,10 +90,11 @@ object RecorderActor {
           log.info(s"recorder开始推流到：rtmp://10.1.29.247:42037/live/${push}")
           recorder4ts.setFrameRate(frameRate)
           recorder4ts.setVideoBitrate(bitRate)
-          recorder4ts.setVideoCodec(avcodec.AV_CODEC_ID_MPEG2VIDEO)
-          recorder4ts.setAudioCodec(avcodec.AV_CODEC_ID_MP2)
+//          recorder4ts.setVideoCodec(avcodec.AV_CODEC_ID_MPEG2VIDEO)
+          recorder4ts.setVideoCodec(avcodec.AV_CODEC_ID_H264)
+          recorder4ts.setAudioCodec(avcodec.AV_CODEC_ID_AAC)
           recorder4ts.setMaxBFrames(0)
-          recorder4ts.setFormat("mpegts")
+          recorder4ts.setFormat("flv")
           try {
             recorder4ts.startUnsafe()
           } catch {
