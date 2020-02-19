@@ -86,8 +86,8 @@ object RecorderActor {
         implicit timer =>
           log.info(s"recorderActor start----")
           avutil.av_log_set_level(-8)
-          val recorder4ts = new FFmpegFrameRecorder(s"rtmp://10.1.29.247:42037/live/${roomId}?${push}", 640, 480, audioChannels)
-          log.info(s"recorder开始推流到：rtmp://10.1.29.247:42037/live/${roomId}?${push}")
+          val recorder4ts = new FFmpegFrameRecorder(s"rtmp://10.1.29.247:42037/live/${push}", 640, 480, audioChannels)
+          log.info(s"recorder开始推流到：rtmp://10.1.29.247:42037/live/${push}")
           recorder4ts.setFrameRate(frameRate)
           recorder4ts.setVideoBitrate(bitRate)
           recorder4ts.setVideoCodec(avcodec.AV_CODEC_ID_MPEG2VIDEO)

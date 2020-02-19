@@ -58,8 +58,8 @@ object GrabberActor {
         msg match {
           case t: Recorder =>
             log.info(s"${ctx.self} receive a msg $t")
-            val grabber = new FFmpegFrameGrabber1(s"rtmp://10.1.29.247:42037/live/$roomId?$liveId")
-            log.info(s"grabber开始拉流：rtmp://10.1.29.247:42037/live/$roomId?$liveId")
+            val grabber = new FFmpegFrameGrabber1(s"rtmp://10.1.29.247:42037/live/$liveId")
+            log.info(s"grabber开始拉流：rtmp://10.1.29.247:42037/live/$liveId")
             try {
               grabber.start()
             } catch {
