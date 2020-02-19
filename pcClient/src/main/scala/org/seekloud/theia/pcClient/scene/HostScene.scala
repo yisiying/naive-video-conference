@@ -34,7 +34,6 @@ import org.seekloud.theia.capture.sdk.DeviceUtil.VideoOption
 import org.seekloud.theia.pcClient.Boot
 import org.seekloud.theia.pcClient.component.Common.getImageView
 import org.seekloud.theia.pcClient.component._
-import org.seekloud.theia.pcClient.core.stream.StreamPuller.{BandWidthInfo, PackageLossInfo}
 import org.seekloud.theia.pcClient.utils.{NetUsage, TimeUtil}
 
 import scala.collection.mutable
@@ -1427,29 +1426,29 @@ class HostScene(stage: Stage) {
 //    }
   }
 
-  def drawPackageLoss(info: mutable.Map[String, PackageLossInfo], bandInfo: Map[String, BandWidthInfo]): Unit = {
-    ctx.save()
-    //    println(s"draw loss, ${ctx.getCanvas.getWidth}, ${ctx.getCanvas.getHeight}")
-    ctx.setFont(new Font("Comic Sans Ms", if(!isFullScreen) 10 else 20))
-    ctx.setFill(Color.WHITE)
-    val loss: Double = if (info.values.headOption.nonEmpty) info.values.head.lossScale2 else 0
-    val band: Double = if (bandInfo.values.headOption.nonEmpty) bandInfo.values.head.bandWidth2s else 0
-    val  CPUMemInfo= NetUsage.getCPUMemInfo
-    //    info.values.headOption.foreach(
-    //      i =>
-    //        bandInfo.values.headOption.foreach(
-    //          j =>
-    //            ctx.fillText(f"丢包率：${i.lossScale2}%.3f" + " %" + f"带宽：${j.bandWidth2s}%.2f" + " %", Constants.DefaultPlayer.width / 5 * 4, 50)
-    //          )
-    //
-    //      )
-    ctx.clearRect(0, 0, ctx.getCanvas.getWidth, ctx.getCanvas.getHeight)
-    CPUMemInfo.foreach { i =>
-      val (memPer, memByte, proName) = (i.memPer, i.memByte, i.proName)
-      ctx.fillText(f"内存占比：$memPer%.2f" + " % " + f"内存：$memByte" , statisticsCanvas.getWidth - 210, 15)
-    }
-    ctx.fillText(f"丢包率：$loss%.3f" + " %  " + f"带宽：$band%.2f" + " bit/s", 0, 15)
-    //    info.values.headOption.foreach(i => ctx.fillText(f"丢包率：${i.lossScale2}%.2f" + " %", Constants.DefaultPlayer.width / 5 * 4, 20))
-    ctx.restore()
-  }
+//  def drawPackageLoss(info: mutable.Map[String, PackageLossInfo], bandInfo: Map[String, BandWidthInfo]): Unit = {
+//    ctx.save()
+//    //    println(s"draw loss, ${ctx.getCanvas.getWidth}, ${ctx.getCanvas.getHeight}")
+//    ctx.setFont(new Font("Comic Sans Ms", if(!isFullScreen) 10 else 20))
+//    ctx.setFill(Color.WHITE)
+//    val loss: Double = if (info.values.headOption.nonEmpty) info.values.head.lossScale2 else 0
+//    val band: Double = if (bandInfo.values.headOption.nonEmpty) bandInfo.values.head.bandWidth2s else 0
+//    val  CPUMemInfo= NetUsage.getCPUMemInfo
+//    //    info.values.headOption.foreach(
+//    //      i =>
+//    //        bandInfo.values.headOption.foreach(
+//    //          j =>
+//    //            ctx.fillText(f"丢包率：${i.lossScale2}%.3f" + " %" + f"带宽：${j.bandWidth2s}%.2f" + " %", Constants.DefaultPlayer.width / 5 * 4, 50)
+//    //          )
+//    //
+//    //      )
+//    ctx.clearRect(0, 0, ctx.getCanvas.getWidth, ctx.getCanvas.getHeight)
+//    CPUMemInfo.foreach { i =>
+//      val (memPer, memByte, proName) = (i.memPer, i.memByte, i.proName)
+//      ctx.fillText(f"内存占比：$memPer%.2f" + " % " + f"内存：$memByte" , statisticsCanvas.getWidth - 210, 15)
+//    }
+//    ctx.fillText(f"丢包率：$loss%.3f" + " %  " + f"带宽：$band%.2f" + " bit/s", 0, 15)
+//    //    info.values.headOption.foreach(i => ctx.fillText(f"丢包率：${i.lossScale2}%.2f" + " %", Constants.DefaultPlayer.width / 5 * 4, 20))
+//    ctx.restore()
+//  }
 }

@@ -105,13 +105,13 @@ object RoomActor {
                 UserInfoDao.getHeadImg(userTableOpt.get.headImg),
                 UserInfoDao.getHeadImg(userTableOpt.get.coverImg), 0, 0,
                 //                    Some(rsp.liveInfo.liveId)
-                Some("main")
+                Some(s"user-${userTableOpt.get.uid}")
               )
 
               //                  DistributorClient.startPull(roomId, "main").map {
               //                    case Right(r) =>
               //                      log.info(s"distributor startPull succeed, get live address: ${r.liveAdd}")
-              dispatchTo(subscribers)(List((userId, false)), StartLiveRsp(Some(LiveInfo("main", "123456"))))
+              dispatchTo(subscribers)(List((userId, false)), StartLiveRsp(Some(LiveInfo(s"user-${userTableOpt.get.uid}", "123456"))))
               //                      roomInfo.mpd = Some(r.liveAdd)
               val startTime = System.currentTimeMillis()
               ctx.self ! SwitchBehavior("idle", idle(WholeRoomInfo(roomInfo), mutable.HashMap(Role.host -> mutable.HashMap(userId -> LiveInfo(s"user-${userTableOpt.get.uid}", "123456"))), subscribers, mutable.Set[Long](), startTime, 0, mutable.HashMap(Role.host -> List(userId))))

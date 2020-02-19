@@ -630,8 +630,8 @@ object RmManager {
           liveManager ! LiveManager.SwitchMediaMode(isJoin = true, reset = hostScene.resetBack)
 
           /*拉取观众的rtp流并播放*/
-          val joinInfo = JoinInfo(roomInfo.get.roomId, msg.audienceInfo.userId, hostScene.gc)
-          liveManager ! LiveManager.PullStream(msg.audienceInfo.liveId, joinInfo = Some(joinInfo), hostScene = Some(hostScene))
+//          val joinInfo = JoinInfo(roomInfo.get.roomId, msg.audienceInfo.userId, hostScene.gc)
+//          liveManager ! LiveManager.PullStream(msg.audienceInfo.liveId, joinInfo = Some(joinInfo), hostScene = Some(hostScene))
 
           hostBehavior(stageCtx, homeController, hostScene, hostController, liveManager, mediaPlayer, sender, hostStatus = HostStatus.CONNECT, Some(msg.audienceInfo), rtmpLive, rtpLive, biliLive)
 
@@ -848,7 +848,7 @@ object RmManager {
           audienceScene.liveId = Some(msg.newId)
           val info = WatchInfo(audienceScene.getRoomInfo.roomId, audienceScene.gc)
           audienceScene.autoReset()
-          liveManager ! LiveManager.PullStream(msg.newId, watchInfo = Some(info), audienceScene = Some(audienceScene))
+          liveManager ! LiveManager.PullRtmpStream(msg.newId, watchInfo = Some(info), audienceScene = Some(audienceScene))
           Behaviors.same
         //          switchBehavior(ctx, "audienceBehavior", audienceBehavior(stageCtx, homeController, roomController, audienceScene, audienceController, liveManager, mediaPlayer, audienceLiveInfo = None, audienceStatus = AudienceStatus.LIVE))
 
@@ -900,7 +900,7 @@ object RmManager {
                   }
                   else {
                     val info = WatchInfo(audienceScene.getRoomInfo.roomId, audienceScene.gc)
-                    liveManager ! LiveManager.PullStream(audienceScene.liveId.get, watchInfo = Some(info))
+//                    liveManager ! LiveManager.PullStream(audienceScene.liveId.get, watchInfo = Some(info))
                   }
 
                 case AudienceStatus.CONNECT =>
@@ -927,7 +927,7 @@ object RmManager {
           audienceStatus match {
             case AudienceStatus.LIVE =>
               val info = WatchInfo(audienceScene.getRoomInfo.roomId, audienceScene.gc)
-              liveManager ! LiveManager.PullStream(audienceScene.liveId.get, watchInfo = Some(info))
+//              liveManager ! LiveManager.PullStream(audienceScene.liveId.get, watchInfo = Some(info))
 
             case AudienceStatus.CONNECT =>
               audienceLiveInfo.foreach { i =>
@@ -937,7 +937,7 @@ object RmManager {
                   audienceScene.gc //观众页画布gc
                 )
                 log.debug(s"~~~~~~~~~~~~~~~~~~~~~~~~~~~~:${i._2}")
-                liveManager ! LiveManager.PullStream(i._2, joinInfo = Some(joinInfo))
+//                liveManager ! LiveManager.PullStream(i._2, joinInfo = Some(joinInfo))
               }
             case AudienceStatus.RECORD => // do nothing
 
@@ -1013,7 +1013,7 @@ object RmManager {
             mediaPlayer.stop(playId, audienceScene.autoReset)
             liveManager ! LiveManager.StopPull
             val info = WatchInfo(audienceScene.getRoomInfo.roomId, audienceScene.gc)
-            liveManager ! LiveManager.PullStream(audienceScene.liveId.get, watchInfo = Some(info))
+            liveManager ! LiveManager.PullRtmpStream(audienceScene.liveId.get, watchInfo = Some(info))
           }
 
           if (audienceStatus == AudienceStatus.CONNECT) {
