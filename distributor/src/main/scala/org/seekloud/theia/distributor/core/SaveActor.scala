@@ -1,6 +1,6 @@
 package org.seekloud.theia.distributor.core
 
-import java.io.File
+import java.io.{BufferedWriter, File, FileWriter}
 
 import akka.actor.Cancellable
 import akka.actor.typed.Behavior
@@ -8,7 +8,7 @@ import akka.actor.typed.scaladsl.{Behaviors, StashBuffer, TimerScheduler}
 import org.bytedeco.javacpp.Loader
 import org.slf4j.LoggerFactory
 import org.seekloud.theia.distributor.common.AppSettings._
-import org.seekloud.theia.distributor.utils.CmdUtil
+import org.seekloud.theia.distributor.utils.{CmdUtil, TimeUtil}
 import org.seekloud.theia.distributor.Boot.{executor, scheduler}
 
 import scala.concurrent.Future
@@ -18,8 +18,10 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 object SaveActor {
 
-  class CreateFFmpeg(roomId: Long, startTime:Long) {
+  class CreateFFmpeg(roomId: Long, startTime: Long) {
     private var process: Process = _
+
+    private var writer: BufferedWriter = _
 
     var isDelete = false
 
@@ -28,6 +30,17 @@ object SaveActor {
 
     var firstTimer: Cancellable = _
     var secondTimer: Cancellable = _
+
+    def createLogInfo(logInfo: String): Unit = {
+      val file = new File(s"$recordLocation$roomId/$startTime/")
+      val temp = File.createTempFile("distributor", "LogInfo", file) //为临时文件名称添加前缀和后缀
+      if (temp.exists() && temp.canWrite) {
+        val bufferedWriter = new BufferedWriter(new FileWriter(temp))
+        bufferedWriter.write(s"$logInfo")
+        bufferedWriter.close()
+      }
+      log.debug(s"create distributor log info: $temp")
+    }
 
     def removeFile(): AnyVal = {
       val f = new File(s"$fileLocation$roomId/")
@@ -83,7 +96,21 @@ object SaveActor {
               if (f.exists()) {
                 log.info(s"record startTime: $startTime")
                 val cmdStr = ffmpeg + s" -i $recordLocation$roomId/$startTime/video.mp4 -i $recordLocation$roomId/$startTime/audio.mp4 -c copy -b:v 1M -movflags faststart $recordLocation$roomId/$startTime/record.mp4"
-                this.process =  CmdUtil.exeFFmpeg(cmdStr)
+                val file = new File(s"$saveLogPath/saveLog-$roomId-${TimeUtil.timeStamp2DetailDate(startTime).replaceAll(" ","-")}")
+                if (!file.exists()) {
+                  file.createNewFile()
+                  log.debug(s"create distributor log info: $file")
+                }
+                if (file.exists() && file.canWrite) {
+                  writer = new BufferedWriter(new FileWriter(file))
+                  CmdUtil.exeFFmpegWithLog(cmdStr, writer) match {
+                    case Right(processAndLog) =>
+                      process = processAndLog
+
+                    case Left(e) =>
+                      log.info(s"execute ffmpeg cmd error, $e")
+                  }
+                }
               }
               else {
                 log.info("video and audio files don't exist")
@@ -97,7 +124,7 @@ object SaveActor {
             periodlyRm()
             log.info(s"record error: $e")
         }
-      }else{
+      } else {
         val path = "/Users/litianyu/Downloads/dash/"
 //        val path = "D:\\test\\"
         val commandStr4Win1 = s"copy /b ${path}init-stream0.m4s+${path}chunk-stream0*.m4s ${path}video.mp4"
@@ -107,8 +134,25 @@ object SaveActor {
         Future.sequence(List(r1, r2)).onComplete{
           case Success(a) =>
             println(s"exe successfully, $a")
-            val fCommandStr = ffmpeg + s" -i ${path}video.mp4 -i ${path}audio.mp4 -c:v copy -c:a copy ${path}final.mp4"
-            process = CmdUtil.exeFFmpeg(fCommandStr)
+            val fCommandStr = ffmpeg + s" -i ${path}video.mp4 -i ${path}audio.mp4 -c copy -b:v 1M -movflags faststart ${path}final.mp4"
+
+            val file = new File(s"$saveLogPath/saveLog-$roomId-${TimeUtil.timeStamp2DetailDate(startTime).replaceAll(" ","-")}")
+            if (!file.exists()) {
+              file.createNewFile()
+              log.debug(s"create distributor log info: $file")
+            }
+            if (file.exists() && file.canWrite) {
+              log.debug(s"create distributor log info: $file")
+              writer = new BufferedWriter(new FileWriter(file))
+              CmdUtil.exeFFmpegWithLog(fCommandStr, writer) match {
+                case Right(processAndLog) =>
+                  process = processAndLog
+
+                case Left(e) =>
+                  log.info(s"execute ffmpeg cmd error, $e")
+              }
+            }
+
           case Failure(exception) =>
             println(s"exe error, $exception")
         }
@@ -117,6 +161,7 @@ object SaveActor {
 
     def close(): Unit = {
       if (this.process != null) this.process.destroyForcibly()
+      if (writer != null) this.writer.close()
       log.info(s"ffmpeg close successfully---")
     }
 

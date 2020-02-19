@@ -79,14 +79,15 @@ object RecorderActor {
   private val emptyAudio = ShortBuffer.allocate(1024 * 2)
   private val emptyAudio4one = ShortBuffer.allocate(1152)
 
-  def create(roomId: Long, host: String, client: String, layout: Int, output: OutputStream): Behavior[Command] = {
+  def create(roomId: Long, host: String, client: String, push:String, layout: Int): Behavior[Command] = {
     Behaviors.setup[Command] { ctx =>
       implicit val stashBuffer: StashBuffer[Command] = StashBuffer[Command](Int.MaxValue)
       Behaviors.withTimers[Command] {
         implicit timer =>
           log.info(s"recorderActor start----")
           avutil.av_log_set_level(-8)
-          val recorder4ts = new FFmpegFrameRecorder(output, 640, 480, audioChannels)
+          val recorder4ts = new FFmpegFrameRecorder(s"rtmp://10.1.29.247:42037/live/${roomId}?${push}", 640, 480, audioChannels)
+          log.info(s"recorder开始推流到：rtmp://10.1.29.247:42037/live/${roomId}?${push}")
           recorder4ts.setFrameRate(frameRate)
           recorder4ts.setVideoBitrate(bitRate)
           recorder4ts.setVideoCodec(avcodec.AV_CODEC_ID_MPEG2VIDEO)
@@ -101,7 +102,7 @@ object RecorderActor {
           }
           roomManager ! RoomManager.RecorderRef(roomId, ctx.self) //fixme 取消注释
           ctx.self ! Init
-          single(roomId,  host, client, layout, recorder4ts, null, null, null, null, output, 30000, (0, 0))
+          single(roomId,  host, client, layout, recorder4ts, null, null, null, null, 30000, (0, 0))
       }
     }
   }
@@ -112,7 +113,6 @@ object RecorderActor {
   drawer: ActorRef[VideoCommand],
   ts4Host: Ts4Host,
   ts4Client: Ts4Client,
-  out: OutputStream,
   tsDiffer: Int = 30000, canvasSize: (Int, Int))(implicit timer: TimerScheduler[Command],
   stashBuffer: StashBuffer[Command]): Behavior[Command] = {
     Behaviors.receive[Command] { (ctx, msg) =>
@@ -126,7 +126,7 @@ object RecorderActor {
           ffFilterN.setSampleFormat(sampleFormat)
           ffFilterN.setAudioInputs(2)
           ffFilterN.start()
-          single(roomId,  host, client, layout, recorder4ts, ffFilterN, drawer, ts4Host, ts4Client, out, tsDiffer, canvasSize)
+          single(roomId,  host, client, layout, recorder4ts, ffFilterN, drawer, ts4Host, ts4Client, tsDiffer, canvasSize)
 
         case UpdateRecorder(channel, sampleRate, f, width, height, liveId) =>
           if(liveId == host) {
@@ -138,7 +138,7 @@ object RecorderActor {
             ffFilter.setSampleRate(sampleRate)
             recorder4ts.setImageWidth(width)
             recorder4ts.setImageHeight(height)
-            single(roomId,  host, client, layout, recorder4ts, ffFilter, drawer, ts4Host, ts4Client, out, tsDiffer,  (640,  480))
+            single(roomId,  host, client, layout, recorder4ts, ffFilter, drawer, ts4Host, ts4Client, tsDiffer,  (640,  480))
           }else{
             Behaviors.same
           }
@@ -152,17 +152,17 @@ object RecorderActor {
             val drawer = ctx.spawn(draw(canvas, canvas.getGraphics, Ts4LastImage(), Image(), recorder4ts,
               new Java2DFrameConverter(), new Java2DFrameConverter(),new Java2DFrameConverter, layout, "defaultImg.jpg", roomId, (640, 480)), s"drawer_$roomId")
             ctx.self ! NewFrame(liveId, frame)
-            work(roomId,host,client,layout,recorder4ts,ffFilter, drawer,ts4Host,ts4Client,out,tsDiffer,canvasSize)
+            work(roomId,host,client,layout,recorder4ts,ffFilter, drawer,ts4Host,ts4Client,tsDiffer,canvasSize)
           }
 
         case CloseRecorder =>
-          try {
-            if (out != null)
-              out.close()
-          } catch {
-            case e: Exception =>
-              log.info(s"pipeStream has already been closed.")
-          }
+//          try {
+//            if (out != null)
+//              out.close()
+//          } catch {
+//            case e: Exception =>
+//              log.info(s"pipeStream has already been closed.")
+//          }
           try {
             ffFilter.close()
             drawer ! Close
@@ -185,7 +185,6 @@ object RecorderActor {
            drawer: ActorRef[VideoCommand],
            ts4Host: Ts4Host,
            ts4Client: Ts4Client,
-           out: OutputStream,
            tsDiffer: Int = 30000, canvasSize: (Int, Int))
           (implicit timer: TimerScheduler[Command],
            stashBuffer: StashBuffer[Command]): Behavior[Command] = {
@@ -228,20 +227,20 @@ object RecorderActor {
             drawer ! SetLayout(msg.layout)
           }
           ctx.self ! RestartRecord
-          work(roomId,  host, client, msg.layout, recorder4ts, ffFilter, drawer, ts4Host, ts4Client, out, tsDiffer, canvasSize)
+          work(roomId,  host, client, msg.layout, recorder4ts, ffFilter, drawer, ts4Host, ts4Client, tsDiffer, canvasSize)
 
         case m@RestartRecord =>
           log.info(s"couple state get $m")
           Behaviors.same
 
         case CloseRecorder =>
-          try {
-            if (out != null)
-              out.close()
-          } catch {
-            case e: Exception =>
-              log.info(s"pipeStream has already been closed.")
-          }
+//          try {
+//            if (out != null)
+//              out.close()
+//          } catch {
+//            case e: Exception =>
+//              log.info(s"pipeStream has already been closed.")
+//          }
           try {
             ffFilter.close()
             drawer ! Close

@@ -350,23 +350,23 @@ var ControlBar = function (dashjsMediaPlayer, displayUTCTimeCodes) {
         }
     };
 
-    var setTime = async function (value) {
-        if (value < 0) {
-            return;
-        }
-        if (player.isDynamic() && player.duration()) {
-            var liveDelay = player.duration() - value;
-            if (liveDelay < liveThresholdSecs) {
-                durationDisplay.classList.add('live');
-                timeDisplay.textContent = '';
-            } else {
-                durationDisplay.classList.remove('live');
-                timeDisplay.textContent = '- ' + player.convertToTimeCode(liveDelay);
-            }
-        } else if (!isNaN(value)) {
-            timeDisplay.textContent = displayUTCTimeCodes ? player.formatUTC(value) : player.convertToTimeCode(value);
-        }
-    };
+    // var setTime = async function (value) {
+    //     if (value < 0) {
+    //         return;
+    //     }
+    //     if (player.isDynamic() && player.duration()) {
+    //         var liveDelay = player.duration() - value;
+    //         if (liveDelay < liveThresholdSecs) {
+    //             durationDisplay.classList.add('live');
+    //             timeDisplay.textContent = '';
+    //         } else {
+    //             durationDisplay.classList.remove('live');
+    //             timeDisplay.textContent = '- ' + player.convertToTimeCode(liveDelay);
+    //         }
+    //     } else if (!isNaN(value)) {
+    //         timeDisplay.textContent = displayUTCTimeCodes ? player.formatUTC(value) : player.convertToTimeCode(value);
+    //     }
+    // };
 
     var updateDuration = function () {
         var duration = player.duration();

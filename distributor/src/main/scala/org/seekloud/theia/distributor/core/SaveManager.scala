@@ -10,7 +10,7 @@ import akka.actor.typed.scaladsl.{ActorContext, Behaviors, StashBuffer, TimerSch
 import org.bytedeco.javacpp.Loader
 import org.slf4j.LoggerFactory
 import org.seekloud.theia.distributor.common.AppSettings.recordLocation
-import org.seekloud.theia.distributor.protocol.SharedProtocol.RecordData
+import org.seekloud.theia.protocol.ptcl.distributor2Manager.DistributorProtocol.RecordData
 
 import scala.collection.mutable
 
@@ -91,18 +91,20 @@ object SaveManager {
   private def getVideoDuration(roomId:Long,startTime:Long) ={
     val ffprobe = Loader.load(classOf[org.bytedeco.ffmpeg.ffprobe])
     //容器时长（container duration）
-    val pb = new ProcessBuilder(ffprobe,"-v","error","-show_entries","format=duration", "-of","csv=\"p=0\"","-i", s"$recordLocation$roomId/$startTime/record.mp4")
+    val pb = new ProcessBuilder(ffprobe,"-v","error","-show_entries","format=duration", "-of","csv=p=0","-i", s"$recordLocation$roomId/$startTime/record.mp4")
     val processor = pb.start()
     val br = new BufferedReader(new InputStreamReader(processor.getInputStream))
-    val s = br.readLine()
-    var duration = 0
-    if(s!= null){
-      duration = (s.toDouble * 1000).toInt
+    val sb = new StringBuilder()
+    var line:String = ""
+    while ({
+      line = br.readLine()
+      line != null
+    }){
+      sb.append(line)
     }
     br.close()
-//    if(processor != null){
-//      processor.destroyForcibly()
-//    }
+    val duration = (sb.toString().toDouble * 1000).toInt
+    processor.destroy()
     millis2HHMMSS(duration)
   }
 

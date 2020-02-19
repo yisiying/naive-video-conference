@@ -1,11 +1,11 @@
 package org.seekloud.theia.distributor.utils
 
-import java.io.{BufferedReader, InputStreamReader}
+import java.io.{BufferedReader, BufferedWriter, InputStreamReader}
 import java.nio.charset.Charset
 import java.util
 import java.util.concurrent.TimeUnit
-import org.seekloud.theia.distributor.Boot.executor
 
+import org.seekloud.theia.distributor.Boot.executor
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
@@ -121,6 +121,98 @@ object CmdUtil {
     val pb: ProcessBuilder = new ProcessBuilder(cmd)
     val processor = pb.inheritIO().start()
     processor
+  }
+
+  def exeFFmpegWithLog(cmdStr: String, writer: BufferedWriter, displayInConsole: Boolean = false): Either[String, Process] = {
+    var br: BufferedReader = null
+    var br4Error: BufferedReader = null
+    val cmd: util.ArrayList[String] = new util.ArrayList[String]()
+    cmdStr.split(" ").foreach(cmd.add)
+    val pb: ProcessBuilder = new ProcessBuilder(cmd)
+
+    val rst = try {
+      val process = pb.start()
+      br = new BufferedReader(new InputStreamReader(process.getInputStream, Charset.forName("GBK")))
+      br4Error = new BufferedReader(new InputStreamReader(process.getErrorStream, Charset.forName("GBK")))
+      var line = ""
+      val logThread = new Thread(() => {
+        try {
+          var flag = true
+          var counter = 0
+          while ( flag ) {
+            if (br.ready()) {
+              if (br.readLine() != line) {
+                line = br.readLine()
+                writer.append(TimeUtil.timeStamp2MoreDetailDate(System.currentTimeMillis())+ "  " + line + "\n")
+//                print(line + "\n")
+              }
+              else if (line != "" && br.readLine() == line){
+                line = ""
+                flag = false
+              }
+              else if (line == ""){
+                flag = false
+              }
+            }
+            else {
+              Thread.sleep(100)
+              counter += 1
+              if (counter > 100) {
+                flag = false
+              }
+            }
+          }
+//          writer.close()
+        } catch {
+          case e: Exception =>
+            log.error(s"logThread catch exception: $e")
+        }
+      })
+      val logThread4err = new Thread(() => {
+        try {
+          var flag4err = true
+          var counter = 0
+          while ( flag4err ) {
+            if (br4Error.ready()) {
+              counter = 0
+              if (br4Error.readLine() != line) {
+                line = br4Error.readLine()
+                writer.flush()
+                writer.append(TimeUtil.timeStamp2MoreDetailDate(System.currentTimeMillis())+ "  " + line + "\n")
+                if (displayInConsole) print(TimeUtil.timeStamp2MoreDetailDate(System.currentTimeMillis())+ "  " + line + "\n")
+              }
+              else if (line != "" && br4Error.readLine() == line){
+                line = ""
+                flag4err = false
+              }
+            }
+            else {
+              Thread.sleep(100)
+              counter += 1
+              if (counter > 100) {
+                flag4err = false
+              }
+            }
+          }
+          // process.destroy()  //主动关闭线程
+          writer.close()
+        } catch {
+          case e: Exception =>
+            log.error(s"logThread4err catch exception: $e")
+        }
+      })
+      logThread.start()
+      logThread4err.start()
+      Right(process)
+    } catch {
+      case ex: Exception =>
+        log.warn(s"out put Stream read error: $ex")
+        if (br != null) br.close()
+        if (br4Error != null) br4Error.close()
+        writer.close()
+        Left(ex.getMessage)
+    }
+    rst
   }
 
 }

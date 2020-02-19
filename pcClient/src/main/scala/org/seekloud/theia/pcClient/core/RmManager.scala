@@ -170,7 +170,7 @@ object RmManager {
 
   final case class ExitJoin(roomId: Long) extends RmCommand //主动关闭和主播的连线
 
-  final case object TestPlay extends RmCommand
+  final case object PullRtmpStream extends RmCommand
 
 //  final case class StartRecord(outFilePath: String) extends RmCommand //开始录制
 
@@ -349,7 +349,7 @@ object RmManager {
             audienceScene.liveId = msg.roomInfo.rtmp
             println(s"111111111111111111111111111  ${msg.roomInfo.rtmp}")
             val info = WatchInfo(msg.roomInfo.roomId, audienceScene.gc)
-            liveManager ! LiveManager.PullStream(msg.roomInfo.rtmp.get, watchInfo = Some(info), audienceScene = Some(audienceScene))
+//            liveManager ! LiveManager.PullStream(msg.roomInfo.rtmp.get, watchInfo = Some(info), audienceScene = Some(audienceScene))
 //            liveManager ! LiveManager.PullStream("rtmp://10.1.29.247:42037/live/123456", watchInfo = Some(info), audienceScene = Some(audienceScene))
 
             ctx.self ! AudienceWsEstablish
@@ -549,7 +549,7 @@ object RmManager {
         case msg: RtmpLiveReq =>
           //          val url = s"rtmp://media.seekloud.com:62040/live/23456?rtmpToken=${msg.token}&userId=${userInfo.get.userId}"
           //          val url = s"rtmp://media.seekloud.com:62040/live/${msg.key}?rtmpToken=${msg.token}&userId=${userInfo.get.userId}"
-          val url = s"rtmp://10.1.29.247:42037/live/123456"
+          val url = s"rtmp://10.1.29.247:42037/live/${roomInfo.get.roomId}?user-${userInfo.get.userId}"
 //          val url = s"rtmp://10.1.29.247:42037/live/${roomInfo.get.roomId}?startTime=${msg.startTime}&userId=${userInfo.get.userId}"
           log.info(s"rtmp_url: $url")
           liveManager ! LiveManager.PushRtmpStream(url)
@@ -765,7 +765,7 @@ object RmManager {
           }
           Behaviors.same
 
-        case TestPlay =>
+        case PullRtmpStream =>
           log.info(s"in StreamPuller-PullStreamReqSuccess in watchInfo")
 //          Some(audienceScene).foreach(_.autoReset())
           audienceScene.autoReset()
@@ -774,7 +774,7 @@ object RmManager {
           mediaPlayer.setTimeGetter(playId, () => System.currentTimeMillis())
           val videoPlayer = ctx.spawn(VideoPlayer.create(playId, Some(audienceScene), None, None), s"videoPlayer$playId")
           //            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
-          mediaPlayer.start(playId, videoPlayer, Left("rtmp://10.1.29.247:42037/live/123456"), Some(audienceScene.gc), None)
+          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/${roomInfo.get.roomId}?main"), Some(audienceScene.gc), None)
           Behaviors.same
 
 
@@ -984,7 +984,8 @@ object RmManager {
         case msg: Devicesuccess =>
           val userId = userInfo.get.userId
           //          audienceScene.autoReset2()
-          liveManager ! LiveManager.PushStream(msg.audienceLiveInfo.liveId, msg.audienceLiveInfo.liveCode)
+//          liveManager ! LiveManager.PushStream(msg.audienceLiveInfo.liveId, msg.audienceLiveInfo.liveCode)
+          liveManager ! LiveManager.PushRtmpStream(s"rtmp://10.1.29.247:42037/live/${roomInfo.get.roomId}?user-${userId}")
 
           /*开始拉取并播放主播rtp流*/
           //          val joinInfo = JoinInfo(

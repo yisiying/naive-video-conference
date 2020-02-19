@@ -14,10 +14,10 @@ import java.util.regex.Pattern
 object TestRecord {
   def main(args: Array[String]): Unit = {
 //    val a = System.currentTimeMillis()
-//    println("first",getVideoDuration("D:/helloMedia/2.mp4"))
+    println("first",getVideoDuration())
 //    val b = System.currentTimeMillis()
-    println("third",calDuration("D:/helloMedia/2.mp4"))
-    val c = System.currentTimeMillis()
+//    println("third",calDuration("D:/helloMedia/2.mp4"))
+//    val c = System.currentTimeMillis()
 //    println("four",getDuration("D:/helloMedia/2.mp4"))
 //    var d = System.currentTimeMillis()
 //    println("b-a", b - a)
@@ -109,29 +109,49 @@ object TestRecord {
 //    h +":" + m + ":" + s + "." + d
 //  }
 
-  private def getVideoDuration(scr:String) = {
-    val ffmpeg = Loader.load(classOf[org.bytedeco.ffmpeg.ffmpeg])
-    val pb = new ProcessBuilder(ffmpeg, "-i", scr)
-    val processor = pb.start()
+//  private def getVideoDuration(scr:String) = {
+//    val ffmpeg = Loader.load(classOf[org.bytedeco.ffmpeg.ffmpeg])
+//    val pb = new ProcessBuilder(ffmpeg, "-i", scr)
+//    val processor = pb.start()
+//
+//    val br = new BufferedReader(new InputStreamReader(processor.getErrorStream))
+//    val sb = new StringBuilder()
+//    var s = ""
+//    s = br.readLine()
+//    while(s!=null){
+//      sb.append(s)
+//      s = br.readLine()
+//    }
+//    br.close()
+//
+//    val regex = "Duration: (.*?),"
+//    val p = Pattern.compile(regex)
+//    val m = p.matcher(sb.toString())
+//    if(m.find()) {
+//      m.group(1)
+//    }else{
+//      "00:00:00.00"
+//    }
+//  }
 
-    val br = new BufferedReader(new InputStreamReader(processor.getErrorStream))
+  private def getVideoDuration() ={
+    val ffprobe = Loader.load(classOf[org.bytedeco.ffmpeg.ffprobe])
+    //容器时长（container duration）
+    val pb = new ProcessBuilder(ffprobe,"-v","error","-show_entries","format=duration", "-of","csv=p=0","-i", "D:/helloMedia/0.mp4")
+    val processor = pb.start()
+    val br = new BufferedReader(new InputStreamReader(processor.getInputStream))
     val sb = new StringBuilder()
-    var s = ""
-    s = br.readLine()
-    while(s!=null){
-      sb.append(s)
-      s = br.readLine()
+    var line:String = ""
+    while ({
+      line = br.readLine()
+      line != null
+    }){
+      sb.append(line)
     }
     br.close()
-
-    val regex = "Duration: (.*?),"
-    val p = Pattern.compile(regex)
-    val m = p.matcher(sb.toString())
-    if(m.find()) {
-      m.group(1)
-    }else{
-      "00:00:00.00"
-    }
+    val duration = (sb.toString().toDouble * 1000).toInt
+    processor.destroy()
+    millis2HHMMSS(duration)
   }
 
 }

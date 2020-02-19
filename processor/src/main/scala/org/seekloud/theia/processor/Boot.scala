@@ -14,7 +14,7 @@ import akka.util.Timeout
 import org.seekloud.theia.processor.http.HttpService
 import akka.actor.typed.scaladsl.adapter._
 import akka.dispatch.MessageDispatcher
-import org.seekloud.theia.processor.core_new.{StreamPullActor, StreamPushActor, RoomManager}
+import org.seekloud.theia.processor.core_new.RoomManager
 import org.seekloud.theia.rtpClient.Protocol.Command
 import scala.collection.mutable
 import scala.language.postfixOps
@@ -43,9 +43,9 @@ object Boot extends HttpService {
 
   val roomManager:ActorRef[RoomManager.Command] = system.spawn(RoomManager.create(),"roomManager")
 
-  val streamPushActor:ActorRef[Command]=system.spawn(StreamPushActor.create(),"streamPushActor")
-
-  val streamPullActor:ActorRef[Command] = system.spawn(StreamPullActor.create(), "streamPullActor")
+//  val streamPushActor:ActorRef[Command]=system.spawn(StreamPushActor.create(),"streamPushActor")
+//
+//  val streamPullActor:ActorRef[Command] = system.spawn(StreamPullActor.create(), "streamPullActor")
 
   //fixme 此处用以判断流是否存在
   var showStreamLog = false

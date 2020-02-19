@@ -6,13 +6,11 @@ import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{Behaviors, StashBuffer, TimerScheduler}
 import org.bytedeco.javacpp.Loader
 import org.slf4j.LoggerFactory
-import org.seekloud.theia.distributor.Boot.{encodeManager, pullActor}
+import org.seekloud.theia.distributor.Boot.{encodeManager, pullActor,killFFActor,liveManager}
 import org.seekloud.theia.distributor.common.Constants
-import org.seekloud.theia.distributor.utils.StreamUtil.test_stream
-import org.seekloud.theia.distributor.protocol.SharedProtocol._
-import org.seekloud.theia.protocol.ptcl.distributor2Manager.DistributorProtocol.{GetAllLiveInfoRsp, liveInfo}
-import org.seekloud.theia.distributor.common.AppSettings.{fileLocation,indexPath}
-
+import org.seekloud.theia.protocol.ptcl.distributor2Manager.DistributorProtocol._
+import org.seekloud.theia.distributor.common.AppSettings.{fileLocation, indexPath}
+import scala.concurrent.duration._
 import scala.collection.mutable
 
 /**
@@ -27,13 +25,18 @@ object LiveManager {
 
   case class updateRoom( roomId:Long, liveId:String, startTime: Long) extends Command
 
+  case object KillFF extends Command
+
   case class liveStop( liveId:String) extends Command
 
   case class CheckLive(liveId:String, reply:ActorRef[CheckStreamRsp]) extends Command
 
   case class RoomWithPort(roomId: Long, port: Int) extends Command
 
-  case class GetAllLiveInfo(reply: ActorRef[GetAllLiveInfoRsp]) extends  Command
+  case class GetAllLiveInfo(reply: ActorRef[GetTransLiveInfoRsp]) extends  Command
+
+  case class CheckStream(liveId:String) extends Command
+
 
   def create(): Behavior[Command] = {
     Behaviors.setup[Command] { ctx =>
@@ -50,17 +53,27 @@ object LiveManager {
     (implicit timer: TimerScheduler[Command],
     stashBuffer: StashBuffer[Command]): Behavior[Command] = {
     log.info(s"liveManager turn to work state--")
-    Behaviors.receive[Command] { (ctx, msg) =>
+    Behaviors.receive[Command] { (_, msg) =>
       msg match {
         case m@updateRoom(roomId: Long, liveId: String, startTime: Long) =>
           log.info(s"got msg: $m")
-          roomInfoMap.put(roomId, liveInfo(roomId, liveId, 0, 1, Constants.getMpdPath(roomId)))
+          roomInfoMap.put(roomId, liveInfo(roomId, liveId, 0, "正常", Constants.getMpdPath(roomId)))
           pullActor ! PullActor.NewLive(liveId, roomId)
+//          killFFActor ! KillFFActor.NewLive(liveId, roomId)
           encodeManager ! EncodeManager.UpdateEncode(roomId, startTime)
           roomLiveMap.filter(_._2==roomId).foreach{e =>
             roomLiveMap.remove(e._1)
           }
           roomLiveMap.put(liveId, roomId)
+          timer.startPeriodicTimer(s"liveStatusKey-$liveId", CheckStream(liveId), 2.seconds)
+          Behaviors.same
+
+        case KillFF =>
+          roomLiveMap.foreach(e =>
+            if (!PullActor.checkStream(e._1)){
+              liveManager ! LiveManager.liveStop(e._1)
+            }
+          )
           Behaviors.same
 
         case RoomWithPort(roomId, port) =>
@@ -74,12 +87,25 @@ object LiveManager {
             roomInfoMap.remove(roomId)
           }
           roomLiveMap.remove(liveId)
+          timer.cancel(s"liveStatusKey-$liveId")
+          Behaviors.same
+
+        case CheckStream(liveId) =>
+          if (roomLiveMap.get(liveId).nonEmpty) {
+            if (PullActor.checkStream(liveId))
+              roomInfoMap.update(roomLiveMap(liveId),roomInfoMap(roomLiveMap(liveId)).copy(status = "正常"))
+            else
+              roomInfoMap.update(roomLiveMap(liveId),roomInfoMap(roomLiveMap(liveId)).copy(status = "断流"))
+          }
+          else {
+            log.debug("liveId not exist")
+            timer.cancel(s"liveStatusKey-$liveId")
+          }
           Behaviors.same
 
         case CheckLive(liveId,reply) =>
           if (roomLiveMap.get(liveId).nonEmpty){
-            val port = roomInfoMap(roomLiveMap(liveId)).port
-            if (test_stream(s"udp://127.0.0.1:$port"))
+            if (PullActor.checkStream(liveId))
               reply ! CheckStreamRsp()
             else
               reply ! StreamError
@@ -92,7 +118,7 @@ object LiveManager {
 
         case GetAllLiveInfo(reply) =>
           val info = roomInfoMap.values.toList
-          reply ! GetAllLiveInfoRsp(info = info)
+          reply ! GetTransLiveInfoRsp(info = info)
           Behaviors.same
       }
     }

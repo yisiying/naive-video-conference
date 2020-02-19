@@ -18,13 +18,16 @@ package org.seekloud.theia.distributor.http
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
-import akka.http.scaladsl.server.Directives.{complete, onComplete, redirect, reject}
-import akka.http.scaladsl.server.{Directive0, Directive1, ValidationRejection}
+import akka.http.scaladsl.server.Directives.{complete, onComplete, redirect, reject, extractRequestContext}
+import akka.http.scaladsl.server.{Directive, Directive0, Directive1, RequestContext, ValidationRejection}
+
 import akka.http.scaladsl.server.directives.BasicDirectives
 import org.seekloud.theia.distributor.common.AppSettings
 import org.seekloud.theia.distributor.utils.{CirceSupport, SessionSupport}
 import com.sun.xml.internal.ws.encoding.soap.DeserializationException
+import org.seekloud.theia.distributor.protocol.SharedProtocol.{ErrorRsp, UserBaseInfo}
 import org.slf4j.LoggerFactory
+
 
 
 /**
@@ -33,10 +36,10 @@ import org.slf4j.LoggerFactory
   * Time: 7:57 PM
   */
 
-object SessionBase {
+object SessionBase extends CirceSupport {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  private val sessionTimeout = 24 * 60 * 60 * 1000
+//  private val sessionTimeout = 24 * 60 * 60 * 1000
   val SessionTypeKey = "STKey"
 
 
@@ -48,6 +51,15 @@ object SessionBase {
     val loginTime = "video_loginTime"
     //添加是否是主播
   }
+  object AdminSessionKey {
+    val SESSION_TYPE = "toDistributorSession"
+    val userId = "userId"
+    val username = "username"
+    val pwd = "pwd"
+    val loginTime = "toAdmin_loginTime"
+    //添加是否是管理员
+  }
+
 
   case class VideoUserInfo (
                            username: String,
@@ -67,8 +79,26 @@ object SessionBase {
     }
   }
 
+  //添加管理页面的session
+  case class AdminSession(
+                              userInfo: UserBaseInfo,
+                              time: Long,
+                              //                                id: Int
+                            ) {
+    def toAdminSessionMap: Map[String, String] = {
+      Map(
+        SessionTypeKey -> AdminSessionKey.SESSION_TYPE,
+        AdminSessionKey.username -> userInfo.userName,
+        AdminSessionKey.loginTime -> time.toString,
+
+      )
+    }
+  }
+
+
 
   implicit class SessionTransformer(sessionMap: Map[String, String]) {
+    private val timeout = AppSettings.sessionTimeOut * 60 * 60 * 1000
 
     def toVideoSession: Option[VideoSession] = {
       logger.debug(s"toVideoSession: change map to session, ${sessionMap.mkString(",")}")
@@ -91,6 +121,32 @@ object SessionBase {
           None
       }
     }
+
+    def toAdminSession:Option[AdminSession] = {
+      try {
+        if (sessionMap.get(SessionTypeKey).exists(_.equals(AdminSessionKey.SESSION_TYPE))) {
+          if(sessionMap(AdminSessionKey.loginTime).toLong - System.currentTimeMillis() > timeout){
+            None
+          }else {
+            Some(AdminSession(
+              UserBaseInfo(sessionMap(AdminSessionKey.username)),
+              sessionMap(AdminSessionKey.loginTime).toLong
+            ))
+          }
+        } else {
+          logger.debug("no session type in the session")
+          None
+        }
+      } catch {
+        case e: Exception =>
+          e.printStackTrace()
+          logger.warn(s"toAdminSession: ${e.getMessage}")
+          None
+      }
+    }
+
+
+
   }
 
 }
@@ -122,5 +178,33 @@ trait SessionBase extends SessionSupport {
       logger.debug(error)
       BasicDirectives.provide(None)
   }
+
+//  def loggingAction: Directive[Tuple1[RequestContext]] = extractRequestContext.map { ctx =>
+//    //    log.info(s"Access uri: ${ctx.request.uri} from ip ${ctx.request.uri.authority.host.address}.")
+//    ctx
+//  }
+
+  def noSessionError(message:String = "no session") = ErrorRsp(1000102,s"$message")
+
+  def adminAuth(f: AdminSession => server.Route) =
+    optionalAdminSession {
+      case Some(session) =>
+        f(session)
+      case None =>
+        complete(noSessionError())
+//            redirect("/theia/distributor#/login", StatusCodes.SeeOther)
+
+  }
+
+
+  protected val optionalAdminSession: Directive1[Option[AdminSession]] = optionalSession.flatMap{
+    case Right(sessionMap) => BasicDirectives.provide(sessionMap.toAdminSession)
+    case Left(error) =>
+      logger.debug(error)
+      BasicDirectives.provide(None)
+  }
+
+
+
 
 }

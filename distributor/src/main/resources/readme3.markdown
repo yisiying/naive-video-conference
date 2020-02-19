@@ -107,4 +107,89 @@
      的fileRoute是从FileService继承。）
      运行各个actor
     
-        
+     
+     
+     
+     
+     
+#### distributor
+- resource
+  - application.conf
+    - 配置文件
+
+- scala.seekloud.theia.distirbutor
+  - common
+    - AppSetting
+        - 管理application配置文件（可对akka进行配置管理）
+    - Constants
+        - 当前仅定义了一个String属性
+  - core
+    - PullActor
+        - s
+    - LiveManager
+        - s
+    - EncodeActor
+        - work
+            -收到EncodeManager传来的port, startTime，再将newStartTime, 本身的roomId传给saveManager
+    - EncodeManager
+        - 编码Actor管理，生成多个不同roomid的EncodeActor
+        - create
+        - work
+            - 收到Distributor传来的roomId, startTime开启一个新端口，再给Distributor传回roomId, port，
+            如果roomid已经有了，就将port, startTime传给roomid对应的EncodeActorRef
+   
+    - SaveActor
+        - create
+            - 被SaveManager开启后，就创建一个CreateFFmpeg对象，并在CreateFFmpeg中连锁运行一系列ffmpeg函数，
+            将fileLocation中的m4s转为mp4，其中要删除之前的无用record.mp4
+            - work
+                - 在收到Stop指令后，删除无用的video.mp4和audio.mp4，并关闭Actor
+    - SaveManager
+        - work
+            - 收到EncodeActor传来的newStartTime, roomId，用以生成一个新的SaveActor
+            
+    distributor -> encodeManager
+    revActor -> encodeManager
+    
+    revActor->distributor
+    encodeManager->distributor
+    
+    FileServer->SaveManager（自带saveActor.create()）
+    encodeActor->SaveManager
+     
+    
+    
+    
+  - http
+    - FileService
+        - 包含fileRoutes路径，连带包含getFile ~ getRecord ~ seekRecord ~ removeRecords,
+        这些接口在和distributor同一级的模块的Routes文件夹中定义
+        - getFile 
+            - 读取/mix下的指定文件
+        - getRecord 
+            - 读取/record下的指定文件
+        - seekRecord
+            - 传消息给saveManager，向saveManager请求SeekRecord（是否有record file）
+        - removeRecords
+            - 传消息给saveManager，向saveManager发送RemoveRecords消息
+    - HttpService
+        - 类中的routes被Boot继承并绑定，连带绑定resourceRoutes ~ fileRoute
+    - ResourceService
+        - 执行resourceRoutes，访问一些资源路径,通常在前端的Route文件中定义
+    - SessionBase
+        - 定义了一个videoAuth，在同一层的Service中返回当前Session
+    
+  - protocol
+    - CommonErrorCode
+        - 存放解析错误函数
+    - SharedProtocol
+        - 存放样例类,用来传输协议
+  - utils
+    - 多功能、基于工具的包
+  - Boot
+    - 绑定routes，interface，port，传入Http()并执行akka框架对其进行处理。
+     （其中routes是从HttpService继承，接着匹配 两个连接的Route类型。其中
+     的fileRoute是从FileService继承。）
+     运行各个actor
+         
+   

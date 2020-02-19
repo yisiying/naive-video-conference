@@ -34,7 +34,7 @@ object CmdTest {
 
     if (os.toString.startsWith("Windows")) {
       //Windows运行
-      val path = "D:\\test\\rtp\\"
+      val path = ".\\"
       val commandStr4Win1 = s"copy /b ${path}init-stream0.m4s+${path}chunk-stream0*.m4s ${path}video.mp4"
       val commandStr4Win2 = s"copy /b ${path}init-stream1.m4s+${path}chunk-stream1*.m4s ${path}audio.mp4"
       val r1 = CmdUtil.exeCmd4Windows(commandStr4Win1)
@@ -42,8 +42,17 @@ object CmdTest {
       Future.sequence(List(r1, r2)).onComplete{
         case Success(a) =>
           println(s"exe successfully, $a")
-          val fCommandStr = ffmpeg + s" -i ${path}video.mp4 -i ${path}audio.mp4 -c:v copy -c:a copy ${path}final.mp4"
+          val fCommandStr = ffmpeg + s" -i ${path}video.mp4 -i ${path}audio.mp4 -c copy -b:v 1M -movflags faststart ${path}final.mp4"
           process = CmdUtil.exeFFmpeg(fCommandStr)
+//          val rst = CmdUtil.exeFFmpegWithLog(fCommandStr)
+//          rst match {
+//            case Right(processAndLog) =>
+//              process = processAndLog._1
+//              println(s"true log: ${processAndLog._2}")
+//
+//            case Left(log) => println(s"false log: $log")
+//          }
+
         case Failure(exception) =>
           println(s"exe error, $exception")
       }
@@ -57,9 +66,17 @@ object CmdTest {
       CmdUtil.exeCmd4Linux(commandStr)
       val fCommandStr = ffmpeg + s" -i $path/video.mp4 -i $path/audio.mp4 -c:v copy -c:a copy $path/final.mp4"
       process = CmdUtil.exeFFmpeg(fCommandStr)
+//      val rst = CmdUtil.exeFFmpegWithLog(fCommandStr)
+//      rst match {
+//        case Right(processAndLog) =>
+//          process = processAndLog._1
+//          println(s"true log: ${processAndLog._2}")
+//
+//        case Left(log) => println(s"false log: $log")
+//      }
     }
 
-    Thread.sleep(200000)
+    Thread.sleep(20000)
     process.destroy()
 
 

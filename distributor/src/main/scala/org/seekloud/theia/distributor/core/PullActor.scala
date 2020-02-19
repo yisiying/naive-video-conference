@@ -1,6 +1,6 @@
 package org.seekloud.theia.distributor.core
 
-import java.net.InetSocketAddress
+import java.net.{InetAddress, InetSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
 
@@ -12,7 +12,9 @@ import org.seekloud.theia.rtpClient.Protocol._
 import org.seekloud.theia.rtpClient.PullStreamClient
 import org.seekloud.theia.distributor.Boot.{liveManager, pullActor}
 import org.seekloud.theia.distributor.core.SendActor.{SendData, StopSend}
+import org.seekloud.theia.protocol.ptcl.distributor2Manager.DistributorProtocol._
 
+import scala.concurrent.duration._
 import scala.collection.mutable
 /**
   * Author: tldq
@@ -31,15 +33,22 @@ object PullActor {
 
   case object PullStream extends Command
 
+  case object GetPlAndBw extends Command
+
   case class CleanStream(liveId:String) extends Command
+
+  case class GetAllInfo(reply:ActorRef[GetPullStreamInfoRsp]) extends Command
 
   case class ChildDead(roomId: Long, childName: String, value: ActorRef[SendActor.Command]) extends Command
 
   case class RoomWithPort(roomId: Long, port: Int) extends Command
 
+  case object TimerKey4PullStream
+
   private val liveSenderMap = mutable.Map[String, ActorRef[SendActor.Command]]()
   private val liveCountMap = mutable.Map[String,Int]()
   private val roomLiveMap = mutable.Map[Long, String]()
+  private val allStreamInfo = mutable.Map[String, PullPackageInfo]()
 
   //test
   private val pullChannel = DatagramChannel.open()
@@ -98,17 +107,17 @@ object PullActor {
       Behaviors.withTimers[Command] {
         implicit timer =>
           log.info(s"pullActor start----")
-//          if(testModel){
-//            pullChannel.socket().bind(new InetSocketAddress("0.0.0.0", 41660))
-//            work()
-//          }else {
+          if(testModel){
+            pullChannel.socket().bind(new InetSocketAddress("0.0.0.0", 41660))
+            work()
+          }else {
             val pullStreamDst = new InetSocketAddress(rtpToHost, 61041)
             val host = "0.0.0.0"
             val port = getRandomPort
             val client = new PullStreamClient(host, port, pullStreamDst, ctx.self, rtpServerDst)
             ctx.self ! Ready(client)
             wait()
-//          }
+          }
       }
     }
   }
@@ -145,6 +154,13 @@ object PullActor {
           if(roomLiveMap.get(roomId).isEmpty){
             log.info(s"got msg: $m")
             roomLiveMap.put(roomId,liveId)
+            allStreamInfo.put(liveId,PullPackageInfo(
+                liveId,
+                InetAddress.getLocalHost.getHostAddress,
+                -1,
+                PackageLossInfo(0.0,0.0,0.0),
+                BandwidthInfo(0.0,0.0,0.0)
+            ))
             val sender = getSendActor(ctx,roomId)
             liveSenderMap.put(liveId, sender)
           }else{
@@ -153,6 +169,10 @@ object PullActor {
             if(liveSenderMap.get(oId).isDefined){
               log.info("status switch.")
               log.info(s"liveId change from $oId to $liveId")
+              if (allStreamInfo.get(oId).isDefined){
+                allStreamInfo.put(liveId,allStreamInfo(oId).copy(liveId = liveId))
+                allStreamInfo.remove(oId)
+              }
               val s = liveSenderMap(oId)
               roomLiveMap.update(roomId,liveId)
               liveSenderMap.remove(oId)
@@ -161,22 +181,32 @@ object PullActor {
               log.warn(s"liveId:$oId not has sender, not change to $liveId")
             }
           }
-          ctx.self ! PullStream
+          timer.startSingleTimer(PullStream,PullStream,500.milli)
+//          ctx.self ! PullStream
           Behaviors.same
 
-        case PullStream =>
+        case m@PullStream =>
+          log.info(s"got msg: $m")
           val lives = liveSenderMap.keys.toList
           client.pullStreamData(lives)
           Behaviors.same
 
         case m@RoomWithPort(roomId, port) =>
           log.info(s"got msg: $m")
-          roomLiveMap.get(roomId).foreach(liveId =>
-            liveSenderMap.get(liveId).foreach( s => s! SendActor.GetUdp(new InetSocketAddress("127.0.0.1", port)))
+          roomLiveMap.get(roomId).foreach(liveId =>{
+            allStreamInfo.put(liveId,PullPackageInfo(
+              liveId,
+              InetAddress.getLocalHost.getHostAddress,
+              port,
+              PackageLossInfo(0.0,0.0,0.0),
+              BandwidthInfo(0.0,0.0,0.0)
+              ))
+            liveSenderMap.get(liveId).foreach( s => s! SendActor.GetUdp(new InetSocketAddress("127.0.0.1", port)))}
           )
           Behaviors.same
 
         case StreamStop(liveId) =>
+          allStreamInfo.remove(liveId)
           ctx.self ! CleanStream(liveId)
           Behaviors.same
 
@@ -185,19 +215,19 @@ object PullActor {
           liveManager ! LiveManager.liveStop(liveId)
           Behaviors.same
 
-        case m@PullStreamReqSuccess(liveIds) =>
+        case m@PullStreamReqSuccess(_) =>
           log.info(s"got msg: $m")
           Behaviors.same
 
-        case m@NoStream(lives) =>
-          log.error(s"got msg: $m")
+        case m@NoStream(_) =>
+          log.info(s"got msg: $m")
           Behaviors.same
 
         case PullStreamPacketLoss =>
           log.info("PullStreamPacketLoss")
           Behaviors.same
 
-        case PullStreamData(liveId, seq, data) =>
+        case PullStreamData(liveId, _, data) =>
           if(liveSenderMap.get(liveId).isDefined){
             val sender = liveSenderMap(liveId)
             if(liveCountMap.getOrElse(liveId,0) < 5){
@@ -210,16 +240,40 @@ object PullActor {
           }
           Behaviors.same
 
-        case RoomClose(roomId) =>
-          roomLiveMap.get(roomId).foreach{ liveId =>
+        case GetAllInfo(reply) =>
+          val plInfo = client.getPackageLoss().map{i=>
+            i._1 -> PackageLossInfo(i._2.lossScale60,i._2.lossScale10,i._2.lossScale2)
+          }
+          val bwInfo = client.getBandWidth().map{i=>
+            i._1 -> BandwidthInfo(i._2.bandWidth60s,i._2.bandWidth10s,i._2.bandWidth2s)
+          }
+          allStreamInfo.foreach(live =>{
+            if (plInfo.contains(live._1))
+              allStreamInfo.update(live._1, allStreamInfo(live._1).copy(packageInfo = plInfo(live._1)))
+            if (bwInfo.contains(live._1))
+              allStreamInfo.update(live._1,allStreamInfo(live._1).copy(bandwidthInfo = bwInfo(live._1)))
+          })
+          val allInfoLists = allStreamInfo.values.toList
+          reply ! GetPullStreamInfoRsp(info = allInfoLists)
+
+          Behaviors.same
+
+        case m@RoomClose(roomId) =>
+          log.info(s"got msg: $m")
+          roomLiveMap.get(roomId).foreach{ liveId =>{
             liveSenderMap.get(liveId).foreach(
               s =>
                 s ! StopSend
             )
             liveSenderMap.remove(liveId)
-          }
+            allStreamInfo.remove(liveId)
+            log.info(s"close room: $roomId and remove liveId: $liveId")
+            log.info(s"allStream: ${allStreamInfo.keys.toList}")
+          }}
+
           roomLiveMap.remove(roomId)
-          ctx.self ! PullStream
+          timer.startSingleTimer(PullStream,PullStream,500.milli)
+//          ctx.self ! PullStream
           Behaviors.same
 
         case x =>
@@ -229,7 +283,7 @@ object PullActor {
     }
   }
 
-  /*def work()(implicit timer: TimerScheduler[Command],
+  def work()(implicit timer: TimerScheduler[Command],
     stashBuffer: StashBuffer[Command]):Behavior[Command] = {
     log.info("-----------------------测试中，自己收流")
     recvThread.start()
@@ -249,7 +303,7 @@ object PullActor {
           )
           Behaviors.same
 
-        case PullStreamData(liveId, seq, data) =>
+        case PullStreamData(liveId, _, data) =>
           if(liveSenderMap.get(liveId).isDefined){
             val sender = liveSenderMap(liveId)
             if(liveCountMap.getOrElse(liveId,0) < 5){
@@ -273,7 +327,7 @@ object PullActor {
       }
     }
   }
-*/
+
   private def getSendActor(ctx: ActorContext[Command], roomId:Long) = {
     val childName = s"wrapActor_$roomId"
     ctx.child(childName).getOrElse {
@@ -281,6 +335,13 @@ object PullActor {
       ctx.watchWith(actor, ChildDead(roomId, childName, actor))
       actor
     }.unsafeUpcast[SendActor.Command]
+  }
+
+  def checkStream(liveId:String): Boolean ={
+    if (allStreamInfo.contains(liveId))
+      true
+    else
+      false
   }
 
 }

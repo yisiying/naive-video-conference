@@ -67,6 +67,8 @@ object CommonErrorCode {
 
   def pwdEmpty = ErrorRsp(1000118, "password can not be empty")
 
+
+
   //chat
   def roomIsNotOn = ErrorRsp(1000119, "room is not on")
 
@@ -79,5 +81,8 @@ object CommonErrorCode {
   def hostUrlNotExist = ErrorRsp(1000123, "hostUrl not exist")
 
   def updateRoomError = ErrorRsp(1000124, "update roomInfo err.")
+
+  //session
+  def sessionError = ErrorRsp(1000125, "session not exist")
 
 }

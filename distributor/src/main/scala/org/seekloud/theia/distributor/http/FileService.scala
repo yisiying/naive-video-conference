@@ -21,7 +21,7 @@ import org.seekloud.theia.distributor.Boot.{executor, saveManager, scheduler, ti
 import org.seekloud.theia.distributor.common.AppSettings.{fileLocation, recordLocation}
 import org.seekloud.theia.distributor.core.SaveManager.{RecordInfo, RemoveRecords}
 import org.seekloud.theia.distributor.core.SaveManager
-import org.seekloud.theia.distributor.protocol.SharedProtocol._
+import org.seekloud.theia.protocol.ptcl.distributor2Manager.DistributorProtocol._
 trait FileService extends ServiceUtils {
 
   private val log = LoggerFactory.getLogger(this.getClass)

@@ -32,7 +32,8 @@ import scala.concurrent.ExecutionContextExecutor
 trait HttpService extends
   ResourceService
   with FileService
-  with StreamService{
+  with StreamService
+  with LoginService {
 
 
   implicit val system: ActorSystem
@@ -57,7 +58,7 @@ trait HttpService extends
     ignoreTrailingSlash {
       pathPrefix("theia") {
         pathPrefix("distributor") {
-          home ~  streamRoute ~ resourceRoutes
+          home ~  streamRoute ~ resourceRoutes ~ loginRoute
         } ~
         fileRoute
       }

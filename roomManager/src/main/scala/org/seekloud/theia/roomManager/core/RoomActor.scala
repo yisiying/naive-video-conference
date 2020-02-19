@@ -114,7 +114,7 @@ object RoomActor {
               dispatchTo(subscribers)(List((userId, false)), StartLiveRsp(Some(LiveInfo("main", "123456"))))
               //                      roomInfo.mpd = Some(r.liveAdd)
               val startTime = System.currentTimeMillis()
-              ctx.self ! SwitchBehavior("idle", idle(WholeRoomInfo(roomInfo), mutable.HashMap(Role.host -> mutable.HashMap(userId -> s"user-${userTableOpt.get.uid}")), subscribers, mutable.Set[Long](), startTime, 0, mutable.HashMap(Role.host -> List(userId))))
+              ctx.self ! SwitchBehavior("idle", idle(WholeRoomInfo(roomInfo), mutable.HashMap(Role.host -> mutable.HashMap(userId -> LiveInfo(s"user-${userTableOpt.get.uid}", "123456"))), subscribers, mutable.Set[Long](), startTime, 0, mutable.HashMap(Role.host -> List(userId))))
 
               //                    case Left(e) =>
               //                      log.error(s"distributor startPull error: $e")

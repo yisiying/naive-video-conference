@@ -111,4 +111,10 @@ object SharedProtocol {
                        )
 
 
+  //登陆管理页面
+  case class UserBaseInfo(
+                       userName:String
+                     )
+
+
 }

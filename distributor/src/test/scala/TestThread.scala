@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ExecutorService, Executors}
 
 import org.seekloud.theia.distributor.Boot.executor
-import org.seekloud.theia.distributor.protocol.SharedProtocol.{FinishPullReq, StartPullReq, SuccessRsp}
+import org.seekloud.theia.protocol.ptcl.distributor2Manager.DistributorProtocol.{StartPullReq,FinishPullReq,SuccessRsp}
 import org.seekloud.theia.distributor.utils.HttpUtil
 import org.slf4j.LoggerFactory
 
@@ -131,7 +131,7 @@ object TestThread extends HttpUtil{
 
       //读取视频文件
 //      val src = "D:/helloMedia/222.ts"
-      val src = "/Users/litianyu/Downloads/record.ts"
+      val src = "C:/Users/Administrator/Videos/2019-11-06 10-56-35.ts"
       val fis = new FileInputStream(new File(src))
       var countRead = 0
       var totalReadSize = 0

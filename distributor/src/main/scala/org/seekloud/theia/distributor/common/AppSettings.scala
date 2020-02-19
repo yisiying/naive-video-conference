@@ -63,9 +63,13 @@ object AppSettings {
   val recordLocation: String = appConfig.getString("recordLocation")
   val testLocation: String = appConfig.getString("testPath")
   val indexPath: String = appConfig.getString("indexPath")
+  val encodeLogPath: String = appConfig.getString("encodeLogPath")
+  val saveLogPath: String = appConfig.getString("saveLogPath")
   val testModel: Boolean = appConfig.getBoolean("testModel")
   val testStream: Boolean = appConfig.getBoolean("testStream")
   val testFile: Boolean = appConfig.getBoolean("testFile")
+  val testKillFF: Boolean = appConfig.getBoolean("testKillFF")
+
 
   val rtpToHost: String = appConfig.getString("rtpToHost")
   val rtpServerDst: String = appConfig.getString("rtpServerDst")
@@ -79,7 +83,11 @@ object AppSettings {
   val slickIdleTimeout: Int = slickConfig.getInt("idleTimeout")
   val slickMaxLifetime: Int = slickConfig.getInt("maxLifetime")
 
-  
+  val sConf: Config = config.getConfig("session")
+  val loginUser : String = sConf.getString("user")
+  val loginPassword : String = sConf.getString("password")
+  val sessionTimeOut : Int = sConf.getInt("sessionTimeOut")
+
   val sessionConfig: SessionConfig = {
     val sConf = config.getConfig("session")
     SessionConfig(
@@ -93,4 +101,7 @@ object AppSettings {
       sessionEncryptData = sConf.getBoolean("encryptData")
     )
   }
+
+
+
 }

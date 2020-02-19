@@ -12,7 +12,7 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 
 import scala.language.postfixOps
-import org.seekloud.theia.distributor.core.{EncodeManager, LiveManager, PullActor, SaveManager}
+import org.seekloud.theia.distributor.core.{EncodeManager, LiveManager, PullActor, SaveManager, KillFFActor}
 import org.seekloud.theia.rtpClient.Protocol._
 
 /**
@@ -48,6 +48,8 @@ object Boot extends HttpService {
   val liveManager:ActorRef[LiveManager.Command] = system.spawn(LiveManager.create(), "liveManager")
 
   val pullActor:ActorRef[Command] = system.spawn(PullActor.create(),"pullActor")
+
+  val killFFActor:ActorRef[KillFFActor.Command] = system.spawn(KillFFActor.create(), "KillFFActor")
 
 	def main(args: Array[String]) {
     Http().bindAndHandle(routes, httpInterface, httpPort)

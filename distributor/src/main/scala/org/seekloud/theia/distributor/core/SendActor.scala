@@ -47,7 +47,7 @@ object SendActor {
         case m@GetUdp(udp) =>
           var output:FileOutputStream = null
           if(testFile){
-            log.info(s"create new test file for room id : ${roomId}")
+            log.info(s"create new test file for room id : $roomId")
             val file = new File(s"$testLocation",s"${roomId}_in.ts")
             file.delete()
             file.createNewFile()

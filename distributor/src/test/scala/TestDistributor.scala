@@ -29,7 +29,7 @@ object TestDistributor {
   //  val dst = new InetSocketAddress("127.0.0.1", 45501)
 
   private val num = 1
-  private val duration = 180000
+  private val duration = 18000000
 
   val pipe: Pipe = Pipe.open()
   val sink: Pipe.SinkChannel = pipe.sink()

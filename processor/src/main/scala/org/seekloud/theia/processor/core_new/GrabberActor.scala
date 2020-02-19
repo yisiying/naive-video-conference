@@ -38,19 +38,19 @@ object GrabberActor {
 
   case object TimerKey4Close
 
-  def create(roomId: Long, liveId: String, buf: InputStream, recorderRef: ActorRef[RecorderActor.Command]): Behavior[Command]= {
+  def create(roomId: Long, liveId: String, recorderRef: ActorRef[RecorderActor.Command]): Behavior[Command]= {
     Behaviors.setup[Command]{ ctx =>
       implicit val stashBuffer: StashBuffer[Command] = StashBuffer[Command](Int.MaxValue)
       Behaviors.withTimers[Command] {
         implicit timer =>
           log.info(s"grabberActor start----")
-          init(roomId, liveId, buf, recorderRef)
+          init(roomId, liveId, recorderRef)
       }
     }
   }
 
-  def init(roomId: Long, liveId: String, buf: InputStream,
-      recorderRef:ActorRef[RecorderActor.Command]
+  def init(roomId: Long, liveId: String,
+      recorderRef:ActorRef[RecorderActor.Command],
     )(implicit timer: TimerScheduler[Command],
       stashBuffer: StashBuffer[Command]):Behavior[Command] = {
       log.info(s"$liveId grabber turn to init")
@@ -58,7 +58,8 @@ object GrabberActor {
         msg match {
           case t: Recorder =>
             log.info(s"${ctx.self} receive a msg $t")
-            val grabber = new FFmpegFrameGrabber1(buf)
+            val grabber = new FFmpegFrameGrabber1(s"rtmp://10.1.29.247:42037/live/$roomId?$liveId")
+            log.info(s"grabber开始拉流：rtmp://10.1.29.247:42037/live/$roomId?$liveId")
             try {
               grabber.start()
             } catch {
@@ -67,7 +68,7 @@ object GrabberActor {
             }
             log.info(s"$liveId grabber start successfully")
             ctx.self ! GrabFrameFirst
-            work(roomId, liveId, grabber, t.rec, buf)
+            work(roomId, liveId, grabber, t.rec)
 
           case StopGrabber =>
             log.info(s"grabber $liveId stopped when init")
@@ -84,7 +85,6 @@ object GrabberActor {
     liveId: String,
     grabber: FFmpegFrameGrabber1,
     recorder: ActorRef[RecorderActor.Command],
-    buf: InputStream
   )(implicit stashBuffer: StashBuffer[Command],
     timer: TimerScheduler[Command]): Behavior[Command] = {
     Behaviors.receive[Command] {(ctx, msg) =>
@@ -147,7 +147,7 @@ object GrabberActor {
             log.info(s"${ctx.self} stop ----")
             grabber.release()
             grabber.close()
-            buf.close()
+//            buf.close()
           }catch {
             case e:Exception =>
               log.error(s"${ctx.self} close error:$e")

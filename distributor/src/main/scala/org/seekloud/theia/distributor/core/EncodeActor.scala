@@ -1,6 +1,6 @@
 package org.seekloud.theia.distributor.core
 
-import java.io.File
+import java.io.{BufferedWriter, File, FileWriter}
 
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{Behaviors, StashBuffer, TimerScheduler}
@@ -8,6 +8,8 @@ import org.bytedeco.javacpp.Loader
 import org.slf4j.LoggerFactory
 import org.seekloud.theia.distributor.common.AppSettings._
 import org.seekloud.theia.distributor.Boot.saveManager
+import org.seekloud.theia.distributor.utils.{CmdUtil, TimeUtil}
+
 import scala.language.implicitConversions
 
 /**
@@ -42,10 +44,11 @@ object EncodeActor {
     private var process: Process = _
     private var recordProcess: Process = _
 
+    private var writer: BufferedWriter = _
+
     def createDir(): AnyVal = {
       val fileLoc = new File(s"$fileLocation$roomId/")
       if(!fileLoc.exists()){
-        log.info("创建fileLocation路径")
         fileLoc.mkdir()
       }
       val recordLoc = new File(s"$recordLocation$roomId/")
@@ -73,13 +76,34 @@ object EncodeActor {
       val ffmpeg = Loader.load(classOf[org.bytedeco.ffmpeg.ffmpeg])
 //      val pb = new ProcessBuilder(ffmpeg,"-analyzeduration","10000000","-probesize","1000000","-i", s"udp://127.0.0.1:$port", "-b:v", "1M","-bufsize","1M", "-c:v","copy","-vtag","avc1","-f", "dash", "-window_size", "20", "-extra_window_size", "20", "-hls_playlist", "1", s"$fileLocation$roomId/index.mpd")
       if(!testModel){
-        val pb = new ProcessBuilder(ffmpeg,"-f","mpegts","-i",s"udp://127.0.0.1:$port","-b:v","1M","-bufsize","1M","-f","dash","-window_size","20","-extra_window_size","20","-hls_playlist","1",s"$fileLocation$roomId/index.mpd")
-        val process = pb.inheritIO().start()
-        this.process = process
-      }else{
-        val pb = new ProcessBuilder(ffmpeg,"-f","mpegts","-i",s"udp://127.0.0.1:$port","-b:v","1M","-bufsize","1M","-f","dash","-window_size","20","-extra_window_size","20","-hls_playlist","1","/Users/litianyu/Downloads/dash/index.mpd")
-        val process = pb.inheritIO().start()
-        this.process = process
+//        val pb = new ProcessBuilder(ffmpeg,"-analyzeduration","10000000","-probesize","1000000","-i",s"udp://127.0.0.1:$port","-b:v","1M","-bufsize","1M","-f","dash","-window_size","20","-extra_window_size","20","-hls_playlist","1",s"$fileLocation$roomId/index.mpd")
+//        val process = pb.inheritIO().start()
+//        this.process = process
+        val cmd = ffmpeg + s" -analyzeduration 10000000 -probesize 1000000 -i udp://127.0.0.1:$port -b:v 1M -bufsize 1M -f dash -use_template 1 -use_timeline 1 -seg_duration 4 -window_size 20 -extra_window_size 20 -hls_playlist 1 $fileLocation$roomId/index.mpd"
+//        "-adaptation_sets \"id=0,streams=v id=1,streams=a\" "
+        //        val cmd = ffmpeg + s" -f mpegts -i udp://127.0.0.1:$port -b:v 1M -bufsize 1M -f dash -window_size 20 -extra_window_size 20 -hls_playlist 1 $fileLocation$roomId/index.mpd"
+//        this.process = CmdUtil.exeFFmpeg(cmd)
+        val file = new File(s"$encodeLogPath/encodeLog-$roomId-${TimeUtil.timeStamp2DetailDate(startTime).replaceAll(" ","-")}")
+        if (!file.exists()) {
+          file.createNewFile()
+          log.debug(s"create distributor log info: $file")
+        }
+        if (file.exists() && file.canWrite) {
+          writer = new BufferedWriter(new FileWriter(file))
+          CmdUtil.exeFFmpegWithLog(cmd, writer, displayInConsole = true) match {
+            case Right(processAndLog) =>
+              process = processAndLog
+
+            case Left(e) =>
+              log.info(s"execute ffmpeg cmd error, $e")
+          }
+        }
+      } else {
+//        val pb = new ProcessBuilder( ffmpeg,"-f","mpegts","-i",s"udp://127.0.0.1:$port","-b:v","1M","-bufsize","1M","-f","dash","-window_size","20","-extra_window_size","20","-hls_playlist","1","/Users/litianyu/Downloads/dash/index.mpd")
+//        val process = pb.inheritIO().start()
+//        this.process = process
+          val cmd = ffmpeg + s" -analyzeduration 10000000 -probesize 5000000 -i udp://127.0.0.1:$port -b:v 1M -bufsize 1M -f dash -use_timeline 0 -use_template 1 -window_size 2 -extra_window_size 2 -seg_duration 5 -single_file 0 -hls_playlist 1 C:/Users/Administrator/Videos/shencheng/"
+          this.process = CmdUtil.exeFFmpeg(cmd)
       }
     }
 
