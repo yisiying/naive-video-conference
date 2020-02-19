@@ -630,8 +630,8 @@ object RmManager {
           liveManager ! LiveManager.SwitchMediaMode(isJoin = true, reset = hostScene.resetBack)
 
           /*拉取观众的rtp流并播放*/
-//          val joinInfo = JoinInfo(roomInfo.get.roomId, msg.audienceInfo.userId, hostScene.gc)
-//          liveManager ! LiveManager.PullStream(msg.audienceInfo.liveId, joinInfo = Some(joinInfo), hostScene = Some(hostScene))
+          val joinInfo = JoinInfo(roomInfo.get.roomId, msg.audienceInfo.userId, hostScene.gc)
+          liveManager ! LiveManager.PullRtmpStream(msg.audienceInfo.liveId, joinInfo = Some(joinInfo), hostScene = Some(hostScene))
 
           hostBehavior(stageCtx, homeController, hostScene, hostController, liveManager, mediaPlayer, sender, hostStatus = HostStatus.CONNECT, Some(msg.audienceInfo), rtmpLive, rtpLive, biliLive)
 
