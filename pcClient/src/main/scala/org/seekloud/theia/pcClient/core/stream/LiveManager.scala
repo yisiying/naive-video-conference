@@ -8,6 +8,9 @@ import org.bytedeco.ffmpeg.global.avcodec
 import org.seekloud.theia.capture.sdk.DeviceUtil.{getAllDevices, getDeviceOption}
 import org.seekloud.theia.capture.sdk.{DeviceUtil, MediaCapture}
 import org.seekloud.theia.pcClient.common.AppSettings
+import org.seekloud.theia.pcClient.common._
+import org.seekloud.theia.pcClient.common.Constants._
+import org.seekloud.theia.pcClient.core.player.VideoPlayer
 import org.seekloud.theia.pcClient.core.collector.CaptureActor
 import org.seekloud.theia.pcClient.core.rtp._
 import org.seekloud.theia.pcClient.core.RmManager
@@ -74,6 +77,8 @@ object LiveManager {
   final case class Ask4State(reply: ActorRef[Boolean]) extends LiveCommand
 
   final case class PullStream(liveId: String, joinInfo: Option[JoinInfo] = None, watchInfo: Option[WatchInfo] = None, audienceScene: Option[AudienceScene] = None, hostScene: Option[HostScene] = None) extends LiveCommand
+
+  final case class PullRtmpStream(liveId: String, joinInfo: Option[JoinInfo] = None, watchInfo: Option[WatchInfo] = None, audienceScene: Option[AudienceScene] = None, hostScene: Option[HostScene] = None) extends LiveCommand
 
   final case object StopPull extends LiveCommand
 
@@ -245,6 +250,19 @@ object LiveManager {
             timer.startSingleTimer(PULL_RETRY_TIMER_KEY, msg, 100.millis)
             Behaviors.same
           }
+
+        case PullRtmpStream(liveId, joinInfo, watchInfo, audienceScene, hostScene) =>
+          log.info(s"in StreamPuller-PullStreamReqSuccess in watchInfo")
+          //          Some(audienceScene).foreach(_.autoReset())
+          audienceScene.get.autoReset()
+          val playId = Ids.getPlayId(AudienceStatus.LIVE, roomId = Some(audienceScene.get.getRoomInfo.roomId))
+          println(s"===watchInfo playId:$playId")
+          mediaPlayer.setTimeGetter(playId, () => System.currentTimeMillis())
+          val videoPlayer = ctx.spawn(VideoPlayer.create(playId, audienceScene, None, None), s"videoPlayer$playId")
+          //            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
+          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/${watchInfo.get.roomId}?${audienceScene.get.getRoomInfo.userId}"), Some(audienceScene.get.gc), None)
+          Behaviors.same
+          Behaviors.same
 
         case GetPackageLoss =>
           streamPuller.foreach { s =>

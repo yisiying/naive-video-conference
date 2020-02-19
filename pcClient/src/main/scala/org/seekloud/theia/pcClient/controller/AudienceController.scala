@@ -301,7 +301,7 @@ class AudienceController(
               audienceScene.likeBtn.setGraphic(audienceScene.unLikeIcon)
             }
           }
-          rmManager ! RmManager.PullRtmpStream
+//          rmManager ! RmManager.PullRtmpStream
 
         case msg: LikeRoomRsp =>
         //          log.debug(s"audience receive likeRoomRsp: ${msg}")

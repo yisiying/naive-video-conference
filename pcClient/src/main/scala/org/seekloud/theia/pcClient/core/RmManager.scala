@@ -349,7 +349,7 @@ object RmManager {
             audienceScene.liveId = msg.roomInfo.rtmp
             println(s"111111111111111111111111111  ${msg.roomInfo.rtmp}")
             val info = WatchInfo(msg.roomInfo.roomId, audienceScene.gc)
-//            liveManager ! LiveManager.PullStream(msg.roomInfo.rtmp.get, watchInfo = Some(info), audienceScene = Some(audienceScene))
+            liveManager ! LiveManager.PullRtmpStream(msg.roomInfo.rtmp.get, watchInfo = Some(info), audienceScene = Some(audienceScene))
 //            liveManager ! LiveManager.PullStream("rtmp://10.1.29.247:42037/live/123456", watchInfo = Some(info), audienceScene = Some(audienceScene))
 
             ctx.self ! AudienceWsEstablish
@@ -774,7 +774,7 @@ object RmManager {
           mediaPlayer.setTimeGetter(playId, () => System.currentTimeMillis())
           val videoPlayer = ctx.spawn(VideoPlayer.create(playId, Some(audienceScene), None, None), s"videoPlayer$playId")
           //            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
-          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/${roomInfo.get.roomId}?main"), Some(audienceScene.gc), None)
+          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/${}?main"), Some(audienceScene.gc), None)
           Behaviors.same
 
 
@@ -985,7 +985,7 @@ object RmManager {
           val userId = userInfo.get.userId
           //          audienceScene.autoReset2()
 //          liveManager ! LiveManager.PushStream(msg.audienceLiveInfo.liveId, msg.audienceLiveInfo.liveCode)
-          liveManager ! LiveManager.PushRtmpStream(s"rtmp://10.1.29.247:42037/live/${roomInfo.get.roomId}?user-${userId}")
+          liveManager ! LiveManager.PushRtmpStream(s"rtmp://10.1.29.247:42037/live/${audienceScene.getRoomInfo.roomId}?user-${userId}")
 
           /*开始拉取并播放主播rtp流*/
           //          val joinInfo = JoinInfo(
