@@ -549,7 +549,7 @@ object RmManager {
         case msg: RtmpLiveReq =>
           //          val url = s"rtmp://media.seekloud.com:62040/live/23456?rtmpToken=${msg.token}&userId=${userInfo.get.userId}"
           //          val url = s"rtmp://media.seekloud.com:62040/live/${msg.key}?rtmpToken=${msg.token}&userId=${userInfo.get.userId}"
-          val url = s"rtmp://10.1.29.247:42037/live/${roomInfo.get.roomId}?user-${userInfo.get.userId}"
+          val url = s"${AppSettings.srsServer}${msg.key}"
 //          val url = s"rtmp://10.1.29.247:42037/live/${roomInfo.get.roomId}?startTime=${msg.startTime}&userId=${userInfo.get.userId}"
           log.info(s"rtmp_url: $url")
           liveManager ! LiveManager.PushRtmpStream(url)

@@ -69,6 +69,7 @@ object AppSettings {
   val imageHeight = appConfig.getInt("imageHeight")
   val isTest = appConfig.getBoolean("isTest")
   val debugPath = appConfig.getString("debugPath")
+  val srsServer = appConfig.getString("srsServer")
 
 
   val slickConfig = config.getConfig("slick.db")

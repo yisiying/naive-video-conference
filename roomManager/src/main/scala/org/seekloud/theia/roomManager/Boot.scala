@@ -14,7 +14,7 @@ import akka.util.Timeout
 import scala.util.{Failure, Success}
 import scala.language.postfixOps
 import org.seekloud.theia.roomManager.common.AppSettings
-import org.seekloud.theia.roomManager.core.{EmailActor, RegisterManager, RoomManager, UserManager}
+import org.seekloud.theia.roomManager.core.{RoomManager, UserManager}
 import org.seekloud.theia.roomManager.http.HttpService
 
 /**
@@ -45,10 +45,10 @@ object Boot extends HttpService {
   val roomManager = system.spawn(RoomManager.create(), "roomManager")
 
 //  val registerManager = system.spawn(RegisterManager.create(), "registerManager")
-  val registerManager = system.spawn(RegisterManager.create(), "registerManager")
+  //  val registerManager = system.spawn(RegisterManager.create(), "registerManager")
 
 //  val emailActor = system.spawn(EmailActor.behavior, "emailActor")
-  val emailActor = system.spawn(EmailActor.behavior, "emailActor")
+  //  val emailActor = system.spawn(EmailActor.behavior, "emailActor")
 
   def main(args: Array[String]): Unit = {
     //    log.info("Starting.")

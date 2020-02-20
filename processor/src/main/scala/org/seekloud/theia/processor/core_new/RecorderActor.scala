@@ -13,6 +13,7 @@ import org.seekloud.theia.processor.Boot.roomManager
 import org.seekloud.theia.processor.common.AppSettings.{addTs, bitRate, debugPath, isDebug}
 import org.slf4j.LoggerFactory
 import org.seekloud.theia.processor.utils.TimeUtil
+import org.seekloud.theia.processor.common.AppSettings
 
 import scala.concurrent.duration._
 
@@ -86,8 +87,8 @@ object RecorderActor {
         implicit timer =>
           log.info(s"recorderActor start----")
           avutil.av_log_set_level(-8)
-          val recorder4ts = new FFmpegFrameRecorder(s"rtmp://10.1.29.247:42037/live/${push}", 640, 480, audioChannels)
-          log.info(s"recorder开始推流到：rtmp://10.1.29.247:42037/live/${push}")
+          val recorder4ts = new FFmpegFrameRecorder(s"${AppSettings.srsServer}${push}", 640, 480, audioChannels)
+          log.info(s"recorder开始推流到：${AppSettings.srsServer}${push}")
           recorder4ts.setFrameRate(frameRate)
           recorder4ts.setVideoBitrate(bitRate)
           recorder4ts.setVideoCodec(avcodec.AV_CODEC_ID_H264)

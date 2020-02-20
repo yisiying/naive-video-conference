@@ -50,6 +50,7 @@ object AppSettings {
   val rmUrl = rmConfig.getString("url")
 //  val d_w = rmConfig.getInt("width")
 //  val d_h = rmConfig.getInt("height")
+val srsServer = dependenceConfig.getString("srsServer")
 
   /*rtpServer*/
   private val rtpConfig = dependenceConfig.getConfig("rtpServer.config")

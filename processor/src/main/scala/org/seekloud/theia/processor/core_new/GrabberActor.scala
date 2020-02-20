@@ -6,6 +6,7 @@ import akka.actor.typed.scaladsl.{Behaviors, StashBuffer, TimerScheduler}
 import org.bytedeco.javacv.FFmpegFrameGrabber1
 import org.slf4j.LoggerFactory
 import scala.concurrent.duration._
+import org.seekloud.theia.processor.common.AppSettings
 
 /**
   * Created by sky
@@ -58,8 +59,8 @@ object GrabberActor {
         msg match {
           case t: Recorder =>
             log.info(s"${ctx.self} receive a msg $t")
-            val grabber = new FFmpegFrameGrabber1(s"rtmp://10.1.29.247:42037/live/$liveId")
-            log.info(s"grabber开始拉流：rtmp://10.1.29.247:42037/live/$liveId")
+            val grabber = new FFmpegFrameGrabber1(s"${AppSettings.srsServer}$liveId")
+            log.info(s"grabber开始拉流：${AppSettings.srsServer}$liveId")
             try {
               grabber.start()
             } catch {

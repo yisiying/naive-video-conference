@@ -13,7 +13,6 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.Flow
 import org.seekloud.theia.protocol.ptcl.{CommonRsp, Response}
-import org.seekloud.theia.roomManager.core.RegisterActor.{ConfirmEmail, SendEmail}
 import org.seekloud.theia.roomManager.core.RoomManager
 import org.seekloud.theia.roomManager.models.dao.{RecordCommentDAO, RecordDao, StatisticDao, UserInfoDao}
 import org.seekloud.theia.roomManager.utils.HestiaClient
