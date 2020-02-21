@@ -37,6 +37,7 @@ import org.seekloud.theia.pcClient.component._
 import org.seekloud.theia.pcClient.utils.{NetUsage, TimeUtil}
 
 import scala.collection.mutable
+import scala.collection.JavaConverters._
 
 
 /**
@@ -114,7 +115,7 @@ object HostScene {
 
 }
 
-class HostScene(stage: Stage) {
+class HostScene(stage: Stage) extends AutoResetSecene {
 
   import HostScene._
 
@@ -137,9 +138,7 @@ class HostScene(stage: Stage) {
   def startPackageLoss(): Unit = {
     log.info("start to get package loss.")
     timeline.setCycleCount(Animation.INDEFINITE)
-    val keyFrame = new KeyFrame(Duration.millis(2000), { _ =>
-      listener.ask4Loss()
-    })
+    val keyFrame = new KeyFrame(Duration.millis(2000), (event: ActionEvent) => listener.ask4Loss())
     timeline.getKeyFrames.add(keyFrame)
     timeline.play()
   }
@@ -398,6 +397,14 @@ class HostScene(stage: Stage) {
     val sWidth = gc.getCanvas.getWidth
     val sHeight = gc.getCanvas.getHeight
     gc.drawImage(waitPulling, 0, 0, sWidth, sHeight)
+  }
+
+  def autoReset(): Unit = {
+    isLive match {
+      case true =>
+        resetLoading()
+      case false =>
+    }
   }
 
   /*留言板*/
@@ -1051,7 +1058,7 @@ class HostScene(stage: Stage) {
       refuseBtnCol.setPrefWidth(width * 0.05)
 
       AudienceTable.setItems(audObservableList)
-      AudienceTable.getColumns.addAll(userInfoCol, agreeBtnCol, refuseBtnCol)
+      AudienceTable.getColumns.addAll(List(userInfoCol, agreeBtnCol, refuseBtnCol).asJavaCollection)
       AudienceTable.setPrefHeight(height * 0.8)
       AudienceTable
     }

@@ -90,7 +90,6 @@ object CommonInfo {
     * */
   case class LiveInfo(
     liveId: String,
-    liveCode: String
   )
 
   /*连线者信息*/

@@ -214,19 +214,19 @@ class HostController(
         rmManager ! HeartBeat
 
       case msg: StartLiveRsp =>
-//        log.debug(s"get StartLiveRsp: $msg")
+        log.debug(s"get StartLiveRsp: $msg")
         if (msg.errCode == 0) {
-          rmManager ! RmManager.StartLive(msg.liveInfo.get.liveId, msg.liveInfo.get.liveCode)
+          rmManager ! RmManager.StartLive(msg.liveInfo.get.liveId)
         } else {
           Boot.addToPlatform {
             WarningDialog.initWarningDialog(s"${msg.msg}")
           }
         }
 
-      case msg:GetTokenRsp =>
+      case msg:GetLiveIdRsp =>
         log.info("gotTokenRsp")
 //        if (msg.errCode == 0) {
-          rmManager ! RmManager.RtmpLiveReq(msg.tokenOpt.get,msg.SecureKeyOpt.get, msg.startTimeOpt.get)
+          rmManager ! RmManager.RtmpLiveReq(msg.liveId.get)
 //        } else {
 //          Boot.addToPlatform {
 //            WarningDialog.initWarningDialog(s"${msg.msg}")

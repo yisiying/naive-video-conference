@@ -673,17 +673,17 @@ object RoomActor {
         }
         switchBehavior(ctx, "busy", busy(), InitTime, TimeOut("busy"))
 
-      case GetTokenReq(uId) =>
+      case GetLiveIdReq(uId) =>
         import org.seekloud.theia.roomManager.utils.SecureUtil.nonceStr
         log.info(s"ID:$uId get token req.")
         UserInfoDao.searchById(uId).map { r =>
           if (r.nonEmpty) {
             if (r.get.rtmpToken != "") {
               if (r.get.`sealed`) {
-                dispatchTo(List((userId, false)), GetTokenRsp(None, None, None, 100038, "该用户已经被封号哦"))
+                dispatchTo(List((userId, false)), GetLiveIdRsp(None, 100038, "该用户已经被封号哦"))
               }
               else {
-                dispatchTo(List((userId, false)), GetTokenRsp(Some(r.get.rtmpToken), Some(nonceStr(40)), Some(startTime)))
+                dispatchTo(List((userId, false)), GetLiveIdRsp(Some(r.get.rtmpToken))
               }
             }
             else {
@@ -691,33 +691,33 @@ object RoomActor {
                 if (t.nonEmpty) {
                   log.debug(s"rtmp获取用户token成功")
                   if (r.get.`sealed`) {
-                    dispatchTo(List((userId, false)), GetTokenRsp(None, None, None, 100038, "该用户已经被封号哦"))
+                    dispatchTo(List((userId, false)), GetLiveIdRsp(None, 100038, "该用户已经被封号哦"))
                   }
                   else {
-                    dispatchTo(List((userId, false)), GetTokenRsp(Some(r.get.rtmpToken), Some(nonceStr(40)), Some(startTime)))
+                    dispatchTo(List((userId, false)), GetLiveIdRsp(Some(r.get.rtmpToken))
 
                   }
                 }
                 else {
                   log.debug(s"rtmp获取用户token失败,数据库更新失败")
-                  dispatchTo(List((userId, false)), GetTokenRsp(None, None, None, 100037, "rtmp获取用户token失败,数据库更新失败"))
+                  dispatchTo(List((userId, false)), GetLiveIdRsp( None, 100037, "rtmp获取用户token失败,数据库更新失败"))
                 }
               }.recover {
                 case e: Exception =>
                   log.debug(s"rtmp获取用户token失败,数据库更新失败$e")
-                  dispatchTo(List((userId, false)), GetTokenRsp(None, None, None, 100037, s"rtmp获取用户token失败,数据库更新失败$e"))
+                  dispatchTo(List((userId, false)), GetLiveIdRsp(None, 100037, s"rtmp获取用户token失败,数据库更新失败$e"))
               }
 
 
             }
           }
           else {
-            dispatchTo(List((userId, false)), GetTokenRsp(None, None, None, 100034, "该用户不存在"))
+            dispatchTo(List((userId, false)), GetLiveIdRsp(None, 100034, "该用户不存在"))
           }
         }.recover {
           case e: Exception =>
             log.debug(s"获取token失败，inter error：$e")
-            dispatchTo(List((userId, false)), GetTokenRsp(None, None, None, 100036, s"获取token失败，inter error：$e"))
+            dispatchTo(List((userId, false)), GetLiveIdRsp(None, 100036, s"获取token失败，inter error：$e"))
         }
         Behaviors.same
 

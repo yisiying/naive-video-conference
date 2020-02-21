@@ -63,14 +63,12 @@ object AuthProtocol {
 
   case class ReFleshRoomInfo(roomInfo: RoomInfo) extends WsMsgRm
   /*申请直播*/
-  case class GetTokenReq(
+  case class GetLiveIdReq(
     userId: Long
   ) extends WsMsgClient
 
-  case class GetTokenRsp(
-    tokenOpt: Option[String],
-    SecureKeyOpt: Option[String],
-    startTimeOpt:Option[Long],
+  case class GetLiveIdRsp(
+    liveId: Option[String],
     errCode: Int = 0,
     msg: String = "ok"
   ) extends WsMsgRm2Host

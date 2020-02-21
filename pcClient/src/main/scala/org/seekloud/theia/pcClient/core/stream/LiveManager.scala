@@ -259,7 +259,8 @@ object LiveManager {
           mediaPlayer.setTimeGetter(playId, () => System.currentTimeMillis())
           val videoPlayer = ctx.spawn(VideoPlayer.create(playId, audienceScene, None, None), s"videoPlayer$playId")
           //            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
-          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/${watchInfo.get.roomId}?$liveId"), Some(audienceScene.get.gc), None)
+          //根据room-roomId拉流
+          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/room-${watchInfo.get.roomId}"), Some(audienceScene.get.gc), None)
           Behaviors.same
           Behaviors.same
 

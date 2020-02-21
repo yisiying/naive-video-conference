@@ -75,7 +75,7 @@ object AudienceScene {
 
 }
 
-class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: String = "") {
+class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: String = "") extends AutoResetSecene {
   import AudienceScene._
 
   private val width = Constants.AppWindow.width * 0.9

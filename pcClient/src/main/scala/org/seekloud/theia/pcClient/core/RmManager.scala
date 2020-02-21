@@ -118,9 +118,9 @@ object RmManager {
 
   final case class HostLiveReq(biliSelected: Boolean, rtmpSelected: Boolean, rtpSelected: Boolean, rtmpServer: Option[String] = None) extends RmCommand
 
-  final case class RtmpLiveReq(token: String, key: String, startTime: Long) extends RmCommand
+  final case class RtmpLiveReq(liveId: String) extends RmCommand
 
-  final case class StartLive(liveId: String, liveCode: String) extends RmCommand
+  final case class StartLive(liveId: String) extends RmCommand
 
   final case object StopLive extends RmCommand
 
@@ -549,11 +549,20 @@ object RmManager {
         case msg: RtmpLiveReq =>
           //          val url = s"rtmp://media.seekloud.com:62040/live/23456?rtmpToken=${msg.token}&userId=${userInfo.get.userId}"
           //          val url = s"rtmp://media.seekloud.com:62040/live/${msg.key}?rtmpToken=${msg.token}&userId=${userInfo.get.userId}"
-          val url = s"${AppSettings.srsServer}${msg.key}"
+          val url = s"${AppSettings.srsServer}${msg.liveId}"
 //          val url = s"rtmp://10.1.29.247:42037/live/${roomInfo.get.roomId}?startTime=${msg.startTime}&userId=${userInfo.get.userId}"
           log.info(s"rtmp_url: $url")
           liveManager ! LiveManager.PushRtmpStream(url)
           hostController.isLive = true
+          hostScene.resetLoading()
+          val playId = Ids.getPlayId(AudienceStatus.LIVE, roomId = Some(roomInfo.map(_.roomId).get))
+          println(s"===开始播放直播的画面:$playId")
+          mediaPlayer.setTimeGetter(playId, () => System.currentTimeMillis())
+          val videoPlayer = ctx.spawn(VideoPlayer.create(playId, Some(hostScene), None, None), s"videoPlayer$playId")
+          //            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
+          log.info(s"rtmp://10.1.29.247:42037/live/room-${roomInfo.map(_.roomId).get}")
+          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/room-${roomInfo.map(_.roomId).get}"), Some(hostScene.gc), None)
+
           hostBehavior(stageCtx, homeController, hostScene, hostController, liveManager, mediaPlayer, sender, hostStatus, joinAudience, Some(true), rtpLive, biliLive)
 
         case msg: StartLive =>
@@ -568,7 +577,7 @@ object RmManager {
 //          }
 //          if (rtmpLive.get) {
             log.info("rtmp live")
-            sender.foreach(_ ! GetTokenReq(userInfo.get.userId))
+            sender.foreach(_ ! GetLiveIdReq(userInfo.get.userId))
 //          }
           Behaviors.same
 
@@ -624,14 +633,14 @@ object RmManager {
 
         case msg: JoinBegin =>
           /*背景改变*/
-          hostScene.resetBack()
+//          hostScene.resetBack()
 
           /*媒体画面模式更改*/
-          liveManager ! LiveManager.SwitchMediaMode(isJoin = true, reset = hostScene.resetBack)
+//          liveManager ! LiveManager.SwitchMediaMode(isJoin = true, reset = hostScene.resetBack)
 
           /*拉取观众的rtp流并播放*/
-          val joinInfo = JoinInfo(roomInfo.get.roomId, msg.audienceInfo.userId, hostScene.gc)
-          liveManager ! LiveManager.PullRtmpStream(msg.audienceInfo.liveId, joinInfo = Some(joinInfo), hostScene = Some(hostScene))
+//          val joinInfo = JoinInfo(roomInfo.get.roomId, msg.audienceInfo.userId, hostScene.gc)
+//          liveManager ! LiveManager.PullRtmpStream(msg.audienceInfo.liveId, joinInfo = Some(joinInfo), hostScene = Some(hostScene))
 
           hostBehavior(stageCtx, homeController, hostScene, hostController, liveManager, mediaPlayer, sender, hostStatus = HostStatus.CONNECT, Some(msg.audienceInfo), rtmpLive, rtpLive, biliLive)
 
@@ -774,7 +783,8 @@ object RmManager {
           mediaPlayer.setTimeGetter(playId, () => System.currentTimeMillis())
           val videoPlayer = ctx.spawn(VideoPlayer.create(playId, Some(audienceScene), None, None), s"videoPlayer$playId")
           //            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
-          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/${}?main"), Some(audienceScene.gc), None)
+          log.info(s"rtmp://10.1.29.247:42037/live/room-${audienceScene.getRoomInfo.roomId}")
+          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/room-${audienceScene.getRoomInfo.roomId}"), Some(audienceScene.gc), None)
           Behaviors.same
 
 
