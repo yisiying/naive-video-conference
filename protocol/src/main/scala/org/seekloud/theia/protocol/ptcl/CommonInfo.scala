@@ -89,8 +89,8 @@ object CommonInfo {
     * webrtcServer中已调用
     * */
   case class LiveInfo(
-    liveId: String,
-    liveCode: String
+                       liveId: String,
+                       //    liveCode: String
   )
 
   /*连线者信息*/

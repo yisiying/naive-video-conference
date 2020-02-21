@@ -122,7 +122,7 @@ object UserActor {
 
           case unknown =>
             if(userId == Common.TestConfig.TEST_USER_ID){
-              log.debug(s"${ctx.self.path} 测试房间的房主actor，不处理其他类型的消息msg=$unknown")
+              //              log.debug(s"${ctx.self.path} 测试房间的房主actor，不处理其他类型的消息msg=$unknown")
             }else{
               log.debug(s"${ctx.self.path} recv an unknown msg:${msg} in init state...")
               stashBuffer.stash(unknown)

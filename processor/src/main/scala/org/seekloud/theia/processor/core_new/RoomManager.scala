@@ -27,7 +27,11 @@ object RoomManager {
 
   sealed trait Command
 
-  case class NewConnection(roomId: Long, host: String, client: String, pushLiveId: String, pushLiveCode: String, layout: Int) extends Command
+  case class StartRoom(roomId: Long, hostLiveId: String, roomLiveId: String, layout: Int) extends Command
+
+  case class NewConnection(roomId: Long, client: String, roomLiveId: String, layout: Int) extends Command
+
+  case class UserOut(roomId: Long, client: String, roomLiveId: String) extends Command
 
   case class CloseRoom(roomId: Long) extends Command
 
@@ -54,12 +58,29 @@ object RoomManager {
     log.info(s"roomManager is working")
     Behaviors.receive[Command]{ (ctx, msg) =>
       msg match {
+        case StartRoom(roomId, hostLiveId, roomLiveId, layout) =>
+          log.info(s"${ctx.self} receive StartRoom msg roomId: ${roomId}")
+          val roomActor = getRoomActor(ctx, roomId, roomLiveId, layout)
+          roomActor ! RoomActor.NewRoom(roomId, hostLiveId, roomLiveId, layout)
+          roomInfoMap.put(roomId, roomActor)
+          Behaviors.same
 
-        case msg:NewConnection =>
-          log.info(s"${ctx.self} receive a msg${msg}")
-          val roomActor = getRoomActor(ctx, msg.roomId, msg.host, msg.client, msg.pushLiveId, msg.pushLiveCode, msg.layout) //fixme 参数更改
-          roomActor ! RoomActor.NewRoom(msg.roomId, msg.host, msg.client, msg.pushLiveId, msg.pushLiveCode, msg.layout)
-          roomInfoMap.put(msg.roomId, roomActor)
+        case NewConnection(roomId, client, roomLiveId, layout) =>
+          log.info(s"${ctx.self} receive new connection msg, roomId: $roomId, partnerLiveId: $client")
+          val roomActor = getRoomActorOpt(ctx, roomId, roomLiveId)
+          roomActor match {
+            case Some(actor) => actor ! RoomActor.PartnerIn(roomId, client)
+            case None => log.info(s"roomActor:$roomId is not exist")
+          }
+          Behaviors.same
+
+        case UserOut(roomId, client, roomLiveId) =>
+          log.info(s"${ctx.self} receive client out msg, roomId: $roomId, partnerLiveId: $client")
+          val roomActor = getRoomActorOpt(ctx, roomId, roomLiveId)
+          roomActor match {
+            case Some(actor) => actor ! RoomActor.PartnerOut(roomId, client)
+            case None => log.info(s"roomActor:$roomId is not exist")
+          }
           Behaviors.same
 
         case msg:UpdateRoomInfo =>
@@ -99,13 +120,18 @@ object RoomManager {
     }
   }
 
-  def getRoomActor(ctx: ActorContext[Command], roomId:Long, host: String, client: String, pushLiveId: String,pushLiveCode: String,  layout: Int) = {
-    val childName = s"roomActor_${roomId}_${host}"
+  def getRoomActor(ctx: ActorContext[Command], roomId: Long, roomLiveId: String, layout: Int) = {
+    val childName = s"roomActor_${roomId}_$roomLiveId"
     ctx.child(childName).getOrElse{
-      val actor = ctx.spawn(RoomActor.create(roomId, host, client, pushLiveId, pushLiveCode, layout), childName)
+      val actor = ctx.spawn(RoomActor.create(roomId, roomLiveId, layout), childName)
       ctx.watchWith(actor, ChildDead(roomId, childName, actor))
       actor
     }.unsafeUpcast[RoomActor.Command]
+  }
+
+  private def getRoomActorOpt(ctx: ActorContext[Command], roomId: Long, roomLiveId: String) = {
+    val childrenName = s"roomActor_${roomId}_$roomLiveId"
+    ctx.child(childrenName).map(_.unsafeUpcast[RoomActor.Command])
   }
 
 

@@ -11,19 +11,42 @@ object ProcessorProtocol {
     val errCode:Int
     val msg:String
   }
+
+  // startRoom
+  case class startRoomInfo(
+                            roomId: Long,
+                            hostLiveId: String,
+                            roomLiveId: String,
+                            layout: Int,
+                          )
+
+  case class startRoomRsp(
+                           errCode: Int = 0,
+                           msg: String = "ok"
+                         ) extends CommonRsp
+
   // newConnect
   case class newConnectInfo(
-    roomId: Long,
-    host: String,
-    client: String,
-    pushLiveId: String,
-    pushLiveCode: String,
-    layout: Int,
+                             roomId: Long,
+                             client: String,
+                             roomLiveId: String,
+                             layout: Int = 1
   )
   case class newConnectRsp(
     errCode:Int = 0,
     msg:String = "ok"
   ) extends CommonRsp
+
+  case class userQuitInfo(
+                           roomId: Long,
+                           client: String,
+                           roomLiveId: String
+                         )
+
+  case class userQuitRsp(
+                          errCode: Int = 0,
+                          msg: String = "ok"
+                        ) extends CommonRsp
 
   // update
   case class UpdateRoomInfo(

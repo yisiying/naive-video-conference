@@ -42,8 +42,9 @@ object RoomManager {
 
   case class ExistRoom(roomId:Long,replyTo:ActorRef[Boolean]) extends Command
 
-  case class DelaySeekRecord(wholeRoomInfo:WholeRoomInfo, totalView:Int, roomId:Long, startTime:Long, liveId: String, invitationList: mutable.HashMap[Int, List[Long]]) extends Command
-  case class OnSeekRecord(wholeRoomInfo:WholeRoomInfo, totalView:Int, roomId:Long, startTime:Long, liveId: String, invitationList: mutable.HashMap[Int, List[Long]]) extends Command
+  case class DelaySeekRecord(wholeRoomInfo: WholeRoomInfo, roomId: Long, startTime: Long, liveId: String, invitationList: mutable.HashMap[Int, List[Long]]) extends Command
+
+  case class OnSeekRecord(wholeRoomInfo: WholeRoomInfo, roomId: Long, startTime: Long, liveId: String, invitationList: mutable.HashMap[Int, List[Long]]) extends Command
 
   case class AddAccess(roomId: Long, startTime: Long, invitationList: mutable.HashMap[Int, List[Long]]) extends Command
 
@@ -92,9 +93,8 @@ object RoomManager {
       msg match {
         case GenLiveIdAndLiveCode(replyTo) =>
           val liveId = s"user-${seq.getAndIncrement()}"
-          val liveCode = "123456"
           log.info(s"gen liveId: $liveId success")
-          replyTo ! LiveInfo(liveId, liveCode)
+          replyTo ! LiveInfo(liveId)
           Behaviors.same
 
         case GetRoomList(replyTo) =>
@@ -250,13 +250,13 @@ object RoomManager {
           Behaviors.same
 
         //延时请求获取录像（计时器）
-        case DelaySeekRecord(wholeRoomInfo, totalView, roomId, startTime, liveId, invitationList) =>
+        case DelaySeekRecord(wholeRoomInfo, roomId, startTime, liveId, invitationList) =>
           log.info("---- wait seconds to seek record ----")
-          timer.startSingleTimer(DelaySeekRecordKey + roomId.toString + startTime, OnSeekRecord(wholeRoomInfo, totalView, roomId, startTime, liveId, invitationList), 5.seconds)
+          timer.startSingleTimer(DelaySeekRecordKey + roomId.toString + startTime, OnSeekRecord(wholeRoomInfo, roomId, startTime, liveId, invitationList), 5.seconds)
           Behaviors.same
 
         //延时请求获取录像
-        case OnSeekRecord(wholeRoomInfo, totalView, roomId, startTime, liveId, invitationList) =>
+        case OnSeekRecord(wholeRoomInfo, roomId, startTime, liveId, invitationList) =>
           timer.cancel(DelaySeekRecordKey + roomId.toString + startTime)
           DistributorClient.seekRecord(roomId,startTime).onComplete{
             case Success(v) =>

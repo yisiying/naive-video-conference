@@ -23,11 +23,28 @@ object ProcessorClient extends HttpUtil{
   private val log = LoggerFactory.getLogger(this.getClass)
 
   val processorBaseUrl = s"http://${AppSettings.processorIp}:${AppSettings.processorPort}/theia/processor"
-  val distributorBaseUrl = s"https://$distributorDomain/theia/distributor"
 
-  def newConnect(roomId:Long, liveId4host: String, liveId4client: String, liveId4push: String, liveCode4push: String, layout: Int):Future[Either[String,newConnectRsp]] = {
+  def startRoom(roomId: Long, liveId4host: String, liveId4room: String, layout: Int) = {
+    val url = processorBaseUrl + "/startRoom"
+    val jsonString = startRoomInfo(roomId, liveId4host, liveId4room, layout).asJson.noSpaces
+    postJsonRequestSend("startRoom", url, List(), jsonString, timeOut = 60 * 1000, needLogRsp = false).map {
+      case Right(v) =>
+        decode[startRoomRsp](v) match {
+          case Right(value) =>
+            Right(value)
+          case Left(e) =>
+            log.error(s"newConnect decode error : $e")
+            Left("Error")
+        }
+      case Left(error) =>
+        log.error(s"startRoom postJsonRequestSend error : $error")
+        Left("Error")
+    }
+  }
+
+  def newConnect(roomId: Long, liveId4client: String, liveId4push: String, layout: Int): Future[Either[String, newConnectRsp]] = {
     val url = processorBaseUrl + "/newConnect"
-    val jsonString = newConnectInfo(roomId, liveId4host, liveId4client, liveId4push, liveCode4push, layout).asJson.noSpaces
+    val jsonString = newConnectInfo(roomId, liveId4client, liveId4push, layout).asJson.noSpaces
     postJsonRequestSend("newConnect",url,List(),jsonString,timeOut = 60 * 1000,needLogRsp = false).map{
       case Right(v) =>
         decode[newConnectRsp](v) match{
@@ -42,6 +59,24 @@ object ProcessorClient extends HttpUtil{
         Left("Error")
     }
 
+  }
+
+  def userQuit(roomId: Long, userLiveId: String, roomLiveId: String) = {
+    val url = processorBaseUrl + "/userQuit"
+    val jsonString = userQuitInfo(roomId, userLiveId, roomLiveId).asJson.noSpaces
+    postJsonRequestSend("userQuit", url, List(), jsonString, timeOut = 60 * 1000, needLogRsp = false).map {
+      case Right(v) =>
+        decode[userQuitRsp](v) match {
+          case Right(value) =>
+            Right(value)
+          case Left(e) =>
+            log.error(s"newConnect decode error : $e")
+            Left("Error")
+        }
+      case Left(error) =>
+        log.error(s"userQuit postJsonRequestSend error : $error")
+        Left("Error")
+    }
   }
 
   def updateRoomInfo(roomId:Long,layout:Int):Future[Either[String,UpdateRsp]] = {
@@ -62,23 +97,6 @@ object ProcessorClient extends HttpUtil{
     }
   }
 
-  def getmpd(roomId:Long):Future[Either[String,MpdRsp]] = {
-    val url = processorBaseUrl + "/getMpd"
-    val jsonString = GetMpd(roomId).asJson.noSpaces
-    postJsonRequestSend("get mpd",url,List(),jsonString,timeOut = 60 * 1000, needLogRsp = false).map{
-      case Right(v) =>
-        decode[MpdRsp](v) match{
-          case Right(data) =>
-            Right(data)
-          case Left(e) =>
-            log.error(s"getmpd decode error : $e")
-            Left("Error")
-        }
-      case Left(error) =>
-        log.error(s"getmpd postJsonRequestSend error : $error")
-        Left("Error")
-    }
-  }
 
   def closeRoom(roomId:Long):Future[Either[String,CloseRsp]] = {
     val url = processorBaseUrl + "/closeRoom"

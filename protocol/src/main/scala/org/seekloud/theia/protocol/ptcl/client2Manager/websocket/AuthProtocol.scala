@@ -63,14 +63,12 @@ object AuthProtocol {
 
   case class ReFleshRoomInfo(roomInfo: RoomInfo) extends WsMsgRm
   /*申请直播*/
-  case class GetTokenReq(
+  case class GetLiveIdReq(
     userId: Long
   ) extends WsMsgClient
 
-  case class GetTokenRsp(
-    tokenOpt: Option[String],
-    SecureKeyOpt: Option[String],
-    startTimeOpt:Option[Long],
+  case class GetLiveIdRsp(
+                           liveId: Option[String],
     errCode: Int = 0,
     msg: String = "ok"
   ) extends WsMsgRm2Host
@@ -196,7 +194,7 @@ object AuthProtocol {
 
   val JoinRefused = JoinRsp(errCode = 300002, msg = "host refuse your request.") //房主拒绝连线申请
 
-  case class AudienceShutJoin(roomId: Long) extends WsMsgAudience //断开与房主的连线请求
+  case class AudienceShutJoin(roomId: Long, audienceId: Long) extends WsMsgAudience //断开与房主的连线请求
 
   //fixme 切断与某个用户的连线，增加userId，拓展多个用户连线的情况
   case class AudienceShutJoinPlus(userId:Long) extends WsMsgAudience //断开与房主的连线请求
