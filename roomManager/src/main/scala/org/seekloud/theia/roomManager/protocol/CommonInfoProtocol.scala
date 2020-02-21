@@ -10,7 +10,6 @@ object CommonInfoProtocol {
                                 var roomInfo:RoomInfo,
                                 //var recordStartTime: Option[Long] = None,
                                 var layout:Int = CommonInfo.ScreenLayout.EQUAL,
-                                var aiMode:Int = 0
                                 )
 
 }

@@ -100,25 +100,25 @@ object RoomActor {
                 UserInfoDao.getHeadImg(userTableOpt.get.coverImg), 0, 0,
                 Some(s"room-$roomId")
               )
-              //              ProcessorClient.startRoom(roomId, s"user-${userTableOpt.get.uid}", roomInfo.rtmp.get, 0).map{
-              //                case Right(r) =>
-              //                  log.info(s"processor start mix stream")
-              //                  DistributorClient.startPull(roomId, "main").map {
-              //                    case Right(r) =>
-              //                      log.info(s"distributor startPull succeed, get live address: ${r.liveAdd}")
-              dispatchTo(subscribers)(List((userId, false)), StartLiveRsp(Some(LiveInfo(roomInfo.rtmp.get))))
-              val startTime = System.currentTimeMillis()
-              ctx.self ! SwitchBehavior("idle", idle(WholeRoomInfo(roomInfo), mutable.HashMap(Role.host -> mutable.HashMap(userId -> LiveInfo(s"user-${userTableOpt.get.uid}"))), subscribers, startTime, mutable.HashMap(Role.host -> List(userId))))
+              ProcessorClient.startRoom(roomId, s"user-${userTableOpt.get.uid}", roomInfo.rtmp.get, 0).map {
+                case Right(r) =>
+                  log.info(s"processor start mix stream")
+                  //                  DistributorClient.startPull(roomId, "main").map {
+                  //                    case Right(r) =>
+                  //                      log.info(s"distributor startPull succeed, get live address: ${r.liveAdd}")
+                  dispatchTo(subscribers)(List((userId, false)), StartLiveRsp(Some(LiveInfo(roomInfo.rtmp.get))))
+                  val startTime = System.currentTimeMillis()
+                  ctx.self ! SwitchBehavior("idle", idle(WholeRoomInfo(roomInfo), mutable.HashMap(Role.host -> mutable.HashMap(userId -> LiveInfo(s"user-${userTableOpt.get.uid}"))), subscribers, startTime, mutable.HashMap(Role.host -> List(userId))))
 
-              //                    case Left(e) =>
-              //                      log.error(s"distributor startPull error: $e")
-              //                      dispatchTo(subscribers)(List((userId, false)), StartLiveRefused4LiveInfoError)
-              //                      ctx.self ! SwitchBehavior("init", init(roomId, subscribers))
-              //                  }
-              //                case Left(e) =>
-              //                  log.error(s"processor start room error:$e")
-              //                  ctx.self ! SwitchBehavior("init", init(roomId, subscribers))
-              //              }
+                //                    case Left(e) =>
+                //                      log.error(s"distributor startPull error: $e")
+                //                      dispatchTo(subscribers)(List((userId, false)), StartLiveRefused4LiveInfoError)
+                //                      ctx.self ! SwitchBehavior("init", init(roomId, subscribers))
+                //                  }
+                case Left(e) =>
+                  log.error(s"processor start room error:$e")
+                  ctx.self ! SwitchBehavior("init", init(roomId, subscribers))
+              }
             } else {
               log.debug(s"${ctx.self.path} 开始直播被拒绝，数据库中没有该用户的数据，userId=$userId")
               dispatchTo(subscribers)(List((userId, false)), StartLiveRefused)
@@ -362,6 +362,7 @@ object RoomActor {
                                 ): Behavior[Command] = {
     msg match {
       case ChangeLiveMode(isConnectOpen, aiMode, screenLayout) =>
+        log.info(s"get ChangeLiveMode msg: $isConnectOpen, $aiMode, $screenLayout")
         val connect = isConnectOpen match {
           case Some(v) => v
           case None => isJoinOpen
@@ -370,16 +371,16 @@ object RoomActor {
         if (aiMode.isEmpty && screenLayout.nonEmpty) {
           wholeRoomInfo.layout = screenLayout.get
         } else if (aiMode.nonEmpty && screenLayout.isEmpty) {
-          wholeRoomInfo.aiMode = aiMode.get
+          //          wholeRoomInfo.aiMode = aiMode.get
         } else if (aiMode.nonEmpty && screenLayout.nonEmpty) {
           wholeRoomInfo.layout = screenLayout.get
-          wholeRoomInfo.aiMode = aiMode.get
+          //          wholeRoomInfo.aiMode = aiMode.get
         }
-        if (!(aiMode.isEmpty && screenLayout.isEmpty)) {
-          changeMode(ctx, userId, dispatchTo)(roomId, liveList, wholeRoomInfo.layout, wholeRoomInfo.aiMode, 0l)
-        } else {
-          dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), ChangeModeRsp())
-        }
+        //        if (!(aiMode.isEmpty && screenLayout.isEmpty)) {
+        //          changeMode(ctx, userId, dispatchTo)(roomId, liveList, wholeRoomInfo.layout, wholeRoomInfo.aiMode, 0l)
+        //        } else {
+        //          dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), ChangeModeRsp())
+        //        }
         idle(wholeRoomInfo, liveInfoMap, subscribers, startTime, invitationList, connect)
 
       case JoinAccept(`roomId`, userId4Audience, clientType, accept) =>
@@ -464,7 +465,7 @@ object RoomActor {
         } else {
           wholeRoomInfo.roomInfo
         }
-        val info = WholeRoomInfo(roomInfo, wholeRoomInfo.layout, wholeRoomInfo.aiMode)
+        val info = WholeRoomInfo(roomInfo, wholeRoomInfo.layout)
         log.debug(s"${ctx.self.path} modify the room info$info  ---ws")
         dispatch(UpdateRoomInfo2Client(roomInfo.roomName, roomInfo.roomDes))
         dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), ModifyRoomRsp())
@@ -587,7 +588,6 @@ object RoomActor {
 
       case GetLiveIdReq(uId) =>
         log.info(s"ID:$uId get token req.")
-        log.info(s"print dispatchTo $userId")
         UserInfoDao.searchById(uId).map { r =>
           if (r.nonEmpty) {
             if (r.get.`sealed`) {
@@ -641,7 +641,12 @@ object RoomActor {
     log.debug(s"${subscribers}定向分发消息：$msg")
     log.info(s"----------------$subscribers")
     targetUserIdList.foreach { k =>
-      subscribers.get(k).foreach(r => r ! UserActor.DispatchMsg(Wrap(msg.asInstanceOf[WsMsgRm].fillMiddleBuffer(sendBuffer).result()), msg.isInstanceOf[AuthProtocol.HostCloseRoom]))
+      subscribers.get(k).foreach { r =>
+        r ! UserActor.DispatchMsg(
+          Wrap(msg.asInstanceOf[WsMsgRm].fillMiddleBuffer(sendBuffer).result()),
+          msg.isInstanceOf[AuthProtocol.HostCloseRoom]
+        )
+      }
     }
   }
 
