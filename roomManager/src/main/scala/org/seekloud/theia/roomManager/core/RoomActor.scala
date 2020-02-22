@@ -651,7 +651,7 @@ object RoomActor {
     **/
   private def dispatchTo(subscribers: mutable.HashMap[(Long, Boolean), ActorRef[UserActor.Command]])(targetUserIdList: List[(Long, Boolean)], msg: WsMsgRm)(implicit sendBuffer: MiddleBufferInJvm): Unit = {
     log.debug(s"${subscribers}定向分发消息：$msg")
-    log.info(s"----------------$subscribers")
+    //    log.info(s"----------------$subscribers")
     targetUserIdList.foreach { k =>
       subscribers.get(k).foreach { r =>
         r ! UserActor.DispatchMsg(
