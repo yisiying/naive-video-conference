@@ -633,8 +633,8 @@ object RmManager {
 
         case msg: AudienceAcceptance =>
           log.debug(s"accept join user-${msg.userId} join.")
-//          assert(roomInfo.nonEmpty)
-//          sender.foreach(_ ! JoinAccept(roomInfo.get.roomId, msg.userId, ClientType.PC, msg.accept))
+          assert(roomInfo.nonEmpty)
+          sender.foreach(_ ! JoinAccept(roomInfo.get.roomId, msg.userId, ClientType.PC, msg.accept))
           Behaviors.same
 
         case msg: JoinBegin =>
@@ -968,7 +968,7 @@ object RmManager {
           // val userId = userInfo.get.userId
 
           /*暂停第三方播放*/
-          val playId = Ids.getPlayId(AudienceStatus.LIVE, roomId = Some(audienceScene.getRoomInfo.roomId))
+//          val playId = Ids.getPlayId(AudienceStatus.LIVE, roomId = Some(audienceScene.getRoomInfo.roomId))
           s"room${audienceScene.getRoomInfo.roomId}"
           //          println(s"pause player ${playId}")
           //          mediaPlayer.pause(playId)
@@ -977,7 +977,7 @@ object RmManager {
 //          audienceScene.audienceStatus = AudienceStatus.CONNECT
 
           // val playId = Ids.getPlayId(AudienceStatus.LIVE,Some(audienceScene.getRoomInfo.roomId))
-          println(s"after join playId:$playId")
+//          println(s"after join playId:$playId")
 
           /*背景改变*/
           //         audienceScene.autoReset()
