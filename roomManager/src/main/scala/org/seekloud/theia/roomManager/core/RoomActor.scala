@@ -69,7 +69,7 @@ object RoomActor {
       implicit val stashBuffer = StashBuffer[Command](Int.MaxValue)
       log.debug(s"${ctx.self.path} setup")
       Behaviors.withTimers[Command] { implicit timer =>
-        implicit val sendBuffer: MiddleBufferInJvm = new MiddleBufferInJvm(1024) //8192
+        implicit val sendBuffer: MiddleBufferInJvm = new MiddleBufferInJvm(81920) //8192
       val subscribers = mutable.HashMap.empty[(Long, Boolean), ActorRef[UserActor.Command]]
         init(roomId, subscribers)
       }
@@ -616,7 +616,7 @@ object RoomActor {
     }
   }
 
-  private def changeMode(ctx: ActorContext[RoomActor.Command], anchorUid: Long, dispatchTo: (List[(Long, Boolean)], WsMsgRm) => Unit)(roomId: Long, liveIdList: List[String], screenLayout: Int, aiMode: Int, startTime: Long) = {
+  private def changeMode(ctx: ActorContext[RoomActor.Command], anchorUid: Long, dispatchTo: (List[(Long, Boolean)], WsMsgRm) => Unit)(roomId: Long, liveIdList: List[String], screenLayout: Int, startTime: Long) = {
     ProcessorClient.updateRoomInfo(roomId, screenLayout).map {
       case Right(rsp) =>
         log.debug(s"${ctx.self.path} modify the mode success")
