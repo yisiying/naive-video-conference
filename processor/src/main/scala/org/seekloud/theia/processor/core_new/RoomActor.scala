@@ -113,10 +113,11 @@ object RoomActor {
 
         case PartnerOut(roomId, partnerLiveId) =>
           log.info(s"partner out, liveId: $partnerLiveId")
-          if (grabberMap.get(roomId).nonEmpty) {
+          if (grabberMap(roomId).get(partnerLiveId).nonEmpty) {
+            grabberMap(roomId)(partnerLiveId) ! GrabberActor.StopGrabber
             grabberMap(roomId).remove(partnerLiveId)
           } else {
-            log.info(s"$roomId grabber not exist")
+            log.info(s"$partnerLiveId grabber not exist")
           }
           if (roomLiveMap.get(roomId).nonEmpty) {
             val newRoomLiveList = roomLiveMap(roomId).filterNot(_ == partnerLiveId)
