@@ -62,11 +62,6 @@ object RoomManager {
       log.info(s"${ctx.self.path} setup")
       Behaviors.withTimers[Command]{implicit timer =>
 //        idle(mutable.HashMap.empty[Long,RoomInfo])
-        var roomInfo = RoomInfo(Common.TestConfig.TEST_ROOM_ID,"test_room","测试房间",Common.TestConfig.TEST_USER_ID,
-          "byf1",UserInfoDao.getHeadImg(""),
-          UserInfoDao.getCoverImg(""),0,0,
-          Some("test")
-        )
         /*ProcessorClient.getmpd(Common.TestConfig.TEST_ROOM_ID).map{
           case Right(v) =>
             log.debug(s"${ctx.self.path} ${v.rtmp}")
@@ -74,9 +69,6 @@ object RoomManager {
           case Left(error) =>
             log.debug(s"${ctx.self.path} processor 获取失败：${error}")
         }*/
-        log.debug(s"${ctx.self.path} ---===== ${roomInfo.rtmp}")
-
-        getRoomActor(Common.TestConfig.TEST_ROOM_ID,ctx) ! TestRoom(roomInfo)
         val seq = new AtomicInteger(100001)
         idle(seq)
       }
@@ -174,17 +166,17 @@ object RoomManager {
           Behaviors.same
 
         case SearchRoom(userId, roomId, replyTo) =>
-          if(roomId == Common.TestConfig.TEST_ROOM_ID){
-            log.debug(s"${ctx.self.path} get test room mpd,roomId=${roomId}")
-            getRoomActorOpt(roomId,ctx) match{
-              case Some(actor) =>
-                val roomInfoFuture:Future[RoomInfo] = actor ? (GetRoomInfo(_))
-                roomInfoFuture.map{r =>replyTo ! SearchRoomRsp(Some(r))}
-              case None =>
-                log.debug(s"${ctx.self.path} test room dead")
-                replyTo ! SearchRoomError4RoomId
-            }
-          } else{
+          //          if(roomId == Common.TestConfig.TEST_ROOM_ID){
+          //            log.debug(s"${ctx.self.path} get test room mpd,roomId=${roomId}")
+          //            getRoomActorOpt(roomId,ctx) match{
+          //              case Some(actor) =>
+          //                val roomInfoFuture:Future[RoomInfo] = actor ? (GetRoomInfo(_))
+          //                roomInfoFuture.map{r =>replyTo ! SearchRoomRsp(Some(r))}
+          //              case None =>
+          //                log.debug(s"${ctx.self.path} test room dead")
+          //                replyTo ! SearchRoomError4RoomId
+          //            }
+          //          } else{
             getRoomActorOpt(roomId,ctx) match{
               case Some(actor) =>
                 val roomInfoFuture:Future[RoomInfo] = actor ? (GetRoomInfo(_))
@@ -223,7 +215,7 @@ object RoomManager {
                 log.debug(s"${ctx.self.path} test room dead")
                 replyTo ! SearchRoomError4RoomId//主播关闭房间
             }
-          }
+          //          }
           Behaviors.same
 
         case ExistRoom(roomId,replyTo) =>

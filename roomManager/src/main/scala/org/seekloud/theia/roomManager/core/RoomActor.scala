@@ -57,8 +57,6 @@ object RoomActor {
     stashBuffer.unstashAll(ctx, behavior)
   }
 
-  final case class TestRoom(roomInfo: RoomInfo) extends Command
-
   final case class GetRoomInfo(replyTo: ActorRef[RoomInfo]) extends Command //考虑后续房间的建立不依赖ws
   final case class UpdateRTMP(rtmp: String) extends Command
 
@@ -135,10 +133,6 @@ object RoomActor {
             replyTo ! RoomInfo(-1, "", "", -1l, "", "", "", -1, -1)
           }
           Behaviors.same
-
-        case TestRoom(roomInfo) =>
-          //仅用户测试使用空房间
-          idle(WholeRoomInfo(roomInfo), mutable.HashMap[Int, mutable.HashMap[Long, LiveInfo]](), subscribers, System.currentTimeMillis(), mutable.HashMap(Role.host -> List(Common.TestConfig.TEST_USER_ID)))
 
         case ActorProtocol.AddUserActor4Test(userId, roomId, userActor) =>
           subscribers.put((userId, false), userActor)
@@ -417,7 +411,7 @@ object RoomActor {
                     dispatch(RcvComment(-1l, "", s"user:$userId join in room:$roomId")) //群发评论
                     //                    dispatchTo(subscribers.keys.toList.filter(t => t._1 != wholeRoomInfo.roomInfo.userId && t._1 != userId4Audience), Join4AllRsp(Some("main"))) //除了host和连线者发送混流的liveId
                     //                    dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), AudienceJoinRsp(Some(audienceInfo)))
-                    dispatchTo(List((userId4Audience, false)), JoinRsp(Some(liveIdHost.get.liveId), Some(LiveInfo(s"user-${userId4Audience}"))))
+                    //                    dispatchTo(List((userId4Audience, false)), JoinRsp(Some(liveIdHost.get.liveId), Some(LiveInfo(s"user-${userId4Audience}"))))
                   } else {
                     log.debug(s"${ctx.self.path} 没有主播的liveId,roomId=$roomId")
                     dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), AudienceJoinError)

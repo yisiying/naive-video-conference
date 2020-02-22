@@ -16,7 +16,6 @@ import org.seekloud.theia.roomManager.Boot.{executor, roomManager, scheduler}
 import org.seekloud.theia.roomManager.common.Common
 import org.seekloud.theia.roomManager.models.dao.UserInfoDao
 import org.seekloud.theia.roomManager.protocol.ActorProtocol
-import org.seekloud.theia.roomManager.utils.RtpClient
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
