@@ -1,5 +1,6 @@
 package org.seekloud.theia.roomManager.http
 
+/*
 import scala.language.postfixOps
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -22,7 +23,7 @@ trait StatisticService extends ServiceUtils{
   import io.circe.generic.auto._
 
   private val log = LoggerFactory.getLogger(this.getClass)
-/*
+
 
 
   val watchRecordEnd = (path("watchRecordEnd") & post){
@@ -243,7 +244,7 @@ trait StatisticService extends ServiceUtils{
     watchRecordEnd ~ getLoginData ~ loginDataByDay ~ loginDataByHour ~ getRecordDataByAdmin ~ getObserveDataById ~
     getObserveDataByHour ~ getObserveDataByDay
   }
-*/
+
 
 }
-
+*/

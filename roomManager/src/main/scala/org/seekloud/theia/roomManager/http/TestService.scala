@@ -1,4 +1,7 @@
 package org.seekloud.theia.roomManager.http
+
+/*
+
 import scala.language.postfixOps
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -80,3 +83,4 @@ trait TestService extends ServiceUtils{
 
 
 }
+*/

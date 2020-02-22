@@ -139,12 +139,13 @@ object GrabberActor {
           Behaviors.same
 
         case StopGrabber =>
+          log.info(s"get stop grabber msg, stop grabber in 400 ms")
           timer.startSingleTimer(TimerKey4Close, CloseGrabber, 400.milli)
           Behaviors.same
 
 
         case CloseGrabber =>
-          log.info(s"${ctx.self} stop ----")
+          log.info(s"${ctx.self} stop")
           try {
             grabber.release()
             grabber.close()

@@ -1,5 +1,7 @@
 package org.seekloud.theia.roomManager.http
 
+/*
+
 import org.seekloud.theia.roomManager.Boot._
 
 import scala.language.postfixOps
@@ -43,3 +45,4 @@ trait RtpService extends ServiceUtils{
   }
 }
 
+*/

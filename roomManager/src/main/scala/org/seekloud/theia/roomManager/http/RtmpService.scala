@@ -1,5 +1,7 @@
 package org.seekloud.theia.roomManager.http
 
+/*
+
 import akka.http.scaladsl.server.Directives._
 import org.seekloud.theia.protocol.ptcl.CommonRsp
 import org.seekloud.theia.protocol.ptcl.client2Manager.http.CommonProtocol.GetLiveInfoRsp4RM
@@ -141,3 +143,4 @@ trait RtmpService extends ServiceUtils{
 
 
 }
+*/

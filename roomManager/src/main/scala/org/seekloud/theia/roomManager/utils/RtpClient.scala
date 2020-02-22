@@ -1,5 +1,7 @@
 package org.seekloud.theia.roomManager.utils
 
+/*
+
 import org.seekloud.theia.protocol.ptcl.client2Manager.http.CommonProtocol.GetLiveInfoRsp
 import SecureUtil.genPostEnvelope
 import org.slf4j.LoggerFactory
@@ -58,3 +60,4 @@ object RtpClient extends HttpUtil{
   }
 
 }
+*/
