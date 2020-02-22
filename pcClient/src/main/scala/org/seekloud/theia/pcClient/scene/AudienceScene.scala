@@ -75,7 +75,7 @@ object AudienceScene {
 
 }
 
-class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: String = "") extends AutoResetSecene {
+class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: String = "") extends Secene {
   import AudienceScene._
 
   private val width = Constants.AppWindow.width * 0.9
@@ -314,7 +314,7 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
     gc.fillText(s"连线中", imgView.getWidth / 2 - 40, imgView.getHeight / 8)
   }
 
-  def loadingBack(): Unit = {
+  def resetLoading(): Unit = {
     gc.drawImage(waitPulling, 0, 0, gc.getCanvas.getWidth, gc.getCanvas.getHeight)
   }
 
@@ -323,7 +323,7 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
 
     audienceStatus match {
       case AudienceStatus.LIVE =>
-        loadingBack()
+        resetLoading()
       case AudienceStatus.CONNECT =>
         resetBack()
     }

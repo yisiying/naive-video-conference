@@ -224,6 +224,7 @@ object RmManager {
           idle(stageCtx, liveManager, mediaPlayer, Some(msg.homeController), roomController)
 
         case msg: SignInSuccess =>
+          println("ssssss"+msg)
           userInfo = Some(msg.userInfo)
           roomInfo = Some(msg.roomInfo)
           //token维护（缓存登录时）
@@ -556,10 +557,11 @@ object RmManager {
           hostController.isLive = true
 
           log.info("停止播放摄像头画面")
-          liveManager ! LiveManager.DrewOff
-          hostScene.resetLoading()
+          liveManager ! LiveManager.DrawOff(hostScene)
+
           val playId = Ids.getPlayId(AudienceStatus.LIVE, roomId = Some(roomInfo.map(_.roomId).get))
           println(s"===开始播放直播的画面:$playId")
+          mediaPlayer.stop(playId,()=>System.currentTimeMillis())
           mediaPlayer.setTimeGetter(playId, () => System.currentTimeMillis())
           val videoPlayer = ctx.spawn(VideoPlayer.create(playId, Some(hostScene), None, None), s"videoPlayer$playId")
 //                      mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
@@ -971,8 +973,8 @@ object RmManager {
           //          println(s"pause player ${playId}")
           //          mediaPlayer.pause(playId)
 
-          mediaPlayer.setConnectState(playId, true, () => audienceScene.autoReset())
-          audienceScene.audienceStatus = AudienceStatus.CONNECT
+//          mediaPlayer.setConnectState(playId, true, () => audienceScene.autoReset())
+//          audienceScene.audienceStatus = AudienceStatus.CONNECT
 
           // val playId = Ids.getPlayId(AudienceStatus.LIVE,Some(audienceScene.getRoomInfo.roomId))
           println(s"after join playId:$playId")
@@ -997,9 +999,10 @@ object RmManager {
         /*开始推流*/
         case msg: Devicesuccess =>
           val userId = userInfo.get.userId
+          println("开始开始推流！"+s"rtmp://10.1.29.247:42037/live/user-${userId}")
           //          audienceScene.autoReset2()
 //          liveManager ! LiveManager.PushStream(msg.audienceLiveInfo.liveId, msg.audienceLiveInfo.liveCode)
-          liveManager ! LiveManager.PushRtmpStream(s"rtmp://10.1.29.247:42037/live/${audienceScene.getRoomInfo.roomId}?user-${userId}")
+          liveManager ! LiveManager.PushRtmpStream(s"rtmp://10.1.29.247:42037/live/user-${userId}")
 
           /*开始拉取并播放主播rtp流*/
           //          val joinInfo = JoinInfo(

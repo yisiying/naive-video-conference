@@ -24,6 +24,7 @@ import org.seekloud.theia.pcClient.component.WarningDialog
 import org.seekloud.theia.pcClient.core.stream.{EncodeActor, LiveManager}
 import org.seekloud.theia.pcClient.core.stream.LiveManager.{ChangeMediaOption, EncodeConfig, RecordOption}
 import org.seekloud.theia.pcClient.core.RmManager.ImgLayout
+import org.seekloud.theia.pcClient.scene.Secene
 import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol.HostStopPushStream2Client
 import org.slf4j.LoggerFactory
 
@@ -119,6 +120,8 @@ object   CaptureActor {
   final case class BottomLayer(bottomLayer: Image) extends DrawCommand
 
   final case object StopDraw extends DrawCommand with CaptureCommand
+
+  final case class PauseDraw(s:Secene) extends DrawCommand with CaptureCommand
 
   private object ENCODE_RETRY_TIMER_KEY
 
@@ -503,8 +506,8 @@ object   CaptureActor {
           log.info(s"${msg.name} dead.")
           Behaviors.same
 
-        case StopDraw=>
-          drawActor.foreach(_ ! StopDraw)
+        case PauseDraw(s)=>
+          drawActor.foreach(_ ! PauseDraw(s))
           Behaviors.same
 
         case x =>
@@ -556,6 +559,10 @@ object   CaptureActor {
         case StopDraw =>
           log.info(s"Capture Drawer stopped.")
           Behaviors.stopped
+
+        case PauseDraw(s)=>
+          s.resetLoading()
+          drawer(gc,false, false, imgLayout)
 
         case x =>
           log.warn(s"unknown msg in drawer: $x")

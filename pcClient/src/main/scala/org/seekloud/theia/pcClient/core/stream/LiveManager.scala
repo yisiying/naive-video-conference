@@ -15,7 +15,7 @@ import org.seekloud.theia.pcClient.core.collector.CaptureActor
 import org.seekloud.theia.pcClient.core.rtp._
 import org.seekloud.theia.pcClient.core.RmManager
 import org.seekloud.theia.pcClient.core.RmManager.ImgLayout
-import org.seekloud.theia.pcClient.scene.{AudienceScene, HostScene}
+import org.seekloud.theia.pcClient.scene.{AudienceScene, Secene, HostScene}
 import org.seekloud.theia.pcClient.utils.{GetAllPixel, NetUtil, RtpUtil}
 import org.seekloud.theia.rtpClient.{PullStreamClient, PushStreamClient}
 import org.seekloud.theia.pcClient.utils.RtpUtil.{clientHost, clientHostQueue}
@@ -59,7 +59,7 @@ object LiveManager {
   final case object DeviceOff extends LiveCommand
 
   //停止播放摄像头画面
-  final case object DrewOff extends LiveCommand
+  final case class DrawOff(scene:Secene) extends LiveCommand
 
   final case class SwitchMediaMode(isJoin: Boolean, reset: () => Unit) extends LiveCommand
 
@@ -166,10 +166,10 @@ object LiveManager {
           captureActor.foreach(_ ! CaptureActor.StopCapture)
           idle(parent, mediaPlayer, None,/* streamPusher, streamPuller,*/ mediaCapture, isStart = isStart, isRegular = isRegular)
 
-        case DrewOff =>
+        case DrawOff(s) =>
 //          captureActor.foreach(_ ! CaptureActor.StopCapture)
 
-          captureActor.foreach(_ ! CaptureActor.StopDraw)
+          captureActor.foreach(_ ! CaptureActor.PauseDraw(s))
           Behaviors.same
 
         case msg: SwitchMediaMode =>

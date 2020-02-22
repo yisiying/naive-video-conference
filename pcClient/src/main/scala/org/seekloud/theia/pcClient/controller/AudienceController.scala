@@ -16,6 +16,7 @@ import org.seekloud.theia.pcClient.component.WarningDialog
 import org.seekloud.theia.pcClient.core.RmManager.HeartBeat
 import org.seekloud.theia.pcClient.scene.AudienceScene.AudienceSceneListener
 import org.seekloud.theia.pcClient.utils.RMClient
+import org.seekloud.theia.protocol.ptcl.CommonInfo
 import org.seekloud.theia.protocol.ptcl.CommonInfo.{RecordInfo, UserDes}
 
 import scala.concurrent.Future
@@ -118,6 +119,8 @@ class AudienceController(
       if (RmManager.userInfo.nonEmpty) {
         WarningDialog.initWarningDialog("正在加入直播")
         rmManager ! RmManager.JoinRoomReq(roomId)
+        assert(RmManager.roomInfo.isDefined)
+        rmManager ! RmManager.StartJoin(RmManager.roomInfo.get.rtmp.get,CommonInfo.LiveInfo("user-"+RmManager.userInfo.get.userId))
       } else {
         WarningDialog.initWarningDialog("请先登录哦~")
       }

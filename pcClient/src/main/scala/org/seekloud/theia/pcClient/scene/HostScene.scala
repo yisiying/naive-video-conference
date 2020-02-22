@@ -115,7 +115,7 @@ object HostScene {
 
 }
 
-class HostScene(stage: Stage) extends AutoResetSecene {
+class HostScene(stage: Stage) extends Secene {
 
   import HostScene._
 
