@@ -17,7 +17,7 @@ import org.seekloud.theia.roomManager.models.dao.{RecordDao, UserInfoDao}
 import org.seekloud.theia.roomManager.protocol.ActorProtocol
 import org.seekloud.theia.roomManager.protocol.ActorProtocol.BanOnAnchor
 import org.seekloud.theia.roomManager.protocol.CommonInfoProtocol.WholeRoomInfo
-import org.seekloud.theia.roomManager.utils.{DistributorClient, ProcessorClient, RtpClient}
+import org.seekloud.theia.roomManager.utils.{DistributorClient, ProcessorClient}
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
