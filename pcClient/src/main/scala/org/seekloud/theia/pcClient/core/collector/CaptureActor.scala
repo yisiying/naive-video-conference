@@ -118,7 +118,7 @@ object   CaptureActor {
 
   final case class BottomLayer(bottomLayer: Image) extends DrawCommand
 
-  final case object StopDraw extends DrawCommand
+  final case object StopDraw extends DrawCommand with CaptureCommand
 
   private object ENCODE_RETRY_TIMER_KEY
 
@@ -501,6 +501,10 @@ object   CaptureActor {
 
         case msg:ChildDead[EncodeActor.EncodeCmd] =>
           log.info(s"${msg.name} dead.")
+          Behaviors.same
+
+        case StopDraw=>
+          drawActor.foreach(_ ! StopDraw)
           Behaviors.same
 
         case x =>

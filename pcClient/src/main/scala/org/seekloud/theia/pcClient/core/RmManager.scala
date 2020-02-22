@@ -554,19 +554,23 @@ object RmManager {
           log.info(s"rtmp_url: $url")
           liveManager ! LiveManager.PushRtmpStream(url)
           hostController.isLive = true
+
+          log.info("停止播放摄像头画面")
+          liveManager ! LiveManager.DrewOff
           hostScene.resetLoading()
           val playId = Ids.getPlayId(AudienceStatus.LIVE, roomId = Some(roomInfo.map(_.roomId).get))
           println(s"===开始播放直播的画面:$playId")
           mediaPlayer.setTimeGetter(playId, () => System.currentTimeMillis())
           val videoPlayer = ctx.spawn(VideoPlayer.create(playId, Some(hostScene), None, None), s"videoPlayer$playId")
-          //            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
-          log.info(s"rtmp://10.1.29.247:42037/live/room-${roomInfo.map(_.roomId).get}")
+//                      mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
+          log.info(s"拉流：rtmp://10.1.29.247:42037/live/room-${roomInfo.map(_.roomId).get}")
           mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/room-${roomInfo.map(_.roomId).get}"), Some(hostScene.gc), None)
 
           hostBehavior(stageCtx, homeController, hostScene, hostController, liveManager, mediaPlayer, sender, hostStatus, joinAudience, Some(true), rtpLive, biliLive)
 
         case msg: StartLive =>
-          log.info(s"${msg.liveId} start live.")
+          //用于拉流的liveId
+          log.info(s"${msg.liveId} StartLive")
           hostController.isLive = true
           Boot.addToPlatform {
             hostScene.allowConnect()
@@ -627,8 +631,8 @@ object RmManager {
 
         case msg: AudienceAcceptance =>
           log.debug(s"accept join user-${msg.userId} join.")
-          assert(roomInfo.nonEmpty)
-          sender.foreach(_ ! JoinAccept(roomInfo.get.roomId, msg.userId, ClientType.PC, msg.accept))
+//          assert(roomInfo.nonEmpty)
+//          sender.foreach(_ ! JoinAccept(roomInfo.get.roomId, msg.userId, ClientType.PC, msg.accept))
           Behaviors.same
 
         case msg: JoinBegin =>
@@ -646,33 +650,33 @@ object RmManager {
 
         case ShutJoin =>
           log.debug("disconnection with current audience.")
-          assert(roomInfo.nonEmpty)
-          if (hostStatus == HostStatus.CONNECT) {
-            Boot.addToPlatform {
-              hostScene.connectionStateText.setText(s"目前状态：无连接~")
-              hostScene.connectStateBox.getChildren.remove(hostScene.shutConnectionBtn)
-              hostController.isConnecting = false
-            }
-            sender.foreach(_ ! HostShutJoin(roomInfo.get.roomId))
-            ctx.self ! JoinStop
-          }
+//          assert(roomInfo.nonEmpty)
+//          if (hostStatus == HostStatus.CONNECT) {
+//            Boot.addToPlatform {
+//              hostScene.connectionStateText.setText(s"目前状态：无连接~")
+//              hostScene.connectStateBox.getChildren.remove(hostScene.shutConnectionBtn)
+//              hostController.isConnecting = false
+//            }
+//            sender.foreach(_ ! HostShutJoin(roomInfo.get.roomId))
+//            ctx.self ! JoinStop
+//          }
           Behaviors.same
 
         case JoinStop =>
           /*媒体画面模式更改*/
-          liveManager ! LiveManager.SwitchMediaMode(isJoin = false, hostScene.resetBack)
+//          liveManager ! LiveManager.SwitchMediaMode(isJoin = false, hostScene.resetBack)
 
           /*停止播放和拉取观众rtp流*/
           //          playManager ! PlayManager.StopPlay(roomInfo.get.roomId, hostScene.resetBack, joinAudience.map(_.userId))
-          val playId = joinAudience match {
-            case Some(joinAud) =>
-              Ids.getPlayId(audienceStatus = AudienceStatus.CONNECT, roomId = Some(roomInfo.get.roomId), audienceId = Some(joinAud.userId))
-            case None =>
-              Ids.getPlayId(audienceStatus = AudienceStatus.LIVE, roomId = Some(roomInfo.get.roomId))
-
-          }
-          mediaPlayer.stop(playId, hostScene.resetBack)
-          liveManager ! LiveManager.StopPull
+//          val playId = joinAudience match {
+//            case Some(joinAud) =>
+//              Ids.getPlayId(audienceStatus = AudienceStatus.CONNECT, roomId = Some(roomInfo.get.roomId), audienceId = Some(joinAud.userId))
+//            case None =>
+//              Ids.getPlayId(audienceStatus = AudienceStatus.LIVE, roomId = Some(roomInfo.get.roomId))
+//
+//          }
+//          mediaPlayer.stop(playId, hostScene.resetBack)
+//          liveManager ! LiveManager.StopPull
           hostBehavior(stageCtx, homeController, hostScene, hostController, liveManager, mediaPlayer, sender, hostStatus = HostStatus.LIVE, None, rtmpLive, rtpLive, biliLive)
 
         case StopSelf =>

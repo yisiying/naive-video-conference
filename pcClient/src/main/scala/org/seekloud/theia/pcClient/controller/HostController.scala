@@ -224,6 +224,7 @@ class HostController(
         }
 
       case msg:GetLiveIdRsp =>
+        //用来推流的liveId
         log.info("gotTokenRsp")
 //        if (msg.errCode == 0) {
           rmManager ! RmManager.RtmpLiveReq(msg.liveId.get)

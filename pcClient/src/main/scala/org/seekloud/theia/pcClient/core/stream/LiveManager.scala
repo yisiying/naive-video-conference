@@ -58,6 +58,9 @@ object LiveManager {
 
   final case object DeviceOff extends LiveCommand
 
+  //停止播放摄像头画面
+  final case object DrewOff extends LiveCommand
+
   final case class SwitchMediaMode(isJoin: Boolean, reset: () => Unit) extends LiveCommand
 
   final case class ChangeMediaOption(bit: Option[Int], re: Option[String], frameRate: Option[Int],
@@ -163,7 +166,11 @@ object LiveManager {
           captureActor.foreach(_ ! CaptureActor.StopCapture)
           idle(parent, mediaPlayer, None,/* streamPusher, streamPuller,*/ mediaCapture, isStart = isStart, isRegular = isRegular)
 
+        case DrewOff =>
+//          captureActor.foreach(_ ! CaptureActor.StopCapture)
 
+          captureActor.foreach(_ ! CaptureActor.StopDraw)
+          Behaviors.same
 
         case msg: SwitchMediaMode =>
           captureActor.foreach(_ ! CaptureActor.SwitchMode(msg.isJoin, msg.reset))
@@ -260,8 +267,8 @@ object LiveManager {
           val videoPlayer = ctx.spawn(VideoPlayer.create(playId, audienceScene, None, None), s"videoPlayer$playId")
           //            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
           //根据room-roomId拉流
-          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/room-${watchInfo.get.roomId}"), Some(audienceScene.get.gc), None)
-          Behaviors.same
+          log.info(s"拉流地址:rtmp://10.1.29.247:42037/live/${liveId}")
+          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/${liveId}"), Some(audienceScene.get.gc), None)
           Behaviors.same
 
 //        case GetPackageLoss =>
