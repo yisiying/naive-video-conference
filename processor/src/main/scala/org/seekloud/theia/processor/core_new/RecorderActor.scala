@@ -192,7 +192,9 @@ object RecorderActor {
         case CloseRecorder =>
           try {
             ffFilter.close()
-            drawer ! Close
+            if (drawer != null) {
+              drawer ! Close
+            }
           } catch {
             case e: Exception =>
               log.error(s"$roomId recorder close error ---: $e")

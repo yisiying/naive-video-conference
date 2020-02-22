@@ -144,8 +144,8 @@ object GrabberActor {
 
 
         case CloseGrabber =>
+          log.info(s"${ctx.self} stop ----")
           try {
-            log.info(s"${ctx.self} stop ----")
             grabber.release()
             grabber.close()
 //            buf.close()
