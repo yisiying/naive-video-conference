@@ -49,7 +49,7 @@ class AudienceController(
           }
         }
       }
-      context.switchScene(audienceScene.getScene, title = s"${audienceScene.getRoomInfo.userId}的直播间-${audienceScene.getRoomInfo.roomId}")
+      context.switchScene(audienceScene.getScene, title = s"${audienceScene.getRoomInfo.userId}的会议室-${audienceScene.getRoomInfo.roomId}")
     }
 
   }
@@ -61,7 +61,7 @@ class AudienceController(
           Boot.addToPlatform {
 //            log.debug(s"${System.currentTimeMillis()},update recCommentList success:${rst.recordCommentList}")
             audienceScene.barrage.refreshRecBarrage(rst.recordCommentList)
-            audienceScene.recCommentBoard.updateCommentsList(rst.recordCommentList)
+            //            audienceScene.recCommentBoard.updateCommentsList(rst.recordCommentList)
           }
         } else {
           Boot.addToPlatform(
