@@ -342,11 +342,11 @@ class HostScene(stage: Stage) extends Secene {
 
   val tb1 = new ToggleButton("房间 ", roomInfoIcon)
   tb1.getStyleClass.add("hostScene-leftArea-toggleButton")
-  val tb2 = new ToggleButton("设置 ", setIcon)
+  val tb2 = new ToggleButton("会议管理 ", setIcon)
   tb2.getStyleClass.add("hostScene-leftArea-toggleButton")
   val tb3 = new ToggleButton("连线 ", connectionIcon)
   tb3.getStyleClass.add("hostScene-leftArea-toggleButton")
-  val tb4 = new ToggleButton("观众 ", audienceIcon)
+  val tb4 = new ToggleButton("参会者 ", audienceIcon)
   tb4.getStyleClass.add("hostScene-leftArea-toggleButton")
   //  val tb5 = new ToggleButton("我的录像 ",recordIcon)
   //  tb5.getStyleClass.add("hostScene-leftArea-toggleButton")
@@ -527,7 +527,7 @@ class HostScene(stage: Stage) extends Secene {
     val left4Area = addLeftChild4Area()
 //    val left5Area = addLeftChild5Area()
     content.getChildren.add(left1Area)
-    content.setPrefSize(width * 0.20, height) //0.27
+    content.setPrefSize(width * 0.25, height) //0.27
 
     tb1.setOnAction(_ => {
       tb1.setGraphic(roomInfoIcon)
@@ -589,7 +589,7 @@ class HostScene(stage: Stage) extends Secene {
 
     def createRoomInfoLabel: HBox = {
       val box = new HBox()
-      box.getChildren.addAll(backBtn, likeLabel)
+      box.getChildren.addAll(backBtn)
       box.setSpacing(210)
       box.setAlignment(Pos.CENTER_LEFT)
       box.setPadding(new Insets(0, 0, 0, 5))
@@ -672,364 +672,43 @@ class HostScene(stage: Stage) extends Secene {
 
   def addLeftChild2Area(): VBox = {
 
-    def changeCameraLayout() = {
-      new EventHandler[ActionEvent] {
-        override def handle(event: ActionEvent): Unit = {
-          val mItem = event.getSource.asInstanceOf[MenuItem]
-          val position = mItem.getText
-          listener.changeCaptureMode(2, Ids.getCameraOption(position))
-        }
-      }
-    }
+    val vBox = new VBox()
+    vBox.getChildren.addAll(connectStateBox, createCntTbArea)
+    vBox.setSpacing(20)
+    vBox.setPrefHeight(height)
+    vBox.setPadding(new Insets(20, 10, 5, 10))
+    vBox.getStyleClass.add("hostScene-leftArea-wholeBox")
 
-    val leftAreaBox = new VBox()
-    leftAreaBox.getChildren.addAll(createLabel, createLiveStateBox)
-    leftAreaBox.setPadding(new Insets(10, 0, 0, 0))
-    leftAreaBox.getStyleClass.add("hostScene-leftArea-wholeBox")
-    leftAreaBox.setPrefHeight(height)
-
-    def createLabel: HBox = {
-
-      val liveStateLabel = new Label("直播设置")
-      liveStateLabel.getStyleClass.add("hostScene-leftArea-label")
-
-      val liveStateIcon = new ImageView("img/liveState1.png")
-      liveStateIcon.setFitHeight(30)
-      liveStateIcon.setFitWidth(30)
-
-      val box = new HBox(liveStateIcon, liveStateLabel)
-      box.setAlignment(Pos.CENTER_LEFT)
-      box.setSpacing(5)
-      box.setPadding(new Insets(10, 0, 10, 5))
-      box
+    def createAddBtn = {
+      val addBtn = new Button("添加参会人")
+      //      addBtn.setOnAction(_ => listener.addPartner)
 
     }
 
-    def createLiveStateBox: VBox = {
+    def createCntTbArea: TableView[AudienceListInfo] = {
+      val AudienceTable = new TableView[AudienceListInfo]()
+      AudienceTable.getStyleClass.add("table-view")
 
-      val allowConnectionCheckBox = new CheckBox("允许连线")
-      allowConnectionCheckBox.setFont(Font.font(15))
-      //      val needImgCheckBox = new CheckBox("无画面")
-      //      needImgCheckBox.setFont(Font.font(15))
-      //
-      //      val needSoundCheckBox = new CheckBox("无声音")
-      //      needSoundCheckBox.setFont(Font.font(15))
+      val userInfoCol = new TableColumn[AudienceListInfo, String]("参会人员")
+      userInfoCol.setPrefWidth(width * 0.15)
+      userInfoCol.setCellValueFactory(new PropertyValueFactory[AudienceListInfo, String]("userInfo"))
 
+      val agreeBtnCol = new TableColumn[AudienceListInfo, Button]("同意")
+      agreeBtnCol.setCellValueFactory(new PropertyValueFactory[AudienceListInfo, Button]("agreeBtn"))
+      agreeBtnCol.setPrefWidth(width * 0.05)
 
-      val recordBox = new HBox(10)
-      recordBox.getChildren.addAll( pathField, chooseFileBtn)
+      val refuseBtnCol = new TableColumn[AudienceListInfo, Button]("拒绝")
+      refuseBtnCol.setCellValueFactory(new PropertyValueFactory[AudienceListInfo, Button]("refuseBtn"))
+      refuseBtnCol.setPrefWidth(width * 0.05)
 
-      //      val imgAndSoundBox = new HBox()
-      //      imgAndSoundBox.getChildren.addAll(needImgCheckBox, needSoundCheckBox)
-      //      imgAndSoundBox.setSpacing(15)
-      //      imgAndSoundBox.setAlignment(Pos.CENTER_LEFT)
-
-
-      val toggleIcon1 = new ImageView("img/toggleIcon1.png")
-      toggleIcon1.setFitHeight(20)
-      toggleIcon1.setFitWidth(30)
-      val toggleIcon2 = new ImageView("img/toggleIcon2.png")
-      toggleIcon2.setFitHeight(20)
-      toggleIcon2.setFitWidth(30)
-      val toggleIcon3 = new ImageView("img/toggleIcon3.png")
-      toggleIcon3.setFitHeight(20)
-      toggleIcon3.setFitWidth(30)
-
-//      mm
-      val toggleGroup = new ToggleGroup()
-      val rb1 = new RadioButton("对等窗口")
-      rb1.setSelected(true)
-      rb1.setGraphic(toggleIcon1)
-      rb1.setToggleGroup(toggleGroup)
-      rb1.setOnAction(_ =>
-                        listener.changeRoomMode(screenLayout = Option(CommonInfo.ScreenLayout.EQUAL))
-                      )
-
-      val rb2 = new RadioButton("主播大")
-      rb2.setGraphic(toggleIcon2)
-      rb2.setToggleGroup(toggleGroup)
-      rb2.setOnAction(_ =>
-                        listener.changeRoomMode(screenLayout = Option(CommonInfo.ScreenLayout.HOST_MAIN_RIGHT))
-                      )
-
-      val rb3 = new RadioButton("观众大")
-      rb3.setGraphic(toggleIcon3)
-      rb3.setToggleGroup(toggleGroup)
-      rb3.setOnAction(_ =>
-                        listener.changeRoomMode(screenLayout = Option(CommonInfo.ScreenLayout.AUDIENCE_MAIN_RIGHT))
-                      )
-
-
-      val rbBox = new VBox()
-      rbBox.setSpacing(10)
-      rbBox.getChildren.addAll(rb1, rb2, rb3)
-
-
-      val AIOptions: ObservableList[String] =
-        FXCollections.observableArrayList(
-          "无模式",
-          "人脸检测",
-          )
-      val AIModeChoiceCBx = new ComboBox(AIOptions)
-      AIModeChoiceCBx.setValue("无模式")
-      val AILabel = new Label("AI模式：")
-      AILabel.setFont(Font.font(15))
-      val AIBox = new HBox(AILabel, AIModeChoiceCBx)
-      AIBox.setSpacing(5)
-      AIBox.setAlignment(Pos.CENTER_LEFT)
-
-      val CaptureOpt: ObservableList[String] =
-        FXCollections.observableArrayList(
-          "摄像头",
-          "桌面",
-          "混合"
-        )
-      val action = changeCameraLayout()
-      val menuBar = new MenuBar()
-      menuBar.setPadding(new Insets(0))
-      val menu = new Menu("摄像头位置")
-      val left_top = new MenuItem("左上")
-      left_top.setOnAction(action)
-      val right_top = new MenuItem("右上")
-      right_top.setOnAction(action)
-      val left_bottom = new MenuItem("左下")
-      left_bottom.setOnAction(action)
-      val right_bottom = new MenuItem("右下")
-      right_bottom.setOnAction(action)
-      menu.getItems.addAll(right_bottom, left_bottom, left_top, right_top)
-      menuBar.getMenus.add(menu)
-      menuBar.setVisible(false)
-
-      val CaptureLayoutOpt: ObservableList[String] =
-        FXCollections.observableArrayList("右下", "左下", "左上", "右上")
-      val LayoutChoice = new ComboBox(CaptureLayoutOpt)
-      LayoutChoice.setValue("右下")
-      LayoutChoice.setVisible(false)
-      val CaptureChoiceBx = new ComboBox(CaptureOpt)
-      CaptureChoiceBx.setValue("摄像头")
-      val CaptureLabel = new Label("媒体源:")
-      CaptureLabel.setFont(Font.font(15))
-//      val CaptureBox = new HBox(CaptureLabel, CaptureChoiceBx, LayoutChoice)
-      val CaptureBox = new HBox(CaptureLabel, CaptureChoiceBx, menuBar)
-      CaptureBox.setSpacing(15)
-      CaptureBox.setAlignment(Pos.CENTER_LEFT)
-
-      val bitOptions: ObservableList[String] =
-        FXCollections.observableArrayList(
-          "256kb/s",
-          "512kb/s",
-          "1024kb/s",
-          "2000kb/s",
-          "1800kb/s",
-          "3500kb/s"
-          )
-      val bitChoiceCBx = new ComboBox(bitOptions)
-      bitChoiceCBx.setValue("2000kb/s")
-      val bitLabel = new Label("码   率：")
-      bitLabel.setFont(Font.font(15))
-      val bitBox = new HBox(bitLabel, bitChoiceCBx)
-      bitBox.setSpacing(5)
-      bitBox.setAlignment(Pos.CENTER_LEFT)
-
-
-      val reList = DeviceUtil.getDeviceOptions.values.toList.flatMap {
-        case i =>
-          i.map {
-            case v: VideoOption => v.s_max
-            case _ => ""
-          }.filterNot(_ == "")
-        case _ =>
-          List.empty[String]
-      }.distinct.sortWith((a, b) => a < b)
-
-      //      val b = DeviceUtil.getDeviceOptions.values.toList.map( s => s)
-      val resolutionOptions: ObservableList[String] = FXCollections.observableArrayList()
-      reList.foreach(resolutionOptions.add)
-      val resolutionChoiceCBx = new ComboBox(resolutionOptions)
-      resolutionChoiceCBx.setValue("640x360")
-      val resolutionLabel = new Label("分辨率：")
-      resolutionLabel.setFont(Font.font(15))
-      val resolutionBox = new HBox(resolutionLabel, resolutionChoiceCBx)
-      resolutionBox.setSpacing(5)
-      resolutionBox.setAlignment(Pos.CENTER_LEFT)
-
-      val frameList = DeviceUtil.getDeviceOptions.values.toList.flatMap {
-        case i =>
-          i.map {
-            case v: VideoOption => v.fps_max.toString
-            case _ => ""
-          }.filterNot(_ == "")
-        case _ =>
-          List.empty
-      }.distinct.sorted
-      val frameRateOptions: ObservableList[String] = FXCollections.observableArrayList(
-        "10",
-        "15",
-        "25",
-        "30",
-        "60"
-        )
-      //      frameList.foreach(frameRateOptions.add)
-      val frameRateChoiceCBx = new ComboBox(frameRateOptions)
-      frameRateChoiceCBx.setValue("30")
-      val frameRateLabel = new Label("帧率：")
-      frameRateLabel.setFont(Font.font(15))
-      val frameRateBox = new HBox(frameRateLabel, frameRateChoiceCBx)
-      frameRateBox.setSpacing(25)
-      frameRateBox.setAlignment(Pos.CENTER_LEFT)
-
-
-      AIModeChoiceCBx.setOnAction {
-        _ =>
-          AIModeChoiceCBx.getValue match {
-            case "无模式" =>
-              listener.changeRoomMode(aiMode = Option(CommonInfo.AiMode.close))
-            case "人脸检测" =>
-              listener.changeRoomMode(aiMode = Option(CommonInfo.AiMode.face))
-            case _ => // do nothing
-          }
-      }
-
-      CaptureChoiceBx.setOnAction{
-        _ =>
-          CaptureChoiceBx.getValue match {
-            case "摄像头" =>
-              listener.changeCaptureMode(0, 0)
-//              LayoutChoice.setVisible(false)
-              menuBar.setVisible(false)
-
-            case "桌面" =>
-              listener.changeCaptureMode(1, 0)
-//              LayoutChoice.setVisible(false)
-              menuBar.setVisible(false)
-
-            case "混合" =>
-              listener.changeCaptureMode(2, Ids.getCameraOption(LayoutChoice.getValue))
-//              LayoutChoice.setVisible(true)
-              menuBar.setVisible(true)
-
-          }
-      }
-
-      LayoutChoice.setOnAction{
-        _ =>
-          listener.changeCaptureMode(2, Ids.getCameraOption(LayoutChoice.getValue))
-          LayoutChoice.getValue
-      }
-
-
-
-      val liveStateBox = new VBox(recordRadioBox, pathLabel, recordBox, CaptureBox, AIBox, bitBox, resolutionBox, allowConnectionCheckBox)
-      liveStateBox.setPadding(new Insets(5, 30, 0, 30))
-      liveStateBox.setSpacing(15)
-
-
-      allowConnectionCheckBox.setOnAction {
-        _ =>
-          if (allowConnectionCheckBox.isSelected) {
-            liveStateBox.getChildren.addAll(rbBox)
-            listener.changeRoomMode(isJoinOpen = Option(true)) //允许观众连线
-          } else {
-            liveStateBox.getChildren.removeAll(rbBox)
-            listener.changeRoomMode(isJoinOpen = Option(false))
-          }
-      }
-
-      allowConnect = () => {
-        if (!allowConnectionCheckBox.isSelected){
-          allowConnectionCheckBox.setSelected(true)
-          liveStateBox.getChildren.addAll(rbBox)
-          listener.changeRoomMode(isJoinOpen = Option(true)) //允许观众连线
-        }
-      }
-
-      chooseFileBtn.setOnAction((_: ActionEvent) => {
-        val recordFileChooser = new DirectoryChooser()
-        val file = new File(Constants.recordPath)
-        recordFileChooser.setTitle("请选择存储位置")
-        recordFileChooser.setInitialDirectory(file)
-        val path = recordFileChooser.showDialog(stage.getOwner)
-        if (path != null) pathField.setText(path.getAbsolutePath)
-      })
-
-      //      recordCheckBox.setOnAction {
-      //        _ =>
-      //          if (!isLive) {
-      //            if (recordCheckBox.isSelected) listener.recordOption(recordCheckBox.isSelected, Some(pathField.getText))
-      //            else listener.recordOption(recordCheckBox.isSelected)
-      //          } else {
-      //            WarningDialog.initWarningDialog("直播中无法更改设置哦~")
-      //            recordCheckBox.setSelected(!recordCheckBox.isSelected)
-      //          }
-      //      }
-
-      //      var bitRate = bitChoiceCBx.getValue
-      bitChoiceCBx.setOnAction {
-        _ =>
-          if (!isLive) {
-            //            bitRate = bitChoiceCBx.getValue
-            bitChoiceCBx.getValue match {
-              case "256kb/s" =>
-                listener.changeOption(bit = Some(256000))
-              case "512kb/s" =>
-                listener.changeOption(bit = Some(512000))
-              case "1024kb/s" =>
-                listener.changeOption(bit = Some(1024000))
-              case "1800kb/s" =>
-                listener.changeOption(bit = Some(1800000))
-              case "2000kb/s" =>
-                listener.changeOption(bit = Some(2000000))
-              case "3500kb/s" =>
-                listener.changeOption(bit = Some(3500000))
-              case _ => // do nothing
-            }
-            //            needImgCheckBox.setSelected(false)
-            //            needSoundCheckBox.setSelected(false)
-            imageToggleBtn.setSelected(true)
-            soundToggleBtn.setSelected(true)
-          } else  {
-            WarningDialog.initWarningDialog("直播中无法更改设置哦~")
-          }
-      }
-
-      resolutionChoiceCBx.setOnAction {
-        _ =>
-          if (!isLive) {
-            resolutionChoiceCBx.getValue match {
-              case re: String =>
-                listener.changeOption(re = Some(re))
-              case _ => // do nothing
-            }
-            //            needImgCheckBox.setSelected(false)
-            //            needSoundCheckBox.setSelected(false)
-            imageToggleBtn.setSelected(true)
-            soundToggleBtn.setSelected(true)
-          } else {
-            WarningDialog.initWarningDialog("直播中无法更改设置哦~")
-          }
-      }
-
-      frameRateChoiceCBx.setOnAction {
-        _ =>
-          if (!isLive) {
-            frameRateChoiceCBx.getValue match {
-              case f: String =>
-                listener.changeOption(frameRate = Some(f.toInt))
-              case _ => // do nothing
-            }
-            //            needImgCheckBox.setSelected(false)
-            //            needSoundCheckBox.setSelected(false)
-            imageToggleBtn.setSelected(true)
-            soundToggleBtn.setSelected(true)
-          } else {
-            WarningDialog.initWarningDialog("直播中无法更改设置哦~")
-          }
-      }
-
-      liveStateBox
+      AudienceTable.setItems(audObservableList)
+      AudienceTable.getColumns.addAll(List(userInfoCol, agreeBtnCol, refuseBtnCol).asJavaCollection)
+      AudienceTable.setPrefHeight(height * 0.8)
+      AudienceTable
     }
 
-    leftAreaBox
+    vBox
+
 
   }
 
@@ -1078,125 +757,6 @@ class HostScene(stage: Stage) extends Secene {
     vBox
   }
 
-  //record page
-
-//  def addLeftChild5Area(): VBox = {
-//    val vBox = new VBox()
-//    vBox.getChildren.addAll(leftRecordBox)
-//    vBox
-//  }
-
-//  def updateRecordBox():Unit={
-//    val scrollPane = new ScrollPane()
-//    val allRecordPane = new VBox()
-//    recordList match{
-//      case Nil=>
-//        leftRecordBox.getChildren.clear()
-//        val nonRecord = new Label("暂无录像")
-//        nonRecord.setFont(Font.font("Verdana", 30))
-//        nonRecord.setPadding(new Insets(200, 0, 0, 0))
-//        val noRecordPane = new BorderPane()
-//        noRecordPane.setCenter(nonRecord)
-//        leftRecordBox.getChildren.add(noRecordPane)
-//
-//      case record=>
-//        leftRecordBox.getChildren.clear()
-//        val albumList = record.map(a=>a.toAlbum)
-//
-//        for(i <- 1 to recordsSize) {
-//          val totalBox = new HBox(2)
-//          val roomBox = new VBox(3)
-//          val roomPic = Pictures.getPic(albumList(i - 1).coverImgUrl, isHeader = false)
-//          roomPic.setFitHeight(Constants.DefaultPlayer.height / 2.5)
-//          roomPic.setFitWidth(Constants.DefaultPlayer.width / 2.5)
-//          //是否需要点进去播放视频这个功能，先不写
-//          //      roomPic.addEventHandler(MouseEvent.MOUSE_CLICKED, (_: MouseEvent) => {
-//          //        listener.enter(albumList(i - 1).roomId, albumList(i - 1).timestamp)
-//          //      })
-//          val userName = new Label(s"${albumList(i - 1).userName}")
-//          userName.setPrefWidth(120)
-//          userName.getStyleClass.add("roomScene-userName")
-//
-//          val audienceNumIcon = Common.getImageView("img/roomScene-view.png", 25, 25)
-//          val audienceNum = new Label(s"${albumList(i - 1).observerNum}", audienceNumIcon)
-//          audienceNum.setPrefWidth(80)
-//          audienceNum.getStyleClass.add("roomScene-userName")
-//
-//          val likeNumIcon = Common.getImageView("img/roomScene-like.png", 20, 20)
-//          val likeNum = new Label(s"${albumList(i - 1).like}", likeNumIcon)
-//          likeNum.setPrefWidth(80)
-//          likeNum.getStyleClass.add("roomScene-userName")
-//
-//          val picBar = new HBox(userName, audienceNum, likeNum)
-//          picBar.setMaxSize(roomPic.getFitWidth, roomPic.getFitHeight * 0.2)
-//          picBar.setPadding(new Insets(3, 0, 3, 0))
-//          picBar.setAlignment(Pos.CENTER_LEFT)
-//          picBar.getStyleClass.add("roomScene-picBar")
-//
-//          val picPane = new StackPane()
-//          picPane.setAlignment(Pos.BOTTOM_CENTER)
-//          picPane.getChildren.addAll(roomPic)
-//
-//          //只看自己录像，不用xxx的直播间
-//          // roomName
-//          //      val roomName = new Label(s"${albumList(i - 1).roomName}")
-//          //      roomName.setPrefWidth(200)
-//          //      roomName.getStyleClass.add("roomScene-roomName")
-//
-//          // timeBox(startTime & duration)
-//          val timeIcon = getImageView("img/date.png", 20, 20)
-//          val liveTime = if (albumList(i - 1).timestamp != 0L) new Label(TimeUtil.timeStamp2DetailDate(albumList(i - 1).timestamp), timeIcon) else new Label("")
-//          liveTime.setPrefWidth(160)
-//          liveTime.getStyleClass.add("roomScene-time")
-//
-//          val durationIcon = getImageView("img/clock.png", 20, 20)
-//          val duration = new Label(s"${albumList(i - 1).duration}", durationIcon)
-//          duration.setPrefWidth(100)
-//          duration.getStyleClass.add("roomScene-time")
-//
-//          val timeBox = new HBox(liveTime, duration)
-//          timeBox.setAlignment(Pos.CENTER_LEFT)
-//
-//          //roomBox
-//          roomBox.getChildren.addAll(picPane, timeBox)
-//          roomBox.setStyle("-fx-cursor: hand;")
-//          val shadow = new DropShadow(10, Color.GRAY)
-//          roomBox.addEventHandler(MouseEvent.MOUSE_ENTERED, (_: MouseEvent) => {
-//            picPane.getChildren.add(picBar)
-//            roomPic.setEffect(shadow)
-//          })
-//          roomBox.addEventHandler(MouseEvent.MOUSE_EXITED, (_: MouseEvent) => {
-//            picPane.getChildren.remove(picBar)
-//            roomPic.setEffect(null)
-//          })
-//
-//          //delete button
-//          val deleteBtn = new Button("Delete")
-//          //deleteBtn.setPadding(new Insets(50,50,0,0))
-//          deleteBtn.setOnAction { _ =>
-//            val record = albumList(i - 1).toRecordInfo
-//            listener.deleteRecord(record.recordId)
-//          }
-//
-//          //一行
-//          totalBox.getChildren.addAll(roomBox, deleteBtn)
-//          //s1.getChildren.add()
-//          allRecordPane.getChildren.addAll(totalBox)
-//        }
-//
-//        import javafx.beans.value.ObservableValue
-//        import javafx.beans.value.ChangeListener
-//        scrollPane.setVmax(440)
-//        scrollPane.setPrefSize(width*0.9, height*0.9)
-//        scrollPane.setContent(allRecordPane)
-//        scrollPane.vvalueProperty().addListener(new ChangeListener[Number]() {
-//          override def changed(ov: ObservableValue[_ <: Number], old_val: Number, new_val: Number): Unit = {
-//            allRecordPane.setLayoutY(-new_val.doubleValue)
-//          }
-//        })
-//        leftRecordBox.getChildren.addAll(scrollPane)
-//    }
-//  }
 
   def addRightArea(): VBox = {
 
