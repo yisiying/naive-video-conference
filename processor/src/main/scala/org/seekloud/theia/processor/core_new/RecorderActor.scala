@@ -258,7 +258,6 @@ object RecorderActor {
 
         case UpdateClientList(clientLiveId, inOrOut) =>
           log.info(s"recorder get new partner: $clientLiveId")
-          recorder4ts.stop()
           val num = clientLiveIdMap.size
           if (inOrOut == Part.in) {
             clientLiveIdMap.put(clientLiveId, num + 1)
@@ -294,7 +293,6 @@ object RecorderActor {
           ffFilter.setAudioChannels(hostChannel)
           ffFilter.setSampleRate(hostSampleRate)
           ffFilterN.start()
-          recorder4ts.start()
           work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilterN, drawer, canvasSize)
 
         case UpdateRecorder(channel, sampleRate, f, width, height, liveId) =>
@@ -349,6 +347,7 @@ object RecorderActor {
               graph.drawImage(img, canvasSize._1 / 4 * 3, 0, canvasSize._1 / 4, canvasSize._2 / 4, null)
               graph.drawString("参会者", 584, 24)
           }*/
+          if (clientImgList.length > 2)
           log.info(s"${clientImgList.length}")
           clientImgList.length + 1 match {
             case x if x == 1 =>
