@@ -147,8 +147,7 @@ object RoomActor {
         case CloseRoom(roomId) =>
           log.info(s"${ctx.self} receive a msg $msg")
           if(grabberMap.get(roomId).nonEmpty){
-            log.info(s"close grabbers: ${grabberMap(roomId).values}")
-            grabberMap(roomId).values.foreach(_ ! GrabberActor.StopGrabber)
+            grabberMap(roomId).values.toList.foreach(_ ! GrabberActor.StopGrabber)
             grabberMap.remove(roomId)
           } else {
             log.info(s"${roomId}  grabbers not exist when closeRoom")

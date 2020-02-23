@@ -439,19 +439,19 @@ object RoomActor {
         liveInfoMap.get(Role.host) match {
           case Some(value) =>
             val liveIdHost = value.get(wholeRoomInfo.roomInfo.userId)
-            if (liveIdHost.nonEmpty) {
-              ctx.self ! UpdateRTMP(liveIdHost.get.liveId)
-            }
-            else {
-              log.debug(s"${ctx.self.path} 没有主播的liveId,无法撤回主播流,roomId=$roomId")
-              dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), AudienceJoinError)
-            }
+          //            if (liveIdHost.nonEmpty) {
+          //              ctx.self ! UpdateRTMP(liveIdHost.get.liveId)
+          //            }
+          //            else {
+          //              log.debug(s"${ctx.self.path} 没有主播的liveId,无法撤回主播流,roomId=$roomId")
+          //              dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), AudienceJoinError)
+          //            }
           case None =>
             log.debug(s"${ctx.self.path} 没有主播的liveInfo")
             dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), NoHostLiveInfoError)
         }
         ProcessorClient.closeRoom(roomId)
-        dispatch(HostDisconnect(liveInfoMap(Role.host)(wholeRoomInfo.roomInfo.userId).liveId))
+        //        dispatch(HostDisconnect(liveInfoMap(Role.host)(wholeRoomInfo.roomInfo.userId).liveId))
         dispatch(RcvComment(-1l, "", s"the host has shut the join in room $roomId"))
         Behaviors.same
 
@@ -526,19 +526,19 @@ object RoomActor {
             liveInfoMap.get(Role.host) match {
               case Some(info) =>
                 val liveIdHost = info.get(wholeRoomInfo.roomInfo.userId)
-                if (liveIdHost.nonEmpty) {
-                  ctx.self ! UpdateRTMP(liveIdHost.get.liveId)
-                }
-                else {
-                  log.debug(s"${ctx.self.path} 没有主播的liveId,无法撤回主播流,roomId=$roomId")
-                  dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), AudienceJoinError)
-                }
+              //                if (liveIdHost.nonEmpty) {
+              //                  ctx.self ! UpdateRTMP(liveIdHost.get.liveId)
+              //                }
+              //                else {
+              //                  log.debug(s"${ctx.self.path} 没有主播的liveId,无法撤回主播流,roomId=$roomId")
+              //                  dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), AudienceJoinError)
+              //                }
               case None =>
                 log.debug(s"${ctx.self.path} no host liveId")
             }
             ProcessorClient.userQuit(roomId, liveInfoMap(Role.audience)(audienceId).liveId, wholeRoomInfo.roomInfo.rtmp.get)
             liveInfoMap(Role.audience).remove(audienceId)
-            dispatch(AuthProtocol.AudienceDisconnect(liveInfoMap(Role.host)(wholeRoomInfo.roomInfo.userId).liveId))
+            //            dispatch(AuthProtocol.AudienceDisconnect(liveInfoMap(Role.host)(wholeRoomInfo.roomInfo.userId).liveId))
             dispatch(RcvComment(-1l, "", s"the audience has shut the join in room $roomId"))
           case None =>
             log.debug(s"${ctx.self.path} no audience liveId")
