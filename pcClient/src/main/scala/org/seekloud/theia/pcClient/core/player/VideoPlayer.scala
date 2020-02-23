@@ -3,7 +3,7 @@ package org.seekloud.theia.pcClient.core.player
 import akka.actor.typed.scaladsl.{Behaviors, StashBuffer, TimerScheduler}
 import akka.actor.typed.{ActorRef, Behavior}
 import org.seekloud.theia.pcClient.component.WarningDialog
-import org.seekloud.theia.pcClient.scene.AudienceScene
+import org.seekloud.theia.pcClient.scene.{Secene}
 import org.seekloud.theia.player.core.PlayerGrabber
 import org.seekloud.theia.player.protocol.Messages
 import org.seekloud.theia.player.protocol.Messages._
@@ -44,7 +44,7 @@ object VideoPlayer {
 
   def create(
     id: String,
-    audienceScene: Option[AudienceScene] = None,
+    audienceScene: Option[Secene] = None,
     imageQueue: Option[immutable.Queue[AddPicture]] = None,
     samplesQueue: Option[immutable.Queue[Array[Byte]]] = None
   ): Behavior[PlayCommand] =
@@ -59,7 +59,7 @@ object VideoPlayer {
 
   private def idle(
     id: String,
-    audienceScene: Option[AudienceScene],
+    audienceScene: Option[Secene],
     imageQueue: Option[immutable.Queue[AddPicture]] = None,
     samplesQueue: Option[immutable.Queue[Array[Byte]]] = None
   ): Behavior[PlayCommand] =
@@ -141,7 +141,7 @@ object VideoPlayer {
     samplesQueue: Option[immutable.Queue[Array[Byte]]],
     pictureFinish: Boolean = true,
     soundFinish: Boolean = true,
-    audienceScene: Option[AudienceScene],
+    audienceScene: Option[Secene],
   )(
     implicit timer: TimerScheduler[PlayCommand]
   ): Behavior[PlayCommand] = Behaviors.receive { (ctx, msg) =>

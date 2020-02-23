@@ -169,12 +169,12 @@ class HomeScene {
   }
 
   def addMiddleArea(): StackPane = {
-    //    val welcomeText = new Text("欢迎来到Theia在线直播系统")
-    //    welcomeText.getStyleClass.add("homeScene-text")
+        val welcomeText = new Text("在线会议系统")
+        welcomeText.getStyleClass.add("homeScene-text")
 
-    val welcomeText = new ImageView("img/welcomeText.png")
-    welcomeText.setFitHeight(61)
-    welcomeText.setFitWidth(690)
+//    val welcomeText = new ImageView("img/welcomeText.png")
+//    welcomeText.setFitHeight(61)
+//    welcomeText.setFitWidth(690)
 
     val welcomeBg = new ImageView("img/welcomeBg3.png")
 
@@ -196,7 +196,7 @@ class HomeScene {
     liveBtn.setOnAction(_ => listener.liveCheck())
     addButtonEffect(liveBtn)
 
-    val liveText = new Text("我要直播")
+    val liveText = new Text("我要开会")
     liveText.getStyleClass.add("homeScene-bottomText")
 
     val liveVBox = new VBox()
@@ -212,7 +212,7 @@ class HomeScene {
     watchBtn.setOnAction(_ => listener.gotoRoomPage())
     addButtonEffect(watchBtn)
 
-    val watchText = new Text("观看直播")
+    val watchText = new Text("参加会议")
     watchText.getStyleClass.add("homeScene-bottomText")
 
     val watchVBox = new VBox()

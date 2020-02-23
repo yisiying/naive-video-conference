@@ -138,7 +138,7 @@ class RoomController(
   def showScene(): Unit = {
     Boot.addToPlatform {
       if (roomScene.liveMode) updateRoomList()
-      context.switchScene(roomScene.getScene, title = "直播间online")
+      context.switchScene(roomScene.getScene, title = "会议室online")
     }
   }
 

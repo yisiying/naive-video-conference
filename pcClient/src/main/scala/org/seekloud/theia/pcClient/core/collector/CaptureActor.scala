@@ -24,6 +24,7 @@ import org.seekloud.theia.pcClient.component.WarningDialog
 import org.seekloud.theia.pcClient.core.stream.{EncodeActor, LiveManager}
 import org.seekloud.theia.pcClient.core.stream.LiveManager.{ChangeMediaOption, EncodeConfig, RecordOption}
 import org.seekloud.theia.pcClient.core.RmManager.ImgLayout
+import org.seekloud.theia.pcClient.scene.Secene
 import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol.HostStopPushStream2Client
 import org.slf4j.LoggerFactory
 
@@ -118,7 +119,9 @@ object   CaptureActor {
 
   final case class BottomLayer(bottomLayer: Image) extends DrawCommand
 
-  final case object StopDraw extends DrawCommand
+  final case object StopDraw extends DrawCommand with CaptureCommand
+
+  final case class PauseDraw(s:Secene) extends DrawCommand with CaptureCommand
 
   private object ENCODE_RETRY_TIMER_KEY
 
@@ -174,8 +177,14 @@ object   CaptureActor {
     Behaviors.receive[CaptureCommand] { (ctx, msg) =>
       msg match {
         case msg: GetMediaCapture =>
-          idle(parent,frameRate, gc, isJoin,encodeSettings, encodeMap, requestMap, callBackFunc, resetFunc, Some(msg.mediaCapture),
-            reqActor, loopExecutor, imageLoop, drawActor, rtmpIsLive, rtpIsLive, fileNeed, imgLayout, bottomLayer)
+//          if(isJoin){
+//            val drawActor = ctx.spawn(drawer(gc, isJoin,false),s"CaptureDrawer-${System.currentTimeMillis()}")
+//            idle(parent,frameRate, gc, isJoin,encodeSettings, encodeMap, requestMap, callBackFunc, resetFunc, Some(msg.mediaCapture),
+//              reqActor, loopExecutor, imageLoop, Some(drawActor), rtmpIsLive, rtpIsLive, fileNeed, imgLayout, bottomLayer)
+//          } else {
+            idle(parent,frameRate, gc, isJoin,encodeSettings, encodeMap, requestMap, callBackFunc, resetFunc, Some(msg.mediaCapture),
+              reqActor, loopExecutor, imageLoop, drawActor, rtmpIsLive, rtpIsLive, fileNeed, imgLayout, bottomLayer)
+//          }
 
         case msg: CaptureStartSuccess =>
           log.info(s"MediaCapture start success!")
@@ -503,6 +512,10 @@ object   CaptureActor {
           log.info(s"${msg.name} dead.")
           Behaviors.same
 
+        case PauseDraw(s)=>
+          drawActor.foreach(_ ! PauseDraw(s))
+          Behaviors.same
+
         case x =>
           log.warn(s"unknown msg in idle: $x")
           Behaviors.unhandled
@@ -528,9 +541,9 @@ object   CaptureActor {
                 gc.drawImage(msg.image, 0.0, 0.0, sWidth, sHeight)
               }
             } else {
-              Boot.addToPlatform {
-                gc.drawImage(msg.image, 0.0, sHeight / 4, sWidth / 2, sHeight / 2)
-              }
+//              Boot.addToPlatform {
+//                gc.drawImage(msg.image, 0.0, sHeight / 4, sWidth / 2, sHeight / 2)
+//              }
             }
           }
           Behaviors.same
@@ -552,6 +565,10 @@ object   CaptureActor {
         case StopDraw =>
           log.info(s"Capture Drawer stopped.")
           Behaviors.stopped
+
+        case PauseDraw(s)=>
+          s.resetLoading()
+          drawer(gc,false, false, imgLayout)
 
         case x =>
           log.warn(s"unknown msg in drawer: $x")

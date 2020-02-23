@@ -19,7 +19,8 @@ object Ids {
 
     val playId = audienceStatus match {
       case AudienceStatus.LIVE => s"room${roomId.get}"
-      case AudienceStatus.CONNECT => s"room${roomId.get}-audience${audienceId.get}"
+//      case AudienceStatus.CONNECT => s"room${roomId.get}-audience${audienceId.get}"
+      case AudienceStatus.CONNECT => s"room${roomId.get}"
       case AudienceStatus.RECORD => s"record${roomId.get}-${startTime.get}"
     }
 

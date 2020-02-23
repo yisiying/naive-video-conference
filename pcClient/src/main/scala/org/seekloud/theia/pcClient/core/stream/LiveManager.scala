@@ -15,7 +15,7 @@ import org.seekloud.theia.pcClient.core.collector.CaptureActor
 import org.seekloud.theia.pcClient.core.rtp._
 import org.seekloud.theia.pcClient.core.RmManager
 import org.seekloud.theia.pcClient.core.RmManager.ImgLayout
-import org.seekloud.theia.pcClient.scene.{AudienceScene, HostScene}
+import org.seekloud.theia.pcClient.scene.{AudienceScene, Secene, HostScene}
 import org.seekloud.theia.pcClient.utils.{GetAllPixel, NetUtil, RtpUtil}
 import org.seekloud.theia.rtpClient.{PullStreamClient, PushStreamClient}
 import org.seekloud.theia.pcClient.utils.RtpUtil.{clientHost, clientHostQueue}
@@ -57,6 +57,9 @@ object LiveManager {
   final case class DevicesOn(gc: GraphicsContext, isJoin: Boolean = false, callBackFunc: Option[() => Unit] = None) extends LiveCommand
 
   final case object DeviceOff extends LiveCommand
+
+  //停止播放摄像头画面
+  final case class DrawOff(scene:Secene) extends LiveCommand
 
   final case class SwitchMediaMode(isJoin: Boolean, reset: () => Unit) extends LiveCommand
 
@@ -163,7 +166,11 @@ object LiveManager {
           captureActor.foreach(_ ! CaptureActor.StopCapture)
           idle(parent, mediaPlayer, None,/* streamPusher, streamPuller,*/ mediaCapture, isStart = isStart, isRegular = isRegular)
 
+        case DrawOff(s) =>
+//          captureActor.foreach(_ ! CaptureActor.StopCapture)
 
+          captureActor.foreach(_ ! CaptureActor.PauseDraw(s))
+          Behaviors.same
 
         case msg: SwitchMediaMode =>
           captureActor.foreach(_ ! CaptureActor.SwitchMode(msg.isJoin, msg.reset))
@@ -259,8 +266,9 @@ object LiveManager {
           mediaPlayer.setTimeGetter(playId, () => System.currentTimeMillis())
           val videoPlayer = ctx.spawn(VideoPlayer.create(playId, audienceScene, None, None), s"videoPlayer$playId")
           //            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
-          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/${watchInfo.get.roomId}?$liveId"), Some(audienceScene.get.gc), None)
-          Behaviors.same
+          //根据room-roomId拉流
+          log.info(s"拉流地址:rtmp://10.1.29.247:42037/live/${liveId}")
+          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/${liveId}"), Some(audienceScene.get.gc), None)
           Behaviors.same
 
 //        case GetPackageLoss =>

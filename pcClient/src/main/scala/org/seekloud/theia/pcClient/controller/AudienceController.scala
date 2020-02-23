@@ -16,6 +16,7 @@ import org.seekloud.theia.pcClient.component.WarningDialog
 import org.seekloud.theia.pcClient.core.RmManager.HeartBeat
 import org.seekloud.theia.pcClient.scene.AudienceScene.AudienceSceneListener
 import org.seekloud.theia.pcClient.utils.RMClient
+import org.seekloud.theia.protocol.ptcl.CommonInfo
 import org.seekloud.theia.protocol.ptcl.CommonInfo.{RecordInfo, UserDes}
 
 import scala.concurrent.Future
@@ -48,7 +49,7 @@ class AudienceController(
           }
         }
       }
-      context.switchScene(audienceScene.getScene, title = s"${audienceScene.getRoomInfo.userId}的直播间-${audienceScene.getRoomInfo.roomId}")
+      context.switchScene(audienceScene.getScene, title = s"${audienceScene.getRoomInfo.userId}的会议室-${audienceScene.getRoomInfo.roomId}")
     }
 
   }
@@ -60,7 +61,7 @@ class AudienceController(
           Boot.addToPlatform {
 //            log.debug(s"${System.currentTimeMillis()},update recCommentList success:${rst.recordCommentList}")
             audienceScene.barrage.refreshRecBarrage(rst.recordCommentList)
-            audienceScene.recCommentBoard.updateCommentsList(rst.recordCommentList)
+            //            audienceScene.recCommentBoard.updateCommentsList(rst.recordCommentList)
           }
         } else {
           Boot.addToPlatform(
@@ -116,9 +117,15 @@ class AudienceController(
 
     override def joinReq(roomId: Long): Unit = {
       if (RmManager.userInfo.nonEmpty) {
-        WarningDialog.initWarningDialog("连线申请已" +
-                                        "发送！")
+        println(RmManager.userInfo.get.userId)
+        WarningDialog.initWarningDialog("正在加入直播")
         rmManager ! RmManager.JoinRoomReq(roomId)
+//        assert(RmManager.roomInfo.isDefined)
+//        assert(RmManager.roomInfo.get.rtmp.isDefined)
+//        println(RmManager.roomInfo.get.rtmp.get)
+//        assert(RmManager.userInfo.isDefined)
+//        println(RmManager.userInfo.get.userId)
+        rmManager ! RmManager.StartJoin("room-"+roomId,CommonInfo.LiveInfo("user-"+RmManager.userInfo.get.userId))
       } else {
         WarningDialog.initWarningDialog("请先登录哦~")
       }

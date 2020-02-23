@@ -33,7 +33,7 @@ class HostController(
   def showScene(): Unit = {
     Boot.addToPlatform(
       if (RmManager.userInfo.nonEmpty && RmManager.roomInfo.nonEmpty) {
-        context.switchScene(hostScene.getScene, title = s"${RmManager.userInfo.get.userName}的直播间-${RmManager.roomInfo.get.roomName}")
+        context.switchScene(hostScene.getScene, title = s"${RmManager.userInfo.get.userName}的会议室-${RmManager.roomInfo.get.roomName}")
       } else {
         WarningDialog.initWarningDialog(s"无房间信息！")
       }
@@ -214,19 +214,20 @@ class HostController(
         rmManager ! HeartBeat
 
       case msg: StartLiveRsp =>
-//        log.debug(s"get StartLiveRsp: $msg")
+        log.debug(s"get StartLiveRsp: $msg")
         if (msg.errCode == 0) {
-          rmManager ! RmManager.StartLive(msg.liveInfo.get.liveId, msg.liveInfo.get.liveCode)
+          rmManager ! RmManager.StartLive(msg.liveInfo.get.liveId)
         } else {
           Boot.addToPlatform {
             WarningDialog.initWarningDialog(s"${msg.msg}")
           }
         }
 
-      case msg:GetTokenRsp =>
+      case msg:GetLiveIdRsp =>
+        //用来推流的liveId
         log.info("gotTokenRsp")
 //        if (msg.errCode == 0) {
-          rmManager ! RmManager.RtmpLiveReq(msg.tokenOpt.get,msg.SecureKeyOpt.get, msg.startTimeOpt.get)
+          rmManager ! RmManager.RtmpLiveReq(msg.liveId.get)
 //        } else {
 //          Boot.addToPlatform {
 //            WarningDialog.initWarningDialog(s"${msg.msg}")
