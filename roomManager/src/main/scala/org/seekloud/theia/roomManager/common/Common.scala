@@ -9,6 +9,11 @@ object Common {
     val audience = 1
   }
 
+  object Part {
+    val in = 0
+    val out = 1
+  }
+
   object Source{
     val pc = "PC"
     val web = "WEB"

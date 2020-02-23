@@ -11,7 +11,7 @@ import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol.{H
 import org.seekloud.theia.roomManager.Boot.{executor, roomManager}
 import org.seekloud.theia.roomManager.common.AppSettings.{distributorIp, distributorPort}
 import org.seekloud.theia.roomManager.common.Common
-import org.seekloud.theia.roomManager.common.Common.{Like, Role}
+import org.seekloud.theia.roomManager.common.Common.{Like, Role, Part}
 import org.seekloud.theia.roomManager.core.RoomManager.GetRtmpLiveInfo
 import org.seekloud.theia.roomManager.models.dao.{RecordDao, UserInfoDao}
 import org.seekloud.theia.roomManager.protocol.ActorProtocol
@@ -93,7 +93,7 @@ object RoomActor {
             userTableOpt <- UserInfoDao.searchById(userId)
           } yield {
             if (userTableOpt.nonEmpty) {
-              val roomInfo = RoomInfo(roomId, s"${userTableOpt.get.userName}的直播间", "", userTableOpt.get.uid, userTableOpt.get.userName,
+              val roomInfo = RoomInfo(roomId, s"${userTableOpt.get.userName}的会议室", "", userTableOpt.get.uid, userTableOpt.get.userName,
                 UserInfoDao.getHeadImg(userTableOpt.get.headImg),
                 UserInfoDao.getHeadImg(userTableOpt.get.coverImg), 0, 0,
                 Some(s"room-$roomId")
@@ -172,10 +172,16 @@ object RoomActor {
           log.debug(s"${ctx.self.path} 更新liveId=$rtmp,更新后的liveId=${newRoomInfo.roomInfo.rtmp} ---idle")
           idle(newRoomInfo, liveInfoMap, subscribe, startTime, invitationList, isJoinOpen)
 
-        case ActorProtocol.UpdateInvitationList(roomId, userId) =>
-          val l = invitationList(Role.audience)
-          val newList = userId :: l
-          invitationList.update(Role.audience, newList)
+        case ActorProtocol.UpdateInvitationList(roomId, userId, inOrOut) =>
+          if (inOrOut == Part.in) {
+            val l = invitationList(Role.audience)
+            val newList = userId :: l
+            invitationList.update(Role.audience, newList)
+          } else if (inOrOut == Part.out) {
+            val l = invitationList(Role.audience)
+            val newList = l.filterNot(_ == userId)
+            invitationList.update(Role.audience, newList)
+          }
           idle(wholeRoomInfo, liveInfoMap, subscribe, startTime, invitationList, isJoinOpen)
 
         case ActorProtocol.WebSocketMsgWithActor(userId, roomId, wsMsg) =>
