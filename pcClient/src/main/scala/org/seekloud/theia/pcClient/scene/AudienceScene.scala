@@ -173,8 +173,8 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
   val sendIcon: ImageView = Common.getImageView("img/confirm.png", 20, 20)
   val sendBtn = new Button("发送", sendIcon)
   val gift = new GiftBar(group)
-  val linkBtn = new Button("申请连线", new ImageView("img/link.png"))
-  val exitBtn = new Button("中断连线", new ImageView("img/shutdown.png"))
+  val linkBtn = new Button("申请加入", new ImageView("img/link.png"))
+  val exitBtn = new Button("退出会议", new ImageView("img/shutdown.png"))
   val emojiBtn = new Button("\uD83D\uDE00")
 
   //  val effectOptions: ObservableList[String] =
@@ -302,7 +302,7 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
     gc.drawImage(waitPulling, 0, sHeight / 4, sWidth / 2, sHeight / 2)
     //    gc.setFont(Font.font(emojiFont, 25))
     gc.setFill(Color.BLACK)
-    gc.fillText(s"连线中", imgView.getWidth / 2 - 40, imgView.getHeight / 8)
+    gc.fillText(s"会议中", imgView.getWidth / 2 - 40, imgView.getHeight / 8)
   }
 
 
@@ -311,7 +311,7 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
     gc.drawImage(connectionBg, 0, 0, gc.getCanvas.getWidth, gc.getCanvas.getHeight)
     //    gc.setFont(Font.font(emojiFont, 25))
     gc.setFill(Color.BLACK)
-    gc.fillText(s"连线中", imgView.getWidth / 2 - 40, imgView.getHeight / 8)
+    gc.fillText(s"会议中", imgView.getWidth / 2 - 40, imgView.getHeight / 8)
   }
 
   def resetLoading(): Unit = {

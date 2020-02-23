@@ -784,13 +784,6 @@ object RmManager {
           log.info(s"in StreamPuller-PullStreamReqSuccess in watchInfo")
 //          Some(audienceScene).foreach(_.autoReset())
           audienceScene.autoReset()
-          val playId = Ids.getPlayId(AudienceStatus.LIVE, roomId = Some(audienceScene.getRoomInfo.roomId))
-          println(s"===watchInfo playId:$playId")
-          mediaPlayer.setTimeGetter(playId, () => System.currentTimeMillis())
-          val videoPlayer = ctx.spawn(VideoPlayer.create(playId, Some(audienceScene), None, None), s"videoPlayer$playId")
-          //            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
-          log.info(s"rtmp://10.1.29.247:42037/live/room-${audienceScene.getRoomInfo.roomId}")
-          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/room-${audienceScene.getRoomInfo.roomId}"), Some(audienceScene.gc), None)
           Behaviors.same
 
 
@@ -964,6 +957,15 @@ object RmManager {
           //case StartJoin =>
           log.info(s"Start join.")
           assert(userInfo.nonEmpty)
+          //同意连线后才能看到画面
+          val playId = Ids.getPlayId(AudienceStatus.LIVE, roomId = Some(audienceScene.getRoomInfo.roomId))
+          println(s"===watchInfo playId:$playId")
+          mediaPlayer.setTimeGetter(playId, () => System.currentTimeMillis())
+          val videoPlayer = ctx.spawn(VideoPlayer.create(playId, Some(audienceScene), None, None), s"videoPlayer$playId")
+          //            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
+          log.info(s"rtmp://10.1.29.247:42037/live/room-${audienceScene.getRoomInfo.roomId}")
+          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/room-${audienceScene.getRoomInfo.roomId}"), Some(audienceScene.gc), None)
+
 
           // val userId = userInfo.get.userId
 
