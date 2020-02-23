@@ -76,15 +76,7 @@ object RecorderActor {
 
   case object Close extends VideoCommand
 
-  case class Ts4Host(var time: Long = 0)
-
-  case class Ts4Client(var time: Long = 0)
-
   case class Image(var frame: Frame = null)
-
-  case class Ts4LastImage(var time: Long = -1)
-
-  case class Ts4LastSample(var time: Long = 0)
 
   private val emptyAudio = ShortBuffer.allocate(1024 * 2)
   private val emptyAudio4one = ShortBuffer.allocate(1152)
@@ -113,7 +105,7 @@ object RecorderActor {
           }
           roomManager ! RoomManager.RecorderRef(roomId, ctx.self) //fixme 取消注释
           ctx.self ! Init(1)
-          single(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, null, null, (0, 0))
+          work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, null, null, (0, 0))
       }
     }
   }
@@ -403,10 +395,6 @@ object RecorderActor {
           val newList = clientFrameList.filterNot(c => c._1 == liveId)
           convert2Map.remove(liveId)
           draw(canvas, graph, newList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize)
-
-        case m@NewRecord4Ts(recorder4ts) =>
-          log.info(s"got msg: $m")
-          draw(canvas, graph, clientFrameList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize)
 
         case Close =>
           log.info(s"drawer stopped")
