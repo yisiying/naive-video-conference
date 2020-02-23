@@ -151,7 +151,7 @@ object RoomActor {
                     subscribe: mutable.HashMap[(Long, Boolean), ActorRef[UserActor.Command]], //需要区分订阅的用户的身份，注册用户还是临时用户(uid,是否是临时用户true:是)
                     startTime: Long,
                     invitationList: mutable.HashMap[Int, List[Long]],
-                    isJoinOpen: Boolean = false,
+                    isJoinOpen: Boolean = true,
                   )
                   (implicit stashBuffer: StashBuffer[Command],
                    timer: TimerScheduler[Command],
@@ -356,7 +356,7 @@ object RoomActor {
                                   subscribers: mutable.HashMap[(Long, Boolean), ActorRef[UserActor.Command]], //包括主播在内的所有用户
                                   liveInfoMap: mutable.HashMap[Int, mutable.HashMap[Long, LiveInfo]], //"audience"/"anchor"->Map(userId->LiveInfo)
                                   startTime: Long,
-                                  isJoinOpen: Boolean = false,
+                                  isJoinOpen: Boolean = true,
                                   dispatch: WsMsgRm => Unit,
                                   dispatchTo: (List[(Long, Boolean)], WsMsgRm) => Unit,
                                   invitationList: mutable.HashMap[Int, List[Long]],
