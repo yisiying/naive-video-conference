@@ -153,7 +153,7 @@ object RecorderActor {
           if (inOrOut == Part.in) {
             clientLiveIdMap.put(clientLiveId, num + 1)
             roomManager ! RoomManager.RecorderRef(roomId, ctx.self)
-          }else{
+          } else {
             clientLiveIdMap.get(clientLiveId) match {
               case Some(index) =>
                 clientLiveIdMap.remove(clientLiveId)
@@ -339,8 +339,8 @@ object RecorderActor {
               graph.drawImage(img, canvasSize._1 / 4 * 3, 0, canvasSize._1 / 4, canvasSize._2 / 4, null)
               graph.drawString("参会者", 584, 24)
           }*/
-          if (clientImgList.length > 2)
-          log.info(s"${clientImgList.length}")
+          if (clientImgList.length >= 2)
+            log.info(s"${clientImgList.length}")
           clientImgList.length + 1 match {
             case x if x == 1 =>
               graph.drawImage(img, 0, 0, canvasSize._1, canvasSize._2, null)
