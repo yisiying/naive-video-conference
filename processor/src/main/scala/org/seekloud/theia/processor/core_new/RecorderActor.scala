@@ -258,6 +258,7 @@ object RecorderActor {
 
         case UpdateClientList(clientLiveId, inOrOut) =>
           log.info(s"recorder get new partner: $clientLiveId")
+          recorder4ts.stop()
           val num = clientLiveIdMap.size
           if (inOrOut == Part.in) {
             clientLiveIdMap.put(clientLiveId, num + 1)
@@ -293,6 +294,7 @@ object RecorderActor {
           ffFilter.setAudioChannels(hostChannel)
           ffFilter.setSampleRate(hostSampleRate)
           ffFilterN.start()
+          recorder4ts.start()
           work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilterN, drawer, canvasSize)
 
         case UpdateRecorder(channel, sampleRate, f, width, height, liveId) =>
@@ -347,6 +349,7 @@ object RecorderActor {
               graph.drawImage(img, canvasSize._1 / 4 * 3, 0, canvasSize._1 / 4, canvasSize._2 / 4, null)
               graph.drawString("参会者", 584, 24)
           }*/
+          log.info(s"${clientImgList.length}")
           clientImgList.length + 1 match {
             case x if x == 1 =>
               graph.drawImage(img, 0, 0, canvasSize._1, canvasSize._2, null)
@@ -374,16 +377,12 @@ object RecorderActor {
               graph.drawImage(img, 0, 0, canvasSize._1 / 2, canvasSize._2 / 2, null)
               graph.drawString("主持人", 24, 24)
               graph.drawImage(clientImgList.head, canvasSize._1 / 2, 0, canvasSize._1 / 2, canvasSize._2 / 2, null)
-
+              graph.drawString("参会者", 344, 24)
               clientImgList.drop(1).foreach { clientImg =>
                 graph.drawImage(clientImg, n * canvasSize._1 / 2, canvasSize._2 / 2, canvasSize._1 / 2, canvasSize._2 / 2, null)
                 graph.drawString("参会者", n * canvasSize._1 / 2 + 24, canvasSize._2 / 2 + 24)
                 n += 1
               }
-
-            case x if x == 5 =>
-
-
           }
           //fixme 此处为何不直接recordImage
           val frame = convert.convert(canvas)
