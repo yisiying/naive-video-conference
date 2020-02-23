@@ -49,12 +49,12 @@ object Constants {
 
   object AppWindow {
 //    val width = 1152
-    val width = 1220
+val width = 1480
     val height = 864
   }
   object DefaultPlayer {
-    val width = 640
-    val height = 360
+    val width = 900
+    val height = 550
   }
 
   object HostStatus {

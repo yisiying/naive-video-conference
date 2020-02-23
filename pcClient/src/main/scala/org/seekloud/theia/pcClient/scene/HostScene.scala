@@ -348,8 +348,8 @@ class HostScene(stage: Stage) extends Secene {
   tb3.getStyleClass.add("hostScene-leftArea-toggleButton")
   val tb4 = new ToggleButton("观众 ", audienceIcon)
   tb4.getStyleClass.add("hostScene-leftArea-toggleButton")
-  val tb5 = new ToggleButton("我的录像 ",recordIcon)
-  tb5.getStyleClass.add("hostScene-leftArea-toggleButton")
+  //  val tb5 = new ToggleButton("我的录像 ",recordIcon)
+  //  tb5.getStyleClass.add("hostScene-leftArea-toggleButton")
 
   /**
     * emoji
@@ -517,7 +517,7 @@ class HostScene(stage: Stage) extends Secene {
 //    tb5.setToggleGroup(group)
 
     val tbBox = new HBox()
-    tbBox.getChildren.addAll(tb1, tb2, tb3, tb4,tb5)
+    tbBox.getChildren.addAll(tb1, tb2, tb3, tb4)
 //    tbBox.getChildren.addAll(tb1, tb2, tb3, tb4)
 
     //val content = new VBox()
@@ -598,23 +598,23 @@ class HostScene(stage: Stage) extends Secene {
     }
 
     def createRoomInfoBox: VBox = {
-      val roomId = new Text(s"房间 ID：${RmManager.roomInfo.get.roomId}")
+      val roomId = new Text(s"会议房间 ID：${RmManager.roomInfo.get.roomId}")
       roomId.getStyleClass.add("hostScene-leftArea-text")
 
-      val userId = new Text(s"房主 ID：${RmManager.roomInfo.get.userId}")
+      val userId = new Text(s"主持人 ID：${RmManager.roomInfo.get.userId}")
       userId.getStyleClass.add("hostScene-leftArea-text")
 
-      val roomNameText = new Text("房间名:")
+      val roomNameText = new Text("会议名:")
       roomNameText.getStyleClass.add("hostScene-leftArea-text")
 
-      val sendWay = new Text("直播方式:")
-      sendWay.getStyleClass.add("hostScene-leftArea-text")
+      //      val sendWay = new Text("直播方式:")
+      //      sendWay.getStyleClass.add("hostScene-leftArea-text")
 
-      val wayOne = new Text("第三方rtmp:")
-      wayOne.getStyleClass.add("hostScene-leftArea-text")
-
-      val wayTwo = new Text("本站:")
-      wayTwo.getStyleClass.add("hostScene-leftArea-text")
+      //      val wayOne = new Text("第三方rtmp:")
+      //      wayOne.getStyleClass.add("hostScene-leftArea-text")
+      //
+      //      val wayTwo = new Text("本站:")
+      //      wayTwo.getStyleClass.add("hostScene-leftArea-text")
 
       val confirmIcon1 = new ImageView("img/confirm.png")
       confirmIcon1.setFitHeight(15)
@@ -634,29 +634,29 @@ class HostScene(stage: Stage) extends Secene {
       roomName.getChildren.addAll(roomNameField, roomNameBtn)
       roomName.setSpacing(5)
 
-      val roomDesText = new Text("房间描述:")
-      roomDesText.getStyleClass.add("hostScene-leftArea-text")
+      //      val roomDesText = new Text("房间描述:")
+      //      roomDesText.getStyleClass.add("hostScene-leftArea-text")
 
-      val confirmIcon2 = new ImageView("img/confirm.png")
-      confirmIcon2.setFitHeight(15)
-      confirmIcon2.setFitWidth(15)
+      //      val confirmIcon2 = new ImageView("img/confirm.png")
+      //      confirmIcon2.setFitHeight(15)
+      //      confirmIcon2.setFitWidth(15)
+      //
+      //      val roomDesBtn = new Button("确认", confirmIcon2)
+      //      roomDesBtn.getStyleClass.add("hostScene-leftArea-confirmBtn")
+      //      roomDesBtn.setOnAction {
+      //        _ =>
+      //          roomInfoMap = Map(RmManager.roomInfo.get.roomId -> List(RmManager.roomInfo.get.roomName, RmManager.roomInfo.get.roomDes))
+      //          listener.modifyRoomInfo(des = Option(roomDesArea.getText()))
+      //      }
+      //      Common.addButtonEffect(roomDesBtn)
 
-      val roomDesBtn = new Button("确认", confirmIcon2)
-      roomDesBtn.getStyleClass.add("hostScene-leftArea-confirmBtn")
-      roomDesBtn.setOnAction {
-        _ =>
-          roomInfoMap = Map(RmManager.roomInfo.get.roomId -> List(RmManager.roomInfo.get.roomName, RmManager.roomInfo.get.roomDes))
-          listener.modifyRoomInfo(des = Option(roomDesArea.getText()))
-      }
-      Common.addButtonEffect(roomDesBtn)
-
-      val roomDes = new HBox()
-      roomDes.setAlignment(Pos.CENTER_LEFT)
-      roomDes.getChildren.addAll(roomDesArea, roomDesBtn)
-      roomDes.setSpacing(5)
+      //      val roomDes = new HBox()
+      //      roomDes.setAlignment(Pos.CENTER_LEFT)
+      //      roomDes.getChildren.addAll(roomDesArea)
+      //      roomDes.setSpacing(5)
 
       val roomInfoBox = new VBox()
-      roomInfoBox.getChildren.addAll(roomId, userId, roomNameText, roomName, roomDesText, roomDes, chooseWay)
+      roomInfoBox.getChildren.addAll(roomId, userId, roomNameText, roomName)
       roomInfoBox.setPadding(new Insets(5, 30, 0, 30))
       roomInfoBox.setSpacing(15)
       roomInfoBox
@@ -1255,82 +1255,82 @@ class HostScene(stage: Stage) extends Secene {
       livePane
     }
 
-    val effectOptions: ObservableList[String] =
-      FXCollections.observableArrayList(
-        "普通弹幕",
-        "放大缩小",
-        "闪入闪出",
-        "定点放缩"
-        )
-    val effectChoiceCBx = new ComboBox(effectOptions)
-    effectChoiceCBx.setValue("普通弹幕")
+    //    val effectOptions: ObservableList[String] =
+    //      FXCollections.observableArrayList(
+    //        "普通弹幕",
+    //        "放大缩小",
+    //        "闪入闪出",
+    //        "定点放缩"
+    //        )
+    //    val effectChoiceCBx = new ComboBox(effectOptions)
+    //    effectChoiceCBx.setValue("普通弹幕")
 
-    effectChoiceCBx.setOnAction {
-      _ =>{
-        effectChoiceCBx.getValue match{
-          case "普通弹幕" =>
-            commentPrefix = "effectType0"
-          case "放大缩小" =>
-            commentPrefix = "effectType1"
-          case "闪入闪出" =>
-            commentPrefix = "effectType2"
-          case "定点放缩" =>
-            commentPrefix = "effectType3"
-          case _ =>
-            commentPrefix = "effectType0"
-        }
-      }
-    }
+    //    effectChoiceCBx.setOnAction {
+    //      _ =>{
+    //        effectChoiceCBx.getValue match{
+    //          case "普通弹幕" =>
+    //            commentPrefix = "effectType0"
+    //          case "放大缩小" =>
+    //            commentPrefix = "effectType1"
+    //          case "闪入闪出" =>
+    //            commentPrefix = "effectType2"
+    //          case "定点放缩" =>
+    //            commentPrefix = "effectType3"
+    //          case _ =>
+    //            commentPrefix = "effectType0"
+    //        }
+    //      }
+    //    }
 
-    commentFiled.setFont(Font.font(emojiFont, 15))
-    commentFiled.setPrefWidth(liveImage.getWidth * 0.65)
-    commentFiled.setPrefHeight(30)
-    commentFiled.setPromptText("输入你的留言~")
-    commentFiled.getStyleClass.add("text-area")
-    commentFiled.setOnKeyPressed { e =>
-      if (e.getCode == javafx.scene.input.KeyCode.ENTER) {
-        val comment = Comment(RmManager.roomInfo.get.userId, RmManager.roomInfo.get.roomId, s"${commentFiled.getText}", extension = Some(commentPrefix))
-        listener.sendCmt(comment)
-        commentFiled.clear()
-      }
-    }
-    val emojiBtn = new Button("\uD83D\uDE00")
-    emojiBtn.setStyle("-fx-background-radius: 5px;")
-    emojiBtn.setFont(Font.font(emojiFont, 15))
-    var emojiBtnClick = true
-    val emojiArea = emoji.getEmojiGridPane
+    //    commentFiled.setFont(Font.font(emojiFont, 15))
+    //    commentFiled.setPrefWidth(liveImage.getWidth * 0.65)
+    //    commentFiled.setPrefHeight(30)
+    //    commentFiled.setPromptText("输入你的留言~")
+    //    commentFiled.getStyleClass.add("text-area")
+    //    commentFiled.setOnKeyPressed { e =>
+    //      if (e.getCode == javafx.scene.input.KeyCode.ENTER) {
+    //        val comment = Comment(RmManager.roomInfo.get.userId, RmManager.roomInfo.get.roomId, s"${commentFiled.getText}", extension = Some(commentPrefix))
+    //        listener.sendCmt(comment)
+    //        commentFiled.clear()
+    //      }
+    //    }
+    //    val emojiBtn = new Button("\uD83D\uDE00")
+    //    emojiBtn.setStyle("-fx-background-radius: 5px;")
+    //    emojiBtn.setFont(Font.font(emojiFont, 15))
+    //    var emojiBtnClick = true
+    //    val emojiArea = emoji.getEmojiGridPane
+    //
+    //    emojiBtn.setOnAction { _ =>
+    //      if (emojiBtnClick) {
+    //        group.getChildren.add(1, emojiArea)
+    //      } else {
+    //        group.getChildren.remove(emojiArea)
+    //      }
+    //      emojiBtnClick = !emojiBtnClick
+    //    }
+    //    Common.addButtonEffect(emojiBtn)
 
-    emojiBtn.setOnAction { _ =>
-      if (emojiBtnClick) {
-        group.getChildren.add(1, emojiArea)
-      } else {
-        group.getChildren.remove(emojiArea)
-      }
-      emojiBtnClick = !emojiBtnClick
-    }
-    Common.addButtonEffect(emojiBtn)
-
-    val sendIcon = new ImageView("img/confirm.png")
-    sendIcon.setFitHeight(20)
-    sendIcon.setFitWidth(20)
-    val sendBtn = new Button("发送", sendIcon)
-    sendBtn.getStyleClass.add("audienceScene-leftArea-sendBtn")
-    sendBtn.setOnAction { _ =>
-      if (commentFiled.getText() != null) {
-        val comment = Comment(RmManager.roomInfo.get.userId, RmManager.roomInfo.get.roomId, s"${commentFiled.getText}", extension = Some(commentPrefix))
-        listener.sendCmt(comment)
-        commentFiled.clear()
-      }
-    }
-    Common.addButtonEffect(sendBtn)
-
-
-    val commentBox = new HBox(commentFiled, emojiBtn, effectChoiceCBx, sendBtn)
-    commentBox.setAlignment(Pos.CENTER)
-    commentBox.setSpacing(8)
+    //    val sendIcon = new ImageView("img/confirm.png")
+    //    sendIcon.setFitHeight(20)
+    //    sendIcon.setFitWidth(20)
+    //    val sendBtn = new Button("发送", sendIcon)
+    //    sendBtn.getStyleClass.add("audienceScene-leftArea-sendBtn")
+    //    sendBtn.setOnAction { _ =>
+    //      if (commentFiled.getText() != null) {
+    //        val comment = Comment(RmManager.roomInfo.get.userId, RmManager.roomInfo.get.roomId, s"${commentFiled.getText}", extension = Some(commentPrefix))
+    //        listener.sendCmt(comment)
+    //        commentFiled.clear()
+    //      }
+    //    }
+    //    Common.addButtonEffect(sendBtn)
 
 
-    val vBox = new VBox(createUpBox, createLivePane, commentArea, commentBox)
+    //    val commentBox = new HBox(commentFiled, emojiBtn, effectChoiceCBx, sendBtn)
+    //    commentBox.setAlignment(Pos.CENTER)
+    //    commentBox.setSpacing(8)
+
+
+    val vBox = new VBox(createUpBox, createLivePane)
     vBox.getStyleClass.add("hostScene-rightArea-wholeBox")
     vBox.setSpacing(10)
     vBox.setPadding(new Insets(15, 35, 5, 30))
