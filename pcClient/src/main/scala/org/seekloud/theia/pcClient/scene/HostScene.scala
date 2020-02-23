@@ -25,6 +25,7 @@ import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol.Co
 import org.slf4j.LoggerFactory
 import javafx.geometry.Pos
 import javafx.scene.canvas.{Canvas, GraphicsContext}
+import javafx.scene.control.Alert.AlertType
 import javafx.scene.paint.Color
 import javafx.scene.text.Font
 import javafx.stage.{DirectoryChooser, Stage}
@@ -581,7 +582,7 @@ class HostScene(stage: Stage) extends Secene {
     Common.addButtonEffect(backBtn)
 
     val leftAreaBox = new VBox()
-    leftAreaBox.getChildren.addAll(createRoomInfoLabel, createRoomInfoBox)
+    leftAreaBox.getChildren.addAll(createRoomInfoLabel, createRoomInfoBox,createAddBtn)
     leftAreaBox.setSpacing(10)
     leftAreaBox.setPadding(new Insets(5, 0, 0, 0))
     leftAreaBox.getStyleClass.add("hostScene-leftArea-wholeBox")
@@ -664,13 +665,22 @@ class HostScene(stage: Stage) extends Secene {
     }
 
     def createAddBtn = {
+      var partnerField = new TextField()
       val addBtn = new Button("添加参会人")
-      //            addBtn.setOnAction(_ => listener.addPartner)
+      //                  addBtn.setOnAction(_ => listener.addPartner)
+      addBtn.setOnAction { _ =>
+        val alert = new Alert(AlertType.INFORMATION)
+        alert.setTitle("添加参会人")
+        alert.setHeaderText("")
+        alert.setContentText("添加成功")
+        partnerField.setText("")
+        alert.showAndWait()
+      }
       val box = new HBox()
-      box.getChildren.addAll(addBtn)
+      box.getChildren.addAll(partnerField,addBtn)
       box.setSpacing(14)
       box.setAlignment(Pos.CENTER_LEFT)
-      box.setPadding(new Insets(80, 60, 0, 0))
+      box.setPadding(new Insets(30, 30, 0, 30))
       box
     }
 
