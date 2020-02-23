@@ -485,7 +485,7 @@ object RoomActor {
         dispatch(HostStopPushStream2Client)
         wholeRoomInfo.roomInfo.rtmp match {
           case Some(v) =>
-            if (v != liveInfoMap(Role.host)(wholeRoomInfo.roomInfo.userId).liveId)
+            //            if (v != liveInfoMap(Role.host)(wholeRoomInfo.roomInfo.userId).liveId)
               ProcessorClient.closeRoom(roomId)
             log.debug(s"roomId:$roomId 主播停止推流，向distributor发送finishpull消息")
             DistributorClient.finishPull(v)
