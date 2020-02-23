@@ -517,7 +517,8 @@ class HostScene(stage: Stage) extends Secene {
 //    tb5.setToggleGroup(group)
 
     val tbBox = new HBox()
-    tbBox.getChildren.addAll(tb1, tb2, tb3, tb4)
+//    tbBox.getChildren.addAll(tb1, tb2, tb3, tb4)
+    tbBox.getChildren.addAll(tb1, tb2, tb4)
 //    tbBox.getChildren.addAll(tb1, tb2, tb3, tb4)
 
     //val content = new VBox()
@@ -662,6 +663,17 @@ class HostScene(stage: Stage) extends Secene {
       roomInfoBox
     }
 
+    def createAddBtn = {
+      val addBtn = new Button("添加参会人")
+      //            addBtn.setOnAction(_ => listener.addPartner)
+      val box = new HBox()
+      box.getChildren.addAll(addBtn)
+      box.setSpacing(14)
+      box.setAlignment(Pos.CENTER_LEFT)
+      box.setPadding(new Insets(80, 60, 0, 0))
+      box
+    }
+
 
     leftAreaBox
 
@@ -679,18 +691,14 @@ class HostScene(stage: Stage) extends Secene {
     vBox.setPadding(new Insets(20, 10, 5, 10))
     vBox.getStyleClass.add("hostScene-leftArea-wholeBox")
 
-    def createAddBtn = {
-      val addBtn = new Button("添加参会人")
-      //      addBtn.setOnAction(_ => listener.addPartner)
 
-    }
 
     def createCntTbArea: TableView[AudienceListInfo] = {
       val AudienceTable = new TableView[AudienceListInfo]()
       AudienceTable.getStyleClass.add("table-view")
 
       val userInfoCol = new TableColumn[AudienceListInfo, String]("参会人员")
-      userInfoCol.setPrefWidth(width * 0.15)
+      userInfoCol.setPrefWidth(width * 0.13)
       userInfoCol.setCellValueFactory(new PropertyValueFactory[AudienceListInfo, String]("userInfo"))
 
       val agreeBtnCol = new TableColumn[AudienceListInfo, Button]("同意")
