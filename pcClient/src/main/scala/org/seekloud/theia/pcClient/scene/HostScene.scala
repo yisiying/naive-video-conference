@@ -344,7 +344,7 @@ class HostScene(stage: Stage) extends Secene {
   tb1.getStyleClass.add("hostScene-leftArea-toggleButton")
   val tb2 = new ToggleButton("设置 ", setIcon)
   tb2.getStyleClass.add("hostScene-leftArea-toggleButton")
-  val tb3 = new ToggleButton("连线 ", connectionIcon)
+  val tb3 = new ToggleButton("参会人 ", connectionIcon)
   tb3.getStyleClass.add("hostScene-leftArea-toggleButton")
   val tb4 = new ToggleButton("观众 ", audienceIcon)
   tb4.getStyleClass.add("hostScene-leftArea-toggleButton")
@@ -390,7 +390,7 @@ class HostScene(stage: Stage) extends Secene {
     gc.drawImage(waitPulling, 0, sHeight / 4, sWidth / 2, sHeight / 2)
     gc.setFont(Font.font(emojiFont, 25))
     gc.setFill(Color.BLACK)
-    gc.fillText(s"连线中", liveImage.getWidth / 2 - 40, liveImage.getHeight / 8)
+    gc.fillText(s"会议中", liveImage.getWidth / 2 - 40, liveImage.getHeight / 8)
   }
 
   def resetLoading(): Unit = {
@@ -527,7 +527,7 @@ class HostScene(stage: Stage) extends Secene {
     val left4Area = addLeftChild4Area()
 //    val left5Area = addLeftChild5Area()
     content.getChildren.add(left1Area)
-    content.setPrefSize(width * 0.20, height) //0.27
+    content.setPrefSize(width * 0.25, height) //0.27
 
     tb1.setOnAction(_ => {
       tb1.setGraphic(roomInfoIcon)
@@ -707,7 +707,7 @@ class HostScene(stage: Stage) extends Secene {
 
     def createLiveStateBox: VBox = {
 
-      val allowConnectionCheckBox = new CheckBox("允许连线")
+      val allowConnectionCheckBox = new CheckBox("允许参会")
       allowConnectionCheckBox.setFont(Font.font(15))
       //      val needImgCheckBox = new CheckBox("无画面")
       //      needImgCheckBox.setFont(Font.font(15))
@@ -919,7 +919,7 @@ class HostScene(stage: Stage) extends Secene {
 
 
 
-      val liveStateBox = new VBox(recordRadioBox, pathLabel, recordBox, CaptureBox, AIBox, bitBox, resolutionBox, allowConnectionCheckBox)
+      val liveStateBox = new VBox(recordRadioBox, pathLabel, recordBox, CaptureBox, /*AIBox,*/ bitBox, resolutionBox/*, allowConnectionCheckBox*/)
       liveStateBox.setPadding(new Insets(5, 30, 0, 30))
       liveStateBox.setSpacing(15)
 
@@ -1045,7 +1045,7 @@ class HostScene(stage: Stage) extends Secene {
       val AudienceTable = new TableView[AudienceListInfo]()
       AudienceTable.getStyleClass.add("table-view")
 
-      val userInfoCol = new TableColumn[AudienceListInfo, String]("连线用户")
+      val userInfoCol = new TableColumn[AudienceListInfo, String]("参会用户")
       userInfoCol.setPrefWidth(width * 0.15)
       userInfoCol.setCellValueFactory(new PropertyValueFactory[AudienceListInfo, String]("userInfo"))
 
