@@ -177,8 +177,14 @@ object   CaptureActor {
     Behaviors.receive[CaptureCommand] { (ctx, msg) =>
       msg match {
         case msg: GetMediaCapture =>
-          idle(parent,frameRate, gc, isJoin,encodeSettings, encodeMap, requestMap, callBackFunc, resetFunc, Some(msg.mediaCapture),
-            reqActor, loopExecutor, imageLoop, drawActor, rtmpIsLive, rtpIsLive, fileNeed, imgLayout, bottomLayer)
+//          if(isJoin){
+//            val drawActor = ctx.spawn(drawer(gc, isJoin,false),s"CaptureDrawer-${System.currentTimeMillis()}")
+//            idle(parent,frameRate, gc, isJoin,encodeSettings, encodeMap, requestMap, callBackFunc, resetFunc, Some(msg.mediaCapture),
+//              reqActor, loopExecutor, imageLoop, Some(drawActor), rtmpIsLive, rtpIsLive, fileNeed, imgLayout, bottomLayer)
+//          } else {
+            idle(parent,frameRate, gc, isJoin,encodeSettings, encodeMap, requestMap, callBackFunc, resetFunc, Some(msg.mediaCapture),
+              reqActor, loopExecutor, imageLoop, drawActor, rtmpIsLive, rtpIsLive, fileNeed, imgLayout, bottomLayer)
+//          }
 
         case msg: CaptureStartSuccess =>
           log.info(s"MediaCapture start success!")
@@ -535,9 +541,9 @@ object   CaptureActor {
                 gc.drawImage(msg.image, 0.0, 0.0, sWidth, sHeight)
               }
             } else {
-              Boot.addToPlatform {
-                gc.drawImage(msg.image, 0.0, sHeight / 4, sWidth / 2, sHeight / 2)
-              }
+//              Boot.addToPlatform {
+//                gc.drawImage(msg.image, 0.0, sHeight / 4, sWidth / 2, sHeight / 2)
+//              }
             }
           }
           Behaviors.same
