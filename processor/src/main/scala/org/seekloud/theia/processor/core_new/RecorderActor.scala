@@ -257,6 +257,7 @@ object RecorderActor {
           work(roomId, hostLiveId, clientLiveIdMap, msg.layout, recorder4ts, ffFilter, drawer, canvasSize)
 
         case UpdateClientList(clientLiveId, inOrOut) =>
+          log.info(s"recorder get new partner: $clientLiveId")
           val num = clientLiveIdMap.size
           if (inOrOut == Part.in) {
             clientLiveIdMap.put(clientLiveId, num + 1)
@@ -279,6 +280,7 @@ object RecorderActor {
           Behaviors.same
 
         case Init(num) =>
+          log.info(s"recorder init: $num")
           if (ffFilter != null) {
             ffFilter.close()
           }
@@ -292,6 +294,9 @@ object RecorderActor {
           ffFilter.setSampleRate(hostSampleRate)
           ffFilterN.start()
           work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilterN, drawer, canvasSize)
+
+        case UpdateRecorder(channel, sampleRate, f, width, height, liveId) =>
+          Behaviors.same
 
         case m@RestartRecord =>
           log.info(s"couple state get $m")
@@ -390,6 +395,7 @@ object RecorderActor {
             clientFrameList.filter(c => c._1 == t.liveId).foreach(_._2.frame = t.frame)
             Behaviors.same
           } else {
+            log.info(s"get new partner: ${t.liveId} !!!!!!!!!!!!!!!!")
             val newList = (t.liveId, Image(t.frame)) :: clientFrameList
             convert2Map.put(t.liveId, new Java2DFrameConverter())
             draw(canvas, graph, newList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize)
