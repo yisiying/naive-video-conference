@@ -1021,7 +1021,7 @@ object RmManager {
         case msg: ExitJoin =>
           log.debug("disconnection with host.")
           if (audienceStatus == AudienceStatus.CONNECT) {
-            sender.foreach(_ ! AudienceShutJoin(msg.roomId))
+            sender.foreach(_ ! AudienceShutJoin(msg.roomId, userInfo.get.userId))
             ctx.self ! StopJoinAndWatch("")
           }
           Behaviors.same
