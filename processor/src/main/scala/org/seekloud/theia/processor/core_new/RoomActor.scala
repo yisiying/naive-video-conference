@@ -153,7 +153,7 @@ object RoomActor {
             log.info(s"${roomId}  grabbers not exist when closeRoom")
           }
           if(recorderMap.get(roomId).nonEmpty) {
-            recorderMap.get(roomId).foreach(_ ! RecorderActor.StopRecorder)
+            recorderMap(roomId) ! RecorderActor.StopRecorder
             recorderMap.remove(roomId)
           } else{
             log.info(s"${roomId}  recorder not exist when closeRoom")
