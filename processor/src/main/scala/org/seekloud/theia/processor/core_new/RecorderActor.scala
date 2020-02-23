@@ -105,7 +105,7 @@ object RecorderActor {
           }
           roomManager ! RoomManager.RecorderRef(roomId, ctx.self) //fixme 取消注释
           ctx.self ! Init(1)
-          work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, null, null, (0, 0))
+          single(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, null, null, (0, 0))
       }
     }
   }
