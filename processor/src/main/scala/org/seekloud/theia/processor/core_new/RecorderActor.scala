@@ -339,8 +339,8 @@ object RecorderActor {
               graph.drawImage(img, canvasSize._1 / 4 * 3, 0, canvasSize._1 / 4, canvasSize._2 / 4, null)
               graph.drawString("参会者", 584, 24)
           }*/
-          if (clientImgList.length >= 2)
-            log.info(s"${clientImgList.length}")
+          //          if (clientImgList.length >= 2)
+          //            log.info(s"${clientImgList.length}")
           clientImgList.length + 1 match {
             case x if x == 1 =>
               graph.drawImage(img, 0, 0, canvasSize._1, canvasSize._2, null)
@@ -388,6 +388,7 @@ object RecorderActor {
             log.info(s"get new partner: ${t.liveId} !!!!!!!!!!!!!!!!")
             val newList = (t.liveId, Image(t.frame)) :: clientFrameList
             convert2Map.put(t.liveId, new Java2DFrameConverter())
+            graph.clearRect(0, 0, canvasSize._1, canvasSize._2)
             draw(canvas, graph, newList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize)
           }
 
