@@ -33,7 +33,7 @@ import scala.concurrent.duration._
   */
 object RecorderActor {
 
-  var audioChannels = 4 //todo 待议
+  var audioChannels = 2 //todo 待议
   val sampleFormat = 1 //todo 待议
   var frameRate = 30
   private var hostChannel: Int = _
@@ -98,6 +98,21 @@ object RecorderActor {
           recorder4ts.setAudioCodec(avcodec.AV_CODEC_ID_AAC)
           recorder4ts.setMaxBFrames(0)
           recorder4ts.setFormat("flv")
+
+
+          recorder4ts.setAudioOption("crf", "0")
+          recorder4ts.setAudioQuality(0)
+          recorder4ts.setAudioBitrate(192000)
+          recorder4ts.setSampleRate(44100)
+          recorder4ts.setInterleaved(true)
+          recorder4ts.setGopSize(60)
+
+          recorder4ts.setVideoOption("tune", "zerolatency")
+          recorder4ts.setVideoOption("preset", "ultrafast")
+          recorder4ts.setVideoOption("crf", "23")
+          //    encoder.setVideoOption("keyint", "1")
+
+
           try {
             recorder4ts.startUnsafe()
           } catch {
