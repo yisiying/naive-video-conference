@@ -389,15 +389,27 @@ object RoomActor {
 
       case AddPartner(userName) =>
         log.info(s"add user: $userName")
-        val l = invitationList(Role.audience)
-        UserInfoDao.searchByName(userName).map {
-          case Some(i) =>
-            val newList = (i.uid, userName) :: l
-            invitationList.update(Role.audience, newList)
-            dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), UpdatePartnerRsp(newList))
-          case None =>
-            dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), UpdatePartnerRsp(l, 101015, "no user"))
+        if (invitationList.contains(Role.audience)) {
+          val l = invitationList(Role.audience)
+          UserInfoDao.searchByName(userName).map {
+            case Some(i) =>
+              val newList = (i.uid, userName) :: l
+              invitationList.update(Role.audience, newList)
+              dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), UpdatePartnerRsp(newList))
+            case None =>
+              dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), UpdatePartnerRsp(l, 101015, "no user"))
+          }
+        } else {
+          UserInfoDao.searchByName(userName).map {
+            case Some(i) =>
+              val newList = List((i.uid, userName))
+              invitationList.put(Role.audience, newList)
+              dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), UpdatePartnerRsp(newList))
+            case None =>
+              dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), UpdatePartnerRsp(Nil, 101015, "no user"))
+          }
         }
+
         idle(wholeRoomInfo, liveInfoMap, subscribers, startTime, invitationList, isJoinOpen)
 
       case DeletePartner(userName) =>
