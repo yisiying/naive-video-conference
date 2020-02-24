@@ -15,11 +15,12 @@ import org.seekloud.theia.processor.common.AppSettings
   *
   * actor由RoomActor创建
   * 解码线程，解析出image和sample，pipe中读取数据
+  *
   * @param
   */
 object GrabberActor {
 
-  private  val log = LoggerFactory.getLogger(this.getClass)
+  private val log = LoggerFactory.getLogger(this.getClass)
 
   sealed trait Command
 
@@ -39,8 +40,8 @@ object GrabberActor {
 
   case object TimerKey4Close
 
-  def create(roomId: Long, liveId: String, recorderRef: ActorRef[RecorderActor.Command]): Behavior[Command]= {
-    Behaviors.setup[Command]{ ctx =>
+  def create(roomId: Long, liveId: String, recorderRef: ActorRef[RecorderActor.Command]): Behavior[Command] = {
+    Behaviors.setup[Command] { ctx =>
       implicit val stashBuffer: StashBuffer[Command] = StashBuffer[Command](Int.MaxValue)
       Behaviors.withTimers[Command] {
         implicit timer =>
@@ -51,58 +52,66 @@ object GrabberActor {
   }
 
   def init(roomId: Long, liveId: String,
-      recorderRef:ActorRef[RecorderActor.Command],
-    )(implicit timer: TimerScheduler[Command],
-      stashBuffer: StashBuffer[Command]):Behavior[Command] = {
-      log.info(s"$liveId grabber turn to init")
-      Behaviors.receive[Command] { (ctx, msg) =>
-        msg match {
-          case t: Recorder =>
-            log.info(s"${ctx.self} receive a msg $t")
-            val grabber = new FFmpegFrameGrabber1(s"${AppSettings.srsServer}$liveId")
-            log.info(s"grabber开始拉流：${AppSettings.srsServer}$liveId")
-            try {
-              grabber.start()
-            } catch {
-              case e: Exception =>
-                log.info(s"exception occured in creant grabber")
-            }
-            log.info(s"$liveId grabber start successfully")
-            ctx.self ! GrabFrameFirst
-            work(roomId, liveId, grabber, t.rec)
+           recorderRef: ActorRef[RecorderActor.Command],
+          )(implicit timer: TimerScheduler[Command],
+            stashBuffer: StashBuffer[Command]): Behavior[Command] = {
+    log.info(s"$liveId grabber turn to init")
+    Behaviors.receive[Command] { (ctx, msg) =>
+      msg match {
+        case t: Recorder =>
+          log.info(s"${ctx.self} receive a msg $t")
+          val grabber =
+          //            if (liveId == "user-100000")
+          //              new FFmpegFrameGrabber1(s"rtmp://58.200.131.2:1935/livetv/hunantv")
+          //            else if (liveId == "user-100001")
+          //              new FFmpegFrameGrabber1("rtmp://58.200.131.2:1935/livetv/gxtv")
+          //            else if (liveId == "user-100003")
+          //              new FFmpegFrameGrabber1("rtmp://58.200.131.2:1935/livetv/gdtv")
+          //            else
+            new FFmpegFrameGrabber1(s"${AppSettings.srsServer}$liveId")
+          log.info(s"grabber开始拉流：${AppSettings.srsServer}$liveId")
+          try {
+            grabber.start()
+          } catch {
+            case e: Exception =>
+              log.info(s"exception occured in creant grabber")
+          }
+          log.info(s"$liveId grabber start successfully")
+          ctx.self ! GrabFrameFirst
+          work(roomId, liveId, grabber, t.rec)
 
-          case StopGrabber =>
-            log.info(s"grabber $liveId stopped when init")
-            Behaviors.stopped
+        case StopGrabber =>
+          log.info(s"grabber $liveId stopped when init")
+          Behaviors.stopped
 
-          case x=>
-            log.info(s"${ctx.self} got an unknown msg:$x")
-            Behaviors.same
+        case x =>
+          log.info(s"${ctx.self} got an unknown msg:$x")
+          Behaviors.same
       }
     }
   }
 
-  def work( roomId: Long,
-    liveId: String,
-    grabber: FFmpegFrameGrabber1,
-    recorder: ActorRef[RecorderActor.Command],
-  )(implicit stashBuffer: StashBuffer[Command],
-    timer: TimerScheduler[Command]): Behavior[Command] = {
-    Behaviors.receive[Command] {(ctx, msg) =>
+  def work(roomId: Long,
+           liveId: String,
+           grabber: FFmpegFrameGrabber1,
+           recorder: ActorRef[RecorderActor.Command],
+          )(implicit stashBuffer: StashBuffer[Command],
+            timer: TimerScheduler[Command]): Behavior[Command] = {
+    Behaviors.receive[Command] { (ctx, msg) =>
       msg match {
         case GrabLost =>
           val frame = grabber.grab()
-          if(frame != null){
-            if(frame.image != null){
+          if (frame != null) {
+            if (frame.image != null) {
               recorder ! RecorderActor.NewFrame(liveId, frame.clone())
               ctx.self ! GrabFrame
-            }else{
+            } else {
               ctx.self ! GrabLost
             }
           }
           Behaviors.same
 
-        case t:Recorder =>
+        case t: Recorder =>
           Behaviors.same
 
         case GrabFrameFirst =>
@@ -114,11 +123,11 @@ object GrabberActor {
           val width = grabber.getImageWidth
           recorder ! RecorderActor.UpdateRecorder(channel, sampleRate, grabber.getFrameRate, width, height, liveId)
 
-          if(frame != null){
-            if(frame.image != null){
+          if (frame != null) {
+            if (frame.image != null) {
               recorder ! RecorderActor.NewFrame(liveId, frame.clone())
               ctx.self ! GrabFrame
-            }else{
+            } else {
               ctx.self ! GrabLost
             }
           } else {
@@ -129,28 +138,29 @@ object GrabberActor {
 
         case GrabFrame =>
           val frame = grabber.grab()
-          if(frame != null) {
+          if (frame != null) {
             recorder ! RecorderActor.NewFrame(liveId, frame.clone())
             ctx.self ! GrabFrame
-          }else{
+          } else {
             log.info(s"$liveId --- frame is null")
             ctx.self ! StopGrabber
           }
           Behaviors.same
 
         case StopGrabber =>
-          timer.startSingleTimer(TimerKey4Close, CloseGrabber, 400.milli)
+          log.info(s"get stop grabber msg, stop grabber in 400 ms")
+          timer.startSingleTimer(TimerKey4Close + liveId, CloseGrabber, 400.milli)
           Behaviors.same
 
 
         case CloseGrabber =>
+          log.info(s"${ctx.self} stop")
           try {
-            log.info(s"${ctx.self} stop ----")
             grabber.release()
             grabber.close()
-//            buf.close()
-          }catch {
-            case e:Exception =>
+            //            buf.close()
+          } catch {
+            case e: Exception =>
               log.error(s"${ctx.self} close error:$e")
           }
           Behaviors.stopped

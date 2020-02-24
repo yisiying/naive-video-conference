@@ -15,10 +15,10 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
   */
 trait HttpService extends ServiceUtils
   with UserService
-  with RtpService
-  with TestService
+  //  with RtpService
+  //  with TestService
   with FileService
-  with RtmpService
+  //  with RtmpService
   with RecordService
   with AdminService
   with RecordCommentService
@@ -65,7 +65,7 @@ trait HttpService extends ServiceUtils
       pathPrefix("theia") {
         home ~ statistics ~
         pathPrefix("roomManager"){
-          resourceRoutes ~ userRoutes ~ rtpRoutes ~ recordRoutes ~ test ~ file ~ rtmp ~ admin ~ recordComment //~ statistic
+          resourceRoutes ~ userRoutes ~ recordRoutes ~ file ~ admin ~ recordComment
         }
       }
     }

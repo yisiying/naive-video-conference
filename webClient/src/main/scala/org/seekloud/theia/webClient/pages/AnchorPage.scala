@@ -460,7 +460,7 @@ class AnchorPage(userId:Long,userName:String, roomId:Long,roomName:String, token
       //开启直播
         if(liveInfo.isDefined) {
           liveId = liveInfo.get.liveId
-          liveCode = liveInfo.get.liveCode
+          liveCode = ""
           connectWebRTC(liveId, liveCode)
         }else{
           println("---|---: "+liveInfo)

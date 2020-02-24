@@ -42,8 +42,9 @@ object RoomManager {
 
   case class ExistRoom(roomId:Long,replyTo:ActorRef[Boolean]) extends Command
 
-  case class DelaySeekRecord(wholeRoomInfo:WholeRoomInfo, totalView:Int, roomId:Long, startTime:Long, liveId: String, invitationList: mutable.HashMap[Int, List[Long]]) extends Command
-  case class OnSeekRecord(wholeRoomInfo:WholeRoomInfo, totalView:Int, roomId:Long, startTime:Long, liveId: String, invitationList: mutable.HashMap[Int, List[Long]]) extends Command
+  case class DelaySeekRecord(wholeRoomInfo: WholeRoomInfo, roomId: Long, startTime: Long, liveId: String, invitationList: mutable.HashMap[Int, List[(Long, String)]]) extends Command
+
+  case class OnSeekRecord(wholeRoomInfo: WholeRoomInfo, roomId: Long, startTime: Long, liveId: String, invitationList: mutable.HashMap[Int, List[(Long, String)]]) extends Command
 
   case class AddAccess(roomId: Long, startTime: Long, invitationList: mutable.HashMap[Int, List[Long]]) extends Command
 
@@ -61,11 +62,6 @@ object RoomManager {
       log.info(s"${ctx.self.path} setup")
       Behaviors.withTimers[Command]{implicit timer =>
 //        idle(mutable.HashMap.empty[Long,RoomInfo])
-        var roomInfo = RoomInfo(Common.TestConfig.TEST_ROOM_ID,"test_room","测试房间",Common.TestConfig.TEST_USER_ID,
-          "byf1",UserInfoDao.getHeadImg(""),
-          UserInfoDao.getCoverImg(""),0,0,
-          Some("test")
-        )
         /*ProcessorClient.getmpd(Common.TestConfig.TEST_ROOM_ID).map{
           case Right(v) =>
             log.debug(s"${ctx.self.path} ${v.rtmp}")
@@ -73,9 +69,6 @@ object RoomManager {
           case Left(error) =>
             log.debug(s"${ctx.self.path} processor 获取失败：${error}")
         }*/
-        log.debug(s"${ctx.self.path} ---===== ${roomInfo.rtmp}")
-
-        getRoomActor(Common.TestConfig.TEST_ROOM_ID,ctx) ! TestRoom(roomInfo)
         val seq = new AtomicInteger(100001)
         idle(seq)
       }
@@ -92,9 +85,8 @@ object RoomManager {
       msg match {
         case GenLiveIdAndLiveCode(replyTo) =>
           val liveId = s"user-${seq.getAndIncrement()}"
-          val liveCode = "123456"
           log.info(s"gen liveId: $liveId success")
-          replyTo ! LiveInfo(liveId, liveCode)
+          replyTo ! LiveInfo(liveId)
           Behaviors.same
 
         case GetRoomList(replyTo) =>
@@ -144,7 +136,7 @@ object RoomManager {
           }
           Behaviors.same
 
-        case r@ActorProtocol.UpdateInvitationList(roomId, userId) =>
+        case r@ActorProtocol.UpdateInvitationList(roomId, userId, inOrOut) =>
           getRoomActorOpt(roomId,ctx) match {
             case Some(actor) => actor ! r
             case None => log.debug(s"${ctx.self.path}房间未建立，roomId：$roomId")
@@ -174,56 +166,65 @@ object RoomManager {
           Behaviors.same
 
         case SearchRoom(userId, roomId, replyTo) =>
-          if(roomId == Common.TestConfig.TEST_ROOM_ID){
-            log.debug(s"${ctx.self.path} get test room mpd,roomId=${roomId}")
+          //          if(roomId == Common.TestConfig.TEST_ROOM_ID){
+          //            log.debug(s"${ctx.self.path} get test room mpd,roomId=${roomId}")
+          //            getRoomActorOpt(roomId,ctx) match{
+          //              case Some(actor) =>
+          //                val roomInfoFuture:Future[RoomInfo] = actor ? (GetRoomInfo(_))
+          //                roomInfoFuture.map{r =>replyTo ! SearchRoomRsp(Some(r))}
+          //              case None =>
+          //                log.debug(s"${ctx.self.path} test room dead")
+          //                replyTo ! SearchRoomError4RoomId
+          //            }
+          //          } else{
             getRoomActorOpt(roomId,ctx) match{
               case Some(actor) =>
-                val roomInfoFuture:Future[RoomInfo] = actor ? (GetRoomInfo(_))
-                roomInfoFuture.map{r =>replyTo ! SearchRoomRsp(Some(r))}
-              case None =>
-                log.debug(s"${ctx.self.path} test room dead")
-                replyTo ! SearchRoomError4RoomId
-            }
-          } else{
-            getRoomActorOpt(roomId,ctx) match{
-              case Some(actor) =>
-                val roomInfoFuture:Future[RoomInfo] = actor ? (GetRoomInfo(_))
-                roomInfoFuture.map{r =>
-                  r.rtmp match {
-                    case Some(v) =>
-                      log.debug(s"${ctx.self.path} search room,roomId=${roomId},rtmp=${r.rtmp}")
-                      replyTo ! SearchRoomRsp(Some(r))//正常返回
-                    case None =>
-                      log.debug(s"${ctx.self.path} search room failed,roomId=${roomId},rtmp=None")
-                      replyTo ! SearchRoomError(msg = s"${ctx.self.path} room rtmp is None")
-                      /*ProcessorClient.getmpd(roomId).map{
-                        case Right(rsp)=>
-                          if(rsp.errCode == 0){
-                            actor ! UpdateRTMP(rsp.rtmp)
-                            val roomInfoFuture:Future[RoomInfo] = actor ? (GetRoomInfo(_))
-                            roomInfoFuture.map{w =>
-                              log.debug(s"${ctx.self.path} research room,roomId=${roomId},rtmp=${r.rtmp}")
-                              replyTo ! SearchRoomRsp(Some(w))}//正常返回
-                          }else if(rsp.errCode == 100024){
-                            //replyTo ! SearchRoomRsp(Some(r))
-                            replyTo ! SearchRoomRsp(Some(r), 100009, "stop push stream")//主播停播，房间还在
-                          }
-                          else{
-                          log.info(s"getmpd code:${rsp.errCode}, msg${rsp.msg}")
-                            replyTo ! SearchRoomError(errCode = rsp.errCode, msg = rsp.msg)//
-                          }
+                val accessCheck: Future[Boolean] = actor ? (CheckAccess(_, userId.get))
+                accessCheck.map {
+                  case true =>
+                    val roomInfoFuture: Future[RoomInfo] = actor ? (GetRoomInfo(_))
+                    roomInfoFuture.map { r =>
+                      r.rtmp match {
+                        case Some(v) =>
+                          log.debug(s"${ctx.self.path} search room,roomId=${roomId},rtmp=${r.rtmp}")
+                          replyTo ! SearchRoomRsp(Some(r)) //正常返回
+                        case None =>
+                          log.debug(s"${ctx.self.path} search room failed,roomId=${roomId},rtmp=None")
+                          replyTo ! SearchRoomError(msg = s"${ctx.self.path} room rtmp is None")
+                        /*ProcessorClient.getmpd(roomId).map{
+                          case Right(rsp)=>
+                            if(rsp.errCode == 0){
+                              actor ! UpdateRTMP(rsp.rtmp)
+                              val roomInfoFuture:Future[RoomInfo] = actor ? (GetRoomInfo(_))
+                              roomInfoFuture.map{w =>
+                                log.debug(s"${ctx.self.path} research room,roomId=${roomId},rtmp=${r.rtmp}")
+                                replyTo ! SearchRoomRsp(Some(w))}//正常返回
+                            }else if(rsp.errCode == 100024){
+                              //replyTo ! SearchRoomRsp(Some(r))
+                              replyTo ! SearchRoomRsp(Some(r), 100009, "stop push stream")//主播停播，房间还在
+                            }
+                            else{
+                            log.info(s"getmpd code:${rsp.errCode}, msg${rsp.msg}")
+                              replyTo ! SearchRoomError(errCode = rsp.errCode, msg = rsp.msg)//
+                            }
 
-                        case Left(error)=>
-                          replyTo ! SearchRoomError4ProcessorDead//请求processor失败
-                      }*/
+                          case Left(error)=>
+                            replyTo ! SearchRoomError4ProcessorDead//请求processor失败
+                        }*/
 
-                  }
+                      }
+                    }
+                  case false =>
+                    log.debug(s"${ctx.self.path} search room failed,userId: ${userId.get} has no access")
+                    replyTo ! searchRoomError4Access
                 }
+
+
               case None =>
                 log.debug(s"${ctx.self.path} test room dead")
                 replyTo ! SearchRoomError4RoomId//主播关闭房间
             }
-          }
+          //          }
           Behaviors.same
 
         case ExistRoom(roomId,replyTo) =>
@@ -250,13 +251,13 @@ object RoomManager {
           Behaviors.same
 
         //延时请求获取录像（计时器）
-        case DelaySeekRecord(wholeRoomInfo, totalView, roomId, startTime, liveId, invitationList) =>
+        case DelaySeekRecord(wholeRoomInfo, roomId, startTime, liveId, invitationList) =>
           log.info("---- wait seconds to seek record ----")
-          timer.startSingleTimer(DelaySeekRecordKey + roomId.toString + startTime, OnSeekRecord(wholeRoomInfo, totalView, roomId, startTime, liveId, invitationList), 5.seconds)
+          timer.startSingleTimer(DelaySeekRecordKey + roomId.toString + startTime, OnSeekRecord(wholeRoomInfo, roomId, startTime, liveId, invitationList), 5.seconds)
           Behaviors.same
 
         //延时请求获取录像
-        case OnSeekRecord(wholeRoomInfo, totalView, roomId, startTime, liveId, invitationList) =>
+        case OnSeekRecord(wholeRoomInfo, roomId, startTime, liveId, invitationList) =>
           timer.cancel(DelaySeekRecordKey + roomId.toString + startTime)
           DistributorClient.seekRecord(roomId,startTime).onComplete{
             case Success(v) =>
@@ -275,10 +276,10 @@ object RoomManager {
               log.debug(s"${ctx.self.path} 查询录像文件失败,error:$error")
           }
           val host = invitationList(Role.host).head
-          RecordCommentDAO.addCommentAccess(wholeRoomInfo.roomInfo.roomId, startTime, host, host)
+          RecordCommentDAO.addCommentAccess(wholeRoomInfo.roomInfo.roomId, startTime, host._1, host._1)
           if(invitationList.contains(Role.audience)){
             invitationList(Role.audience).foreach{u =>
-              RecordCommentDAO.addCommentAccess(wholeRoomInfo.roomInfo.roomId, startTime, host, u)
+              RecordCommentDAO.addCommentAccess(wholeRoomInfo.roomInfo.roomId, startTime, host._1, u._1)
             }
           }
 

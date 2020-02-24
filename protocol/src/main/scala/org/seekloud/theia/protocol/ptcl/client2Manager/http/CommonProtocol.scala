@@ -184,6 +184,7 @@ object CommonProtocol {
   def SearchRoomError(errCode: Int = 100005, msg: String = "error: search room error，processor left") = SearchRoomRsp(None, errCode, msg)
   val SearchRoomError4RoomId = SearchRoomRsp(None, 100008, msg = "error: roomId error")
   val SearchRoomError4ProcessorDead = SearchRoomRsp(None, 100006, msg = "error: processor failed")
+  val searchRoomError4Access = SearchRoomRsp(None, 100021, msg = "no access")
 
   /**
     *

@@ -479,7 +479,7 @@ class LivePage(userId:Long, roomId:Long) extends Page{
         println("JoinRsp",errCode)
         if(errCode ==0 && hostLiveId.isDefined && joinInfo.isDefined) {
           audienceLiveId = joinInfo.get.liveId
-          audienceLiveCode = joinInfo.get.liveCode
+          audienceLiveCode = ""
           connectAnchor(hostLiveId.get,audienceLiveId)
         }
 

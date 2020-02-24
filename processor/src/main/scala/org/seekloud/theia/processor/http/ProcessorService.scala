@@ -19,7 +19,7 @@ import ch.megard.akka.http.cors.scaladsl.CorsDirectives.cors
 import ch.megard.akka.http.cors.scaladsl.settings.CorsSettings
 import ch.megard.akka.http.cors.scaladsl.model.HttpOriginMatcher
 import org.seekloud.theia.processor.models.MpdInfoDao
-import org.seekloud.theia.protocol.ptcl.processer2Manager.Processor.{NewConnect, NewConnectRsp, CloseRoom, CloseRoomRsp, UpdateRoomInfo, UpdateRsp}
+import org.seekloud.theia.protocol.ptcl.processer2Manager.Processor.{CloseRoom, CloseRoomRsp, NewConnect, NewConnectRsp, StartRoom, StartRoomRsp, UpdateRoomInfo, UpdateRsp, UserQuit, UserQuitRsp}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
@@ -28,12 +28,34 @@ trait ProcessorService extends ServiceUtils {
 
   private val log = LoggerFactory.getLogger(this.getClass)
 
+  private def startRoom = (path("startRoom") & post) {
+    entity(as[Either[Error, StartRoom]]) {
+      case Right(req) =>
+        log.info(s"post method $StartRoom")
+        roomManager ! RoomManager.StartRoom(req.roomId, req.hostLiveId, req.roomLiveId, req.layout)
+        complete(StartRoomRsp())
+      case Left(e) =>
+        complete(parseJsonError)
+    }
+  }
+
   private def newConnect = (path("newConnect") & post) {
     entity(as[Either[Error, NewConnect]]) {
       case Right(req) =>
         log.info(s"post method $NewConnect")
-        roomManager ! RoomManager.NewConnection(req.roomId, req.host, req.client, req.pushLiveId, req.pushLiveCode,req.layout)
+        roomManager ! RoomManager.NewConnection(req.roomId, req.client, req.roomLiveId, req.layout)
         complete(NewConnectRsp())
+      case Left(e) =>
+        complete(parseJsonError)
+    }
+  }
+
+  private def userQuit = (path("userQuit") & post) {
+    entity(as[Either[Error, UserQuit]]) {
+      case Right(req) =>
+        log.info(s"post method $UserQuit")
+        roomManager ! RoomManager.UserOut(req.roomId, req.client, req.roomLiveId)
+        complete(UserQuitRsp())
       case Left(e) =>
         complete(parseJsonError)
     }
@@ -102,6 +124,6 @@ trait ProcessorService extends ServiceUtils {
 //  }
 
   val processorRoute:Route = pathPrefix("processor") {
-   newConnect  ~ closeRoom ~ updateRoomInfo  ~ upLoadImg ~ streamLog
+    startRoom ~ newConnect ~ userQuit ~ closeRoom ~ updateRoomInfo ~ upLoadImg ~ streamLog
   }
 }

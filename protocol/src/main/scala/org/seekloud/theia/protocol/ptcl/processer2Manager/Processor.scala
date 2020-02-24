@@ -7,15 +7,26 @@ object Processor {
     val msg: String
   }
 
+  // startRoom
+  case class StartRoom(
+                        roomId: Long,
+                        hostLiveId: String,
+                        roomLiveId: String,
+                        layout: Int,
+                      )
+
+  case class StartRoomRsp(
+                           errCode: Int = 0,
+                           msg: String = "ok"
+                         ) extends CommonRsp
+
   /**  url:processor/newConnect
     *  post
     */
   case class NewConnect(
                          roomId: Long,
-                         host: String,
                          client: String,
-                         pushLiveId:String,
-                         pushLiveCode:String,
+                         roomLiveId: String,
                          layout: Int = 1
                        )
 
@@ -24,6 +35,16 @@ object Processor {
                           msg:String = "ok"
                           ) extends CommonRsp
 
+  case class UserQuit(
+                       roomId: Long,
+                       client: String,
+                       roomLiveId: String
+                     )
+
+  case class UserQuitRsp(
+                          errCode: Int = 0,
+                          msg: String = "ok"
+                        ) extends CommonRsp
   /**  url:processor/closeRoom
     *  post
     */

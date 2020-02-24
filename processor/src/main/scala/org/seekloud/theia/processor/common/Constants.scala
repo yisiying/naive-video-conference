@@ -26,4 +26,9 @@ object Constants {
 
   val essfMapKeyName = "essfKey"
 
+  object Part {
+    val in = 0
+    val out = 1
+  }
+
 }

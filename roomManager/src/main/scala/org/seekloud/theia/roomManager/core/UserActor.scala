@@ -16,7 +16,6 @@ import org.seekloud.theia.roomManager.Boot.{executor, roomManager, scheduler}
 import org.seekloud.theia.roomManager.common.Common
 import org.seekloud.theia.roomManager.models.dao.UserInfoDao
 import org.seekloud.theia.roomManager.protocol.ActorProtocol
-import org.seekloud.theia.roomManager.utils.RtpClient
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
@@ -122,7 +121,7 @@ object UserActor {
 
           case unknown =>
             if(userId == Common.TestConfig.TEST_USER_ID){
-              log.debug(s"${ctx.self.path} 测试房间的房主actor，不处理其他类型的消息msg=$unknown")
+              //              log.debug(s"${ctx.self.path} 测试房间的房主actor，不处理其他类型的消息msg=$unknown")
             }else{
               log.debug(s"${ctx.self.path} recv an unknown msg:${msg} in init state...")
               stashBuffer.stash(unknown)
