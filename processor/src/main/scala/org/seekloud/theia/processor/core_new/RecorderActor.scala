@@ -8,8 +8,8 @@ import java.nio.{ByteBuffer, ShortBuffer}
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{Behaviors, StashBuffer, TimerScheduler}
 import org.bytedeco.ffmpeg.global.{avcodec, avutil}
-import org.bytedeco.javacv.{FFmpegFrameFilter /*, FFmpegFrameRecorder*/ , Frame, Java2DFrameConverter}
-import org.bytedeco.javacv.FFmpegFrameRecorder1
+import org.bytedeco.javacv.{FFmpegFrameFilter, FFmpegFrameRecorder, Frame, Java2DFrameConverter}
+//import org.bytedeco.javacv.FFmpegFrameRecorder1
 import org.seekloud.theia.processor.Boot.roomManager
 import org.seekloud.theia.processor.common.AppSettings.{addTs, bitRate, debugPath, isDebug}
 import org.slf4j.LoggerFactory
@@ -33,7 +33,7 @@ import scala.concurrent.duration._
   */
 object RecorderActor {
 
-  var audioChannels = 2 //todo 待议
+  var audioChannels = 4 //todo 待议
   val sampleFormat = 1 //todo 待议
   var frameRate = 30
   private var hostChannel: Int = _
@@ -71,7 +71,7 @@ object RecorderActor {
 
   case class SetLayout(layout: Int) extends VideoCommand
 
-  case class NewRecord4Ts(recorder4ts: FFmpegFrameRecorder1) extends VideoCommand
+  case class NewRecord4Ts(recorder4ts: FFmpegFrameRecorder) extends VideoCommand
 
   case class RemoveClient(liveId: String) extends VideoCommand
 
@@ -90,7 +90,7 @@ object RecorderActor {
         implicit timer =>
           log.info(s"recorderActor start----")
           avutil.av_log_set_level(-8)
-          val recorder4ts = new FFmpegFrameRecorder1(s"${AppSettings.srsServer}$roomLiveId", 640, 480, audioChannels)
+          val recorder4ts = new FFmpegFrameRecorder(s"${AppSettings.srsServer}$roomLiveId", 640, 480, audioChannels)
           log.info(s"recorder开始推流到：${AppSettings.srsServer}$roomLiveId")
           recorder4ts.setFrameRate(frameRate)
           recorder4ts.setVideoBitrate(bitRate)
@@ -112,7 +112,7 @@ object RecorderActor {
   }
 
   def single(roomId: Long, hostLiveId: String, clientLiveIdMap: mutable.Map[String, Int], layout: Int,
-             recorder4ts: FFmpegFrameRecorder1,
+             recorder4ts: FFmpegFrameRecorder,
              ffFilter: FFmpegFrameFilter,
              drawer: ActorRef[VideoCommand],
              canvasSize: (Int, Int))(implicit timer: TimerScheduler[Command],
@@ -202,7 +202,7 @@ object RecorderActor {
   }
 
   def work(roomId: Long, hostLiveId: String, clientLiveIdMap: mutable.Map[String, Int], layout: Int,
-           recorder4ts: FFmpegFrameRecorder1,
+           recorder4ts: FFmpegFrameRecorder,
            ffFilter: FFmpegFrameFilter,
            drawer: ActorRef[VideoCommand],
            canvasSize: (Int, Int))
@@ -316,7 +316,7 @@ object RecorderActor {
   }
 
   def draw(canvas: BufferedImage, graph: Graphics, clientFrameList: List[(String, Image)],
-           recorder4ts: FFmpegFrameRecorder1, convert1: Java2DFrameConverter, convert2Map: mutable.Map[String, Java2DFrameConverter], convert: Java2DFrameConverter,
+           recorder4ts: FFmpegFrameRecorder, convert1: Java2DFrameConverter, convert2Map: mutable.Map[String, Java2DFrameConverter], convert: Java2DFrameConverter,
            layout: Int = 0, bgImg: String, roomId: Long, canvasSize: (Int, Int)): Behavior[VideoCommand] = {
     Behaviors.setup[VideoCommand] { ctx =>
       Behaviors.receiveMessage[VideoCommand] {
