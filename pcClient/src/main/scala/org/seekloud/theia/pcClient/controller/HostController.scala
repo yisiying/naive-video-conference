@@ -281,6 +281,7 @@ class HostController(
           Boot.addToPlatform{
             WarningDialog.initWarningDialog("更新成功")
           }
+          hostScene
           msg.audienceList
         }
 

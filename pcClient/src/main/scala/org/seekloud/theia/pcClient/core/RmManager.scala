@@ -479,6 +479,7 @@ object RmManager {
             //            Boot.addToPlatform {
             //              hostController.showScene()
             //            }
+            println("建立成功")
           }
 
           def failureFunc(): Unit = {
@@ -493,6 +494,11 @@ object RmManager {
           Behaviors.same
 
         case msg: GetSender =>
+          log.debug("get sender")
+          println(msg.sender)
+          println(userInfo.get.userId)
+          println(userInfo.get.token)
+          msg.sender ! StartLiveReq(userInfo.get.userId, userInfo.get.token, ClientType.PC)
           hostBehavior(stageCtx, homeController, hostScene, hostController, liveManager, mediaPlayer, Some(msg.sender), hostStatus, joinAudience, rtmpLive, rtpLive, biliLive)
 
 
@@ -637,6 +643,7 @@ object RmManager {
           Behaviors.same
 
         case AddPartner(name)=>
+          println("add partner")
           sender.foreach(_ ! AuthProtocol.AddPartner(name))
           Behaviors.same
 
