@@ -31,6 +31,7 @@ import org.seekloud.theia.pcClient.utils.RMClient
 import org.seekloud.theia.protocol.ptcl.CommonInfo._
 import org.slf4j.LoggerFactory
 import org.seekloud.theia.player.sdk.MediaPlayer
+import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -141,6 +142,8 @@ object RmManager {
   final case object ShutJoin extends RmCommand //主动关闭和某观众的连线
 
   final case class ChangeCaptureMode(mediaSource: Int, cameraPosition: Int, imgLayout: Option[ImgLayout] = None) extends RmCommand
+
+  final case class AddPartner(name:String) extends RmCommand
 
   // 0->camera; 1->desktop; 2->both
   //0：左上  1：右上  2：右下  3：左下
@@ -281,6 +284,13 @@ object RmManager {
                     Boot.addToPlatform {
                       roomController.get.removeLoading()
                       WarningDialog.initWarningDialog("主播已关闭房间！")
+                      roomController.foreach(_.refreshList)
+                    }
+                  }
+                  else if (rsp.errCode == 100021) {
+                    Boot.addToPlatform {
+                      roomController.get.removeLoading()
+                      WarningDialog.initWarningDialog("你没有查看的权限！")
                       roomController.foreach(_.refreshList)
                     }
                   }
@@ -624,6 +634,10 @@ object RmManager {
         case msg: ChangeCaptureMode =>
           liveManager ! LiveManager.ChangeCaptureMode(msg.mediaSource, msg.cameraPosition, msg.imgLayout)
 
+          Behaviors.same
+
+        case AddPartner(name)=>
+          sender.foreach(_ ! AuthProtocol.AddPartner(name))
           Behaviors.same
 
 

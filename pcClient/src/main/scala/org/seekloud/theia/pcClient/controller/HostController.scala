@@ -153,7 +153,11 @@ class HostController(
       }
     }
 
-//    override def deleteRecord(recordId: Long) : Unit = {
+    override def addPartner(name: String): Unit = {
+      rmManager ! RmManager.AddPartner(name:String)
+    }
+
+    //    override def deleteRecord(recordId: Long) : Unit = {
 //      RMClient.deleteRecord(recordId).map{
 //        case Right(rst)=>
 //          if(rst.errCode == 0){
@@ -265,6 +269,19 @@ class HostController(
         log.debug(s"Audience-${msg.userName} send join req.")
         Boot.addToPlatform {
           hostScene.updateAudienceList(msg.userId, msg.userName)
+        }
+
+      case msg:UpdatePartnerRsp=>
+        log.debug("update partner rsp")
+        if(msg.errCode!=0){
+          Boot.addToPlatform{
+            WarningDialog.initWarningDialog("更新失败")
+          }
+        }else{
+          Boot.addToPlatform{
+            WarningDialog.initWarningDialog("更新成功")
+          }
+          msg.audienceList
         }
 
 
