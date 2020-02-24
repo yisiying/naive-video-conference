@@ -68,7 +68,7 @@ object AuthProtocol {
   ) extends WsMsgClient
 
   case class GetLiveIdRsp(
-                           liveId: Option[String],
+    liveId: Option[String],
     errCode: Int = 0,
     msg: String = "ok"
   ) extends WsMsgRm2Host
