@@ -42,9 +42,9 @@ object RoomManager {
 
   case class ExistRoom(roomId:Long,replyTo:ActorRef[Boolean]) extends Command
 
-  case class DelaySeekRecord(wholeRoomInfo: WholeRoomInfo, roomId: Long, startTime: Long, liveId: String, invitationList: mutable.HashMap[Int, List[Long]]) extends Command
+  case class DelaySeekRecord(wholeRoomInfo: WholeRoomInfo, roomId: Long, startTime: Long, liveId: String, invitationList: mutable.HashMap[Int, List[(Long, String)]]) extends Command
 
-  case class OnSeekRecord(wholeRoomInfo: WholeRoomInfo, roomId: Long, startTime: Long, liveId: String, invitationList: mutable.HashMap[Int, List[Long]]) extends Command
+  case class OnSeekRecord(wholeRoomInfo: WholeRoomInfo, roomId: Long, startTime: Long, liveId: String, invitationList: mutable.HashMap[Int, List[(Long, String)]]) extends Command
 
   case class AddAccess(roomId: Long, startTime: Long, invitationList: mutable.HashMap[Int, List[Long]]) extends Command
 
@@ -267,10 +267,10 @@ object RoomManager {
               log.debug(s"${ctx.self.path} 查询录像文件失败,error:$error")
           }
           val host = invitationList(Role.host).head
-          RecordCommentDAO.addCommentAccess(wholeRoomInfo.roomInfo.roomId, startTime, host, host)
+          RecordCommentDAO.addCommentAccess(wholeRoomInfo.roomInfo.roomId, startTime, host._1, host._1)
           if(invitationList.contains(Role.audience)){
             invitationList(Role.audience).foreach{u =>
-              RecordCommentDAO.addCommentAccess(wholeRoomInfo.roomInfo.roomId, startTime, host, u)
+              RecordCommentDAO.addCommentAccess(wholeRoomInfo.roomInfo.roomId, startTime, host._1, u._1)
             }
           }
 

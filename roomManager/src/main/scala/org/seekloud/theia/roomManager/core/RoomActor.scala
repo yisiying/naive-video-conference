@@ -106,7 +106,13 @@ object RoomActor {
                   //                      log.info(s"distributor startPull succeed, get live address: ${r.liveAdd}")
                   dispatchTo(subscribers)(List((userId, false)), StartLiveRsp(Some(LiveInfo(roomInfo.rtmp.get))))
                   val startTime = System.currentTimeMillis()
-                  ctx.self ! SwitchBehavior("idle", idle(WholeRoomInfo(roomInfo), mutable.HashMap(Role.host -> mutable.HashMap(userId -> LiveInfo(s"user-${userTableOpt.get.uid}"))), subscribers, startTime, mutable.HashMap(Role.host -> List(userId))))
+                  ctx.self ! SwitchBehavior("idle", idle(WholeRoomInfo(roomInfo),
+                    mutable.HashMap(Role.host -> mutable.HashMap(userId -> LiveInfo(s"user-${userTableOpt.get.uid}"))),
+                    subscribers,
+                    startTime,
+                    mutable.HashMap(Role.host -> List((userTableOpt.get.uid, userTableOpt.get.userName)))
+                  )
+                  )
 
                 //                    case Left(e) =>
                 //                      log.error(s"distributor startPull error: $e")
@@ -150,7 +156,7 @@ object RoomActor {
                     liveInfoMap: mutable.HashMap[Int, mutable.HashMap[Long, LiveInfo]],
                     subscribe: mutable.HashMap[(Long, Boolean), ActorRef[UserActor.Command]], //需要区分订阅的用户的身份，注册用户还是临时用户(uid,是否是临时用户true:是)
                     startTime: Long,
-                    invitationList: mutable.HashMap[Int, List[Long]],
+                    invitationList: mutable.HashMap[Int, List[(Long, String)]],
                     isJoinOpen: Boolean = true,
                   )
                   (implicit stashBuffer: StashBuffer[Command],
@@ -173,15 +179,15 @@ object RoomActor {
           idle(newRoomInfo, liveInfoMap, subscribe, startTime, invitationList, isJoinOpen)
 
         case ActorProtocol.UpdateInvitationList(roomId, userId, inOrOut) =>
-          if (inOrOut == Part.in) {
-            val l = invitationList(Role.audience)
-            val newList = userId :: l
-            invitationList.update(Role.audience, newList)
-          } else if (inOrOut == Part.out) {
-            val l = invitationList(Role.audience)
-            val newList = l.filterNot(_ == userId)
-            invitationList.update(Role.audience, newList)
-          }
+          //          if (inOrOut == Part.in) {
+          //            val l = invitationList(Role.audience)
+          //            val newList = userId :: l
+          //            invitationList.update(Role.audience, newList)
+          //          } else if (inOrOut == Part.out) {
+          //            val l = invitationList(Role.audience)
+          //            val newList = l.filterNot(_ == userId)
+          //            invitationList.update(Role.audience, newList)
+          //          }
           idle(wholeRoomInfo, liveInfoMap, subscribe, startTime, invitationList, isJoinOpen)
 
         case ActorProtocol.WebSocketMsgWithActor(userId, roomId, wsMsg) =>
@@ -359,7 +365,7 @@ object RoomActor {
                                   isJoinOpen: Boolean = true,
                                   dispatch: WsMsgRm => Unit,
                                   dispatchTo: (List[(Long, Boolean)], WsMsgRm) => Unit,
-                                  invitationList: mutable.HashMap[Int, List[Long]],
+                                  invitationList: mutable.HashMap[Int, List[(Long, String)]],
                                 )
                                 (ctx: ActorContext[Command], userId: Long, roomId: Long, msg: WsMsgClient)
                                 (
@@ -389,6 +395,29 @@ object RoomActor {
         //          dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), ChangeModeRsp())
         //        }
         idle(wholeRoomInfo, liveInfoMap, subscribers, startTime, invitationList, connect)
+
+      case AddPartner(userName) =>
+        log.info(s"add user: $userName")
+        val l = invitationList(Role.audience)
+        UserInfoDao.searchByName(userName).map {
+          case Some(i) =>
+            val newList = (i.uid, userName) :: l
+            invitationList.update(Role.audience, newList)
+            dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), UpdatePartnerRsp(newList))
+          case None =>
+            dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), UpdatePartnerRsp(l, -1, "no user"))
+        }
+        idle(wholeRoomInfo, liveInfoMap, subscribers, startTime, invitationList, isJoinOpen)
+
+      case DeletePartner(userName) =>
+        log.info(s"delete user: $userName")
+        val l = invitationList(Role.audience)
+        val newList = l.filterNot(_._2 == userName)
+        invitationList.update(Role.audience, newList)
+        dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), UpdatePartnerRsp(newList))
+        idle(wholeRoomInfo, liveInfoMap, subscribers, startTime, invitationList, isJoinOpen)
+
+
 
       case JoinAccept(`roomId`, userId4Audience, clientType, accept) =>
         log.debug(s"${ctx.self.path} 接受连线者请求，roomId=$roomId   ---ws")

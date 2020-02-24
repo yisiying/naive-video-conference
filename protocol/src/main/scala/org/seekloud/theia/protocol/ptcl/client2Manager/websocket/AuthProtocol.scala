@@ -137,6 +137,16 @@ object AuthProtocol {
 
   case class HostStopPushStream(roomId: Long) extends WsMsgHost //房主停止推流
 
+  case class AddPartner(userName: String) extends WsMsgHost
+
+  case class DeletePartner(userName: String) extends WsMsgHost
+
+  case class UpdatePartnerRsp(
+                               audienceList: List[(Long, String)],
+                               errCode: Int = 0,
+                               msg: String = "ok"
+                             ) extends WsMsgRm2Host
+
 
   /**
     *
