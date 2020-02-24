@@ -60,6 +60,8 @@ object RoomActor {
   final case class GetRoomInfo(replyTo: ActorRef[RoomInfo]) extends Command //考虑后续房间的建立不依赖ws
   final case class UpdateRTMP(rtmp: String) extends Command
 
+  final case class CheckAccess(replyTo: ActorRef[Boolean], userId: Long) extends Command
+
   private final val InitTime = Some(5.minutes)
 
   def create(roomId: Long): Behavior[Command] = {
@@ -171,6 +173,10 @@ object RoomActor {
 
         case GetRoomInfo(replyTo) =>
           replyTo ! wholeRoomInfo.roomInfo
+          Behaviors.same
+
+        case CheckAccess(replyTo, userId) =>
+          replyTo ! invitationList(Role.audience).map(_._1).contains(userId)
           Behaviors.same
 
         case UpdateRTMP(rtmp) =>
@@ -405,7 +411,7 @@ object RoomActor {
             invitationList.update(Role.audience, newList)
             dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), UpdatePartnerRsp(newList))
           case None =>
-            dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), UpdatePartnerRsp(l, -1, "no user"))
+            dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), UpdatePartnerRsp(l, 101015, "no user"))
         }
         idle(wholeRoomInfo, liveInfoMap, subscribers, startTime, invitationList, isJoinOpen)
 

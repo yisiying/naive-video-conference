@@ -179,38 +179,47 @@ object RoomManager {
           //          } else{
             getRoomActorOpt(roomId,ctx) match{
               case Some(actor) =>
-                val roomInfoFuture:Future[RoomInfo] = actor ? (GetRoomInfo(_))
-                roomInfoFuture.map{r =>
-                  r.rtmp match {
-                    case Some(v) =>
-                      log.debug(s"${ctx.self.path} search room,roomId=${roomId},rtmp=${r.rtmp}")
-                      replyTo ! SearchRoomRsp(Some(r))//正常返回
-                    case None =>
-                      log.debug(s"${ctx.self.path} search room failed,roomId=${roomId},rtmp=None")
-                      replyTo ! SearchRoomError(msg = s"${ctx.self.path} room rtmp is None")
-                      /*ProcessorClient.getmpd(roomId).map{
-                        case Right(rsp)=>
-                          if(rsp.errCode == 0){
-                            actor ! UpdateRTMP(rsp.rtmp)
-                            val roomInfoFuture:Future[RoomInfo] = actor ? (GetRoomInfo(_))
-                            roomInfoFuture.map{w =>
-                              log.debug(s"${ctx.self.path} research room,roomId=${roomId},rtmp=${r.rtmp}")
-                              replyTo ! SearchRoomRsp(Some(w))}//正常返回
-                          }else if(rsp.errCode == 100024){
-                            //replyTo ! SearchRoomRsp(Some(r))
-                            replyTo ! SearchRoomRsp(Some(r), 100009, "stop push stream")//主播停播，房间还在
-                          }
-                          else{
-                          log.info(s"getmpd code:${rsp.errCode}, msg${rsp.msg}")
-                            replyTo ! SearchRoomError(errCode = rsp.errCode, msg = rsp.msg)//
-                          }
+                val accessCheck: Future[Boolean] = actor ? (CheckAccess(_, userId.get))
+                accessCheck.map {
+                  case true =>
+                    val roomInfoFuture: Future[RoomInfo] = actor ? (GetRoomInfo(_))
+                    roomInfoFuture.map { r =>
+                      r.rtmp match {
+                        case Some(v) =>
+                          log.debug(s"${ctx.self.path} search room,roomId=${roomId},rtmp=${r.rtmp}")
+                          replyTo ! SearchRoomRsp(Some(r)) //正常返回
+                        case None =>
+                          log.debug(s"${ctx.self.path} search room failed,roomId=${roomId},rtmp=None")
+                          replyTo ! SearchRoomError(msg = s"${ctx.self.path} room rtmp is None")
+                        /*ProcessorClient.getmpd(roomId).map{
+                          case Right(rsp)=>
+                            if(rsp.errCode == 0){
+                              actor ! UpdateRTMP(rsp.rtmp)
+                              val roomInfoFuture:Future[RoomInfo] = actor ? (GetRoomInfo(_))
+                              roomInfoFuture.map{w =>
+                                log.debug(s"${ctx.self.path} research room,roomId=${roomId},rtmp=${r.rtmp}")
+                                replyTo ! SearchRoomRsp(Some(w))}//正常返回
+                            }else if(rsp.errCode == 100024){
+                              //replyTo ! SearchRoomRsp(Some(r))
+                              replyTo ! SearchRoomRsp(Some(r), 100009, "stop push stream")//主播停播，房间还在
+                            }
+                            else{
+                            log.info(s"getmpd code:${rsp.errCode}, msg${rsp.msg}")
+                              replyTo ! SearchRoomError(errCode = rsp.errCode, msg = rsp.msg)//
+                            }
 
-                        case Left(error)=>
-                          replyTo ! SearchRoomError4ProcessorDead//请求processor失败
-                      }*/
+                          case Left(error)=>
+                            replyTo ! SearchRoomError4ProcessorDead//请求processor失败
+                        }*/
 
-                  }
+                      }
+                    }
+                  case false =>
+                    log.debug(s"${ctx.self.path} search room failed,userId: ${userId.get} has no access")
+                    replyTo ! searchRoomError4Access
                 }
+
+
               case None =>
                 log.debug(s"${ctx.self.path} test room dead")
                 replyTo ! SearchRoomError4RoomId//主播关闭房间
