@@ -61,13 +61,13 @@ object GrabberActor {
         case t: Recorder =>
           log.info(s"${ctx.self} receive a msg $t")
           val grabber =
-            if (liveId == "user-100000")
-              new FFmpegFrameGrabber1(s"rtmp://58.200.131.2:1935/livetv/hunantv")
-            else if (liveId == "user-100001")
-              new FFmpegFrameGrabber1("rtmp://58.200.131.2:1935/livetv/gxtv")
-            else if (liveId == "user-100003")
-              new FFmpegFrameGrabber1("rtmp://58.200.131.2:1935/livetv/gdtv")
-            else
+          //            if (liveId == "user-100000")
+          //              new FFmpegFrameGrabber1(s"rtmp://58.200.131.2:1935/livetv/hunantv")
+          //            else if (liveId == "user-100001")
+          //              new FFmpegFrameGrabber1("rtmp://58.200.131.2:1935/livetv/gxtv")
+          //            else if (liveId == "user-100003")
+          //              new FFmpegFrameGrabber1("rtmp://58.200.131.2:1935/livetv/gdtv")
+          //            else
             new FFmpegFrameGrabber1(s"${AppSettings.srsServer}$liveId")
           log.info(s"grabber开始拉流：${AppSettings.srsServer}$liveId")
           try {
