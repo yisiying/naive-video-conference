@@ -231,7 +231,6 @@ object UserActor {
                       sendBuffer:MiddleBufferInJvm
                     ):Behavior[Command] =
     Behaviors.receive[Command]{(ctx,msg) =>
-      log.info(s"userActor-${userId} change to audience")
       msg match {
         case SendHeartBeat =>
 //          log.debug(s"${ctx.self.path} 发送心跳给userId=$userId,roomId=$roomId")

@@ -106,7 +106,7 @@ object RoomActor {
                   //                  DistributorClient.startPull(roomId, "main").map {
                   //                    case Right(r) =>
                   //                      log.info(s"distributor startPull succeed, get live address: ${r.liveAdd}")
-                  dispatchTo(subscribers)(List((userId, false)), StartLiveRsp(Some(LiveInfo(roomInfo.rtmp.get))))
+              //                  dispatchTo(subscribers)(List((userId, false)), StartLiveRsp(Some(LiveInfo(roomInfo.rtmp.get))))
                   val startTime = System.currentTimeMillis()
                   ctx.self ! SwitchBehavior("idle", idle(WholeRoomInfo(roomInfo),
                     mutable.HashMap(Role.host -> mutable.HashMap(userId -> LiveInfo(s"user-${userTableOpt.get.uid}"))),
