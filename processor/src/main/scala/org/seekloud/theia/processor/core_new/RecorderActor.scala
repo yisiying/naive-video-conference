@@ -390,6 +390,7 @@ object RecorderActor {
             val newList = (t.liveId, Image(t.frame)) :: clientFrameList
             convert2Map.put(t.liveId, new Java2DFrameConverter())
             graph.clearRect(0, 0, canvasSize._1, canvasSize._2)
+            recorder4ts.flush()
             draw(canvas, graph, newList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize)
           }
 
