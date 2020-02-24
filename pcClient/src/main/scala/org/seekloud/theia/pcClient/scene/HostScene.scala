@@ -112,6 +112,8 @@ object HostScene {
 
 //    def refresh()
 
+    def addPartner(name:String)
+
   }
 
 }
@@ -669,12 +671,7 @@ class HostScene(stage: Stage) extends Secene {
       val addBtn = new Button("添加参会人")
       //                  addBtn.setOnAction(_ => listener.addPartner)
       addBtn.setOnAction { _ =>
-        val alert = new Alert(AlertType.INFORMATION)
-        alert.setTitle("添加参会人")
-        alert.setHeaderText("")
-        alert.setContentText("添加成功")
-        partnerField.setText("")
-        alert.showAndWait()
+        listener.addPartner(partnerField.getText())
       }
       val box = new HBox()
       box.getChildren.addAll(partnerField,addBtn)
