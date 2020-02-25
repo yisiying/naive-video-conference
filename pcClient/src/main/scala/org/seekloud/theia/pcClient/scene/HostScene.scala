@@ -3,7 +3,7 @@ package org.seekloud.theia.pcClient.scene
 import java.io.File
 
 import javafx.animation.{Animation, KeyFrame, Timeline}
-import javafx.beans.property.{ObjectProperty, SimpleObjectProperty, SimpleStringProperty, StringProperty}
+import javafx.beans.property.{LongProperty, ObjectProperty, SimpleObjectProperty, SimpleStringProperty, StringProperty}
 import javafx.collections.{FXCollections, ObservableList}
 import javafx.geometry.Insets
 import javafx.scene.{Group, Scene}
@@ -67,6 +67,14 @@ object HostScene {
     def setRefuseBtn(btn: Button): Unit = refuseBtn.set(btn)
 
   }
+
+  case class PartnerListInfo(userId:LongProperty,username:StringProperty){
+    def getUserId:Long = userId.get()
+    def setUserId(info:Long) :Unit = userId.set(info)
+    def getUsername: String = username.get()
+    def setUsername(name:String): Unit = username.set(name)
+  }
+
 
 
   trait HostSceneListener {
@@ -149,6 +157,8 @@ class HostScene(stage: Stage) extends Secene {
   def stopPackageLoss(): Unit = {
     timeline.stop()
   }
+
+  var partnerList: ObservableList[PartnerListInfo] = FXCollections.observableArrayList()
 
   var isLive = false
   var isFullScreen = false
@@ -584,7 +594,7 @@ class HostScene(stage: Stage) extends Secene {
     Common.addButtonEffect(backBtn)
 
     val leftAreaBox = new VBox()
-    leftAreaBox.getChildren.addAll(createRoomInfoLabel, createRoomInfoBox,createAddBtn)
+    leftAreaBox.getChildren.addAll(createRoomInfoLabel, createRoomInfoBox,createAddBtn,createCntTbArea)
     leftAreaBox.setSpacing(10)
     leftAreaBox.setPadding(new Insets(5, 0, 0, 0))
     leftAreaBox.getStyleClass.add("hostScene-leftArea-wholeBox")
@@ -664,6 +674,25 @@ class HostScene(stage: Stage) extends Secene {
       roomInfoBox.setPadding(new Insets(5, 30, 0, 30))
       roomInfoBox.setSpacing(15)
       roomInfoBox
+    }
+
+
+    def createCntTbArea: TableView[PartnerListInfo] = {
+      val partnerTable = new TableView[PartnerListInfo]()
+      partnerTable.getStyleClass.add("table-view")
+
+      val userIdCol = new TableColumn[PartnerListInfo, String]("用户id")
+      userIdCol.setPrefWidth(width * 0.13)
+      userIdCol.setCellValueFactory(new PropertyValueFactory[PartnerListInfo, String]("userId"))
+
+      val usernameCol = new TableColumn[PartnerListInfo, String]("用户名")
+      usernameCol.setCellValueFactory(new PropertyValueFactory[PartnerListInfo, String]("username"))
+      usernameCol.setPrefWidth(width * 0.05)
+
+      partnerTable.setItems(partnerList)
+      partnerTable.getColumns.addAll(List(userIdCol, usernameCol).asJavaCollection)
+      partnerTable.setPrefHeight(height * 0.8)
+      partnerTable
     }
 
     def createAddBtn = {

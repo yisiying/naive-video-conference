@@ -1,18 +1,22 @@
 package org.seekloud.theia.pcClient.controller
 
 import akka.actor.typed.ActorRef
+import javafx.beans.property.{LongProperty, SimpleLongProperty, SimpleStringProperty}
 import org.seekloud.theia.pcClient.Boot
 import org.seekloud.theia.pcClient.common.{Constants, StageContext}
 import org.seekloud.theia.pcClient.component.WarningDialog
 import org.seekloud.theia.pcClient.core.RmManager
 import org.seekloud.theia.pcClient.core.RmManager.HeartBeat
 import org.seekloud.theia.pcClient.scene.HostScene
-import org.seekloud.theia.pcClient.scene.HostScene.{AudienceListInfo, HostSceneListener}
+import org.seekloud.theia.pcClient.scene.HostScene.{AudienceListInfo, HostSceneListener, PartnerListInfo}
 import org.seekloud.theia.protocol.ptcl.client2Manager.websocket.AuthProtocol._
 import org.slf4j.LoggerFactory
 import org.seekloud.theia.pcClient.utils.RMClient
 import org.seekloud.theia.pcClient.Boot.executor
 import org.seekloud.theia.pcClient.core.collector.CaptureActor
+
+import scala.collection.JavaConverters._
+
 
 /**
   * User: Arrow
@@ -60,19 +64,11 @@ class HostController(
     }
 
     override def audienceAcceptance(userId: Long, accept: Boolean, newRequest: AudienceListInfo): Unit = {
-      if (!isConnecting) {
-        rmManager ! RmManager.AudienceAcceptance(userId, accept)
-        hostScene.audObservableList.remove(newRequest)
-      } else {
-        if (isConnecting && !accept) {
-          rmManager ! RmManager.AudienceAcceptance(userId, accept)
-          hostScene.audObservableList.remove(newRequest)
-        } else {
-          Boot.addToPlatform {
-            WarningDialog.initWarningDialog(s"无法重复连线，请先断开当前连线。")
-          }
-        }
+      if (accept) {
+        hostScene.partnerList.add(PartnerListInfo(new SimpleLongProperty(userId), new SimpleStringProperty(newRequest.userInfo.toString)))
       }
+      rmManager ! RmManager.AudienceAcceptance(userId, accept)
+      hostScene.audObservableList.remove(newRequest)
     }
 
     override def shutJoin(): Unit = {
@@ -281,8 +277,8 @@ class HostController(
           Boot.addToPlatform{
             WarningDialog.initWarningDialog("更新成功")
           }
-          hostScene
-          msg.audienceList
+          hostScene.partnerList.addAll(msg.audienceList.map(e=>PartnerListInfo(new SimpleLongProperty(e._1),new SimpleStringProperty(e._2))).asJavaCollection)
+          println(hostScene.partnerList)
         }
 
 
