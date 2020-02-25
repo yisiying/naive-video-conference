@@ -39,6 +39,10 @@ object RoomManager {
 
   case class RecorderRef(roomId: Long, ref: ActorRef[RecorderActor.Command]) extends Command
 
+  case class SetSpokesman(roomId: Long, userLiveIdOpt: Option[String], roomLiveId: String) extends Command
+
+  case class UpdateBlock(roomId: Long, userLiveId: String, iOS: Int, aOD: Int, roomLiveId: String) extends Command
+
   case class ChildDead(roomId: Long, childName: String, value: ActorRef[RoomActor.Command]) extends Command
 
   def create(): Behavior[Command] = {
@@ -82,6 +86,25 @@ object RoomManager {
             case None => log.info(s"roomActor:$roomId is not exist")
           }
           Behaviors.same
+
+        case SetSpokesman(roomId, userLiveIdOpt, roomLiveId) =>
+          log.info(s"${ctx.self} receive set spokesman msg, roomId: $roomId, partnerLiveId: $userLiveIdOpt")
+          val roomActor = getRoomActorOpt(ctx, roomId, roomLiveId)
+          roomActor match {
+            case Some(actor) => actor ! RoomActor.SetSpokesman(roomId, userLiveIdOpt)
+            case None => log.info(s"roomActor:$roomId is not exist")
+          }
+          Behaviors.same
+
+        case UpdateBlock(roomId, userLiveId, iOS, aOD, roomLiveId) =>
+          log.info(s"${ctx.self} receive update image or sound msg, roomId: $roomId, partnerLiveId: $userLiveId")
+          val roomActor = getRoomActorOpt(ctx, roomId, roomLiveId)
+          roomActor match {
+            case Some(actor) => actor ! RoomActor.UpdateBlock(roomId, userLiveId, iOS, aOD)
+            case None => log.info(s"roomActor:$roomId is not exist")
+          }
+          Behaviors.same
+
 
         case msg:UpdateRoomInfo =>
           log.info(s"${ctx.self} receive a msg${msg}")

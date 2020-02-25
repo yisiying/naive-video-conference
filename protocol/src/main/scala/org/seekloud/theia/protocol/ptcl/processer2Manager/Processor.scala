@@ -20,8 +20,8 @@ object Processor {
                            msg: String = "ok"
                          ) extends CommonRsp
 
-  /**  url:processor/newConnect
-    *  post
+  /** url:processor/newConnect
+    * post
     */
   case class NewConnect(
                          roomId: Long,
@@ -31,8 +31,8 @@ object Processor {
                        )
 
   case class NewConnectRsp(
-                          errCode: Int = 0,
-                          msg:String = "ok"
+                            errCode: Int = 0,
+                            msg: String = "ok"
                           ) extends CommonRsp
 
   case class UserQuit(
@@ -45,21 +45,47 @@ object Processor {
                           errCode: Int = 0,
                           msg: String = "ok"
                         ) extends CommonRsp
-  /**  url:processor/closeRoom
-    *  post
+
+  case class SetSpokesman(
+                           roomId: Long,
+                           userLiveIdOpt: Option[String],
+                           roomLiveId: String
+                         )
+
+  case class SetSpokesmanRsp(
+                              errCode: Int = 0,
+                              msg: String = "ok"
+                            ) extends CommonRsp
+
+  case class UpdateImageOrSound(
+                                 roomId: Long,
+                                 userLiveId: String,
+                                 IOS: Int,
+                                 AOD: Int,
+                                 roomLiveId: String
+                               )
+
+  case class UpdateImageOrSoundRsp(
+                                    errCode: Int = 0,
+                                    msg: String = "ok"
+                                  ) extends CommonRsp
+
+
+  /** url:processor/closeRoom
+    * post
     */
   case class CloseRoom(
                         roomId: Long
                       )
 
   case class CloseRoomRsp(
-                            errCode: Int = 0,
-                            msg:String = "ok"
-                          ) extends CommonRsp
+                           errCode: Int = 0,
+                           msg: String = "ok"
+                         ) extends CommonRsp
 
 
-  /**  url:processor/update
-    *  post
+  /** url:processor/update
+    * post
     */
   case class UpdateRoomInfo(
                              roomId: Long,
@@ -68,7 +94,7 @@ object Processor {
 
   case class UpdateRsp(
                         errCode: Int = 0,
-                        msg:String = "ok"
+                        msg: String = "ok"
                       ) extends CommonRsp
 
 

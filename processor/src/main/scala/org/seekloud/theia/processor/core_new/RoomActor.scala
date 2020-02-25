@@ -9,11 +9,10 @@ import akka.actor.typed.scaladsl.{ActorContext, Behaviors, StashBuffer, TimerSch
 import org.seekloud.theia.processor.common.AppSettings.{debugPath, isDebug}
 import org.seekloud.theia.processor.stream.PipeStream
 import org.seekloud.theia.processor.common.Constants.Part
+import org.seekloud.theia.processor.core_new.RoomManager.UpdateBlock
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
-
-
 import scala.collection.mutable
 
 /**
@@ -46,6 +45,10 @@ object RoomActor {
   case class ChildDead4Grabber(roomId: Long, childName: String, value: ActorRef[GrabberActor.Command]) extends Command// fixme liveID
 
   case class ChildDead4Recorder(roomId: Long, childName: String, value: ActorRef[RecorderActor.Command]) extends Command
+
+  case class SetSpokesman(roomId: Long, userLiveIdOpt: Option[String]) extends Command
+
+  case class UpdateBlock(roomId: Long, userLiveId: String, iOS: Int, aOD: Int) extends Command
 
   case class ClosePipe(liveId: String) extends Command
 
@@ -141,6 +144,22 @@ object RoomActor {
             grabberActor.get.values.toList.foreach(_ ! GrabberActor.Recorder(msg.recorderRef))
           } else {
             log.info(s"${msg.roomId} grabbers not exist")
+          }
+          Behaviors.same
+
+        case SetSpokesman(roomId, userLiveIdOpt) =>
+          if (recorderMap.get(roomId).nonEmpty) {
+            recorderMap(roomId) ! RecorderActor.ChangeSpokesman(userLiveIdOpt)
+          } else {
+            log.info(s"${roomId}  recorder not exist when setSpokesman")
+          }
+          Behaviors.same
+
+        case UpdateBlock(roomId, userLiveId, iOS, aOD) =>
+          if (recorderMap.get(roomId).nonEmpty) {
+            recorderMap(roomId) ! RecorderActor.UpdateBlock(userLiveId, iOS, aOD)
+          } else {
+            log.info(s"${roomId}  recorder not exist when setSpokesman")
           }
           Behaviors.same
 

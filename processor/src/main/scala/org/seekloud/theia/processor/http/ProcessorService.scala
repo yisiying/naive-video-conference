@@ -20,6 +20,7 @@ import ch.megard.akka.http.cors.scaladsl.settings.CorsSettings
 import ch.megard.akka.http.cors.scaladsl.model.HttpOriginMatcher
 import org.seekloud.theia.processor.models.MpdInfoDao
 import org.seekloud.theia.protocol.ptcl.processer2Manager.Processor.{CloseRoom, CloseRoomRsp, NewConnect, NewConnectRsp, StartRoom, StartRoomRsp, UpdateRoomInfo, UpdateRsp, UserQuit, UserQuitRsp}
+import org.seekloud.theia.protocol.ptcl.processer2Manager.Processor._
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
@@ -60,6 +61,39 @@ trait ProcessorService extends ServiceUtils {
         complete(parseJsonError)
     }
   }
+
+  private def setSpokesman = (path("setSpokesman") & post) {
+    entity(as[Either[Error, SetSpokesman]]) {
+      case Right(req) =>
+        log.info(s"post method $SetSpokesman")
+        roomManager ! RoomManager.SetSpokesman(req.roomId, req.userLiveIdOpt, req.roomLiveId)
+        complete(SetSpokesmanRsp())
+      case Left(e) =>
+        complete(parseJsonError)
+    }
+  }
+
+  private def updateImageOrSound = (path("updateImage") & post) {
+    entity(as[Either[Error, UpdateImageOrSound]]) {
+      case Right(req) =>
+        log.info(s"post method $UpdateImageOrSound")
+        roomManager ! RoomManager.UpdateBlock(req.roomId, req.userLiveId, req.IOS, req.AOD, req.roomLiveId)
+        complete(UpdateImageOrSoundRsp())
+      case Left(e) =>
+        complete(parseJsonError)
+    }
+  }
+
+  //  private def updateSound = (path("updateSound") & post) {
+  //    entity(as[Either[Error, UpdateSound]]) {
+  //      case Right(req) =>
+  //        log.info(s"post method $SetSpokesman")
+  //        roomManager ! RoomManager.
+  //        complete(UpdateSoundRsp())
+  //      case Left(e) =>
+  //        complete(parseJsonError)
+  //    }
+  //  }
 
   private def closeRoom = (path("closeRoom") & post) {
     entity(as[Either[Error, CloseRoom]]) {
@@ -124,6 +158,6 @@ trait ProcessorService extends ServiceUtils {
 //  }
 
   val processorRoute:Route = pathPrefix("processor") {
-    startRoom ~ newConnect ~ userQuit ~ closeRoom ~ updateRoomInfo ~ upLoadImg ~ streamLog
+    startRoom ~ newConnect ~ userQuit ~ closeRoom ~ updateRoomInfo ~ upLoadImg ~ streamLog ~ setSpokesman ~ updateImageOrSound
   }
 }
