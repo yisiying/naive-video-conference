@@ -68,7 +68,7 @@ object GrabberActor {
           //            else if (liveId == "user-100003")
           //              new FFmpegFrameGrabber1("rtmp://58.200.131.2:1935/livetv/gdtv")
           //            else
-            new FFmpegFrameGrabber1(s"${AppSettings.srsServer}user-100002")
+            new FFmpegFrameGrabber1(s"${AppSettings.srsServer}$liveId")
           log.info(s"grabber开始拉流：${AppSettings.srsServer}$liveId")
           try {
             grabber.start()
