@@ -176,7 +176,12 @@ object RoomActor {
           Behaviors.same
 
         case CheckAccess(replyTo, userId) =>
-          replyTo ! invitationList(Role.audience).map(_._1).contains(userId)
+          val isContain = if (invitationList.contains(Role.audience)) {
+            invitationList(Role.audience).map(_._1).contains(userId)
+          } else {
+            false
+          }
+          replyTo ! isContain
           Behaviors.same
 
         case UpdateRTMP(rtmp) =>
