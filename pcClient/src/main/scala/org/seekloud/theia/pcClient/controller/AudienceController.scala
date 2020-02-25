@@ -119,12 +119,13 @@ class AudienceController(
       if (RmManager.userInfo.nonEmpty) {
         println(RmManager.userInfo.get.userId)
         WarningDialog.initWarningDialog("正在加入直播")
-        rmManager ! RmManager.JoinRoomReq(roomId)
+//        rmManager ! RmManager.JoinRoomReq(roomId)
 //        assert(RmManager.roomInfo.isDefined)
 //        assert(RmManager.roomInfo.get.rtmp.isDefined)
 //        println(RmManager.roomInfo.get.rtmp.get)
 //        assert(RmManager.userInfo.isDefined)
 //        println(RmManager.userInfo.get.userId)
+        audienceScene.hasReqJoin = false
         rmManager ! RmManager.StartJoin("room-"+roomId,CommonInfo.LiveInfo("user-"+RmManager.userInfo.get.userId))
       } else {
         WarningDialog.initWarningDialog("请先登录哦~")
