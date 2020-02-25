@@ -358,10 +358,10 @@ object RmManager {
           val audienceController = new AudienceController(stageCtx, audienceScene, ctx.self)
           if (msg.roomInfo.rtmp.nonEmpty) {
             audienceScene.liveId = msg.roomInfo.rtmp
-//            println(s"111111111111111111111111111  ${msg.roomInfo.rtmp}")
-//            val info = WatchInfo(msg.roomInfo.roomId, audienceScene.gc)
-//            liveManager ! LiveManager.PullRtmpStream(msg.roomInfo.rtmp.get, watchInfo = Some(info), audienceScene = Some(audienceScene))
-////            liveManager ! LiveManager.PullStream("rtmp://10.1.29.247:42037/live/123456", watchInfo = Some(info), audienceScene = Some(audienceScene))
+            println(s"111111111111111111111111111  ${msg.roomInfo.rtmp}")
+            val info = WatchInfo(msg.roomInfo.roomId, audienceScene.gc)
+            liveManager ! LiveManager.PullRtmpStream(msg.roomInfo.rtmp.get, watchInfo = Some(info), audienceScene = Some(audienceScene))
+//            liveManager ! LiveManager.PullStream("rtmp://10.1.29.247:42037/live/123456", watchInfo = Some(info), audienceScene = Some(audienceScene))
 
             ctx.self ! AudienceWsEstablish
 
@@ -900,7 +900,7 @@ object RmManager {
         case msg: JoinRoomReq =>
           assert(userInfo.nonEmpty)
           val userId = userInfo.get.userId
-          sender.foreach(_ ! JoinReq(userId, msg.roomId, ClientType.PC))
+//          sender.foreach(_ ! JoinReq(userId, msg.roomId, ClientType.PC))
           Behaviors.same
 
         case msg: ChangeOption4Audience =>
@@ -979,8 +979,8 @@ object RmManager {
           log.info(s"Start join.")
           assert(userInfo.nonEmpty)
 //          //同意连线后才能看到画面
-          println(s"111111111111111111111111111  ${audienceScene.liveId}")
-          liveManager ! LiveManager.PullRtmpStream(audienceScene.liveId.get, watchInfo = None, audienceScene = Some(audienceScene))
+//          println(s"111111111111111111111111111  ${audienceScene.liveId}")
+//          liveManager ! LiveManager.PullRtmpStream(audienceScene.liveId.get, watchInfo = None, audienceScene = Some(audienceScene))
 //          val playId = Ids.getPlayId(AudienceStatus.LIVE, roomId = Some(audienceScene.getRoomInfo.roomId))
 //          println(s"===watchInfo playId:$playId")
 //          mediaPlayer.setTimeGetter(playId, () => System.currentTimeMillis())

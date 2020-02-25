@@ -173,7 +173,7 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
   val sendIcon: ImageView = Common.getImageView("img/confirm.png", 20, 20)
   val sendBtn = new Button("发送", sendIcon)
   val gift = new GiftBar(group)
-  val linkBtn = new Button("申请加入", new ImageView("img/link.png"))
+  val linkBtn = new Button("加入会议", new ImageView("img/link.png"))
   val exitBtn = new Button("退出会议", new ImageView("img/shutdown.png"))
   val emojiBtn = new Button("\uD83D\uDE00")
 
@@ -478,7 +478,7 @@ class AudienceScene(album: AlbumInfo, isRecord: Boolean = false, recordUrl: Stri
           listener.joinReq(album.roomId)
           hasReqJoin = true
         }
-        else WarningDialog.initWarningDialog("已经发送过申请啦~")
+//        else WarningDialog.initWarningDialog("已经发送过申请啦~")
       }
       Common.addButtonEffect(linkBtn)
 
