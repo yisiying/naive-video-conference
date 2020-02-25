@@ -267,8 +267,8 @@ object LiveManager {
           val videoPlayer = ctx.spawn(VideoPlayer.create(playId, audienceScene, None, None), s"videoPlayer$playId")
           //            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
           //根据room-roomId拉流
-          log.info(s"拉流地址:rtmp://10.1.29.247:42037/live/${liveId}")
-          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/${liveId}"), Some(audienceScene.get.gc), None)
+          log.info(s"拉流地址:rtmp://47.92.170.2:42037/live/live/${liveId}")
+          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://47.92.170.2:42037/live/${liveId}"), Some(audienceScene.get.gc), None)
           Behaviors.same
 
 //        case GetPackageLoss =>

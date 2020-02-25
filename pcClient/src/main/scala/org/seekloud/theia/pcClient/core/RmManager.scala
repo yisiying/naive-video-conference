@@ -361,7 +361,7 @@ object RmManager {
             println(s"111111111111111111111111111  ${msg.roomInfo.rtmp}")
             val info = WatchInfo(msg.roomInfo.roomId, audienceScene.gc)
             liveManager ! LiveManager.PullRtmpStream(msg.roomInfo.rtmp.get, watchInfo = Some(info), audienceScene = Some(audienceScene))
-//            liveManager ! LiveManager.PullStream("rtmp://10.1.29.247:42037/live/123456", watchInfo = Some(info), audienceScene = Some(audienceScene))
+//            liveManager ! LiveManager.PullStream("rtmp://47.92.170.2:42037/live/123456", watchInfo = Some(info), audienceScene = Some(audienceScene))
 
             ctx.self ! AudienceWsEstablish
 
@@ -567,7 +567,7 @@ object RmManager {
           //          val url = s"rtmp://media.seekloud.com:62040/live/23456?rtmpToken=${msg.token}&userId=${userInfo.get.userId}"
           //          val url = s"rtmp://media.seekloud.com:62040/live/${msg.key}?rtmpToken=${msg.token}&userId=${userInfo.get.userId}"
           val url = s"${AppSettings.srsServer}${msg.liveId}"
-//          val url = s"rtmp://10.1.29.247:42037/live/${roomInfo.get.roomId}?startTime=${msg.startTime}&userId=${userInfo.get.userId}"
+//          val url = s"rtmp://47.92.170.2:42037/live/${roomInfo.get.roomId}?startTime=${msg.startTime}&userId=${userInfo.get.userId}"
           log.info(s"rtmp_url: $url")
           liveManager ! LiveManager.PushRtmpStream(url)
           hostController.isLive = true
@@ -581,8 +581,8 @@ object RmManager {
           mediaPlayer.setTimeGetter(playId, () => System.currentTimeMillis())
           val videoPlayer = ctx.spawn(VideoPlayer.create(playId, Some(hostScene), None, None), s"videoPlayer$playId")
 //                      mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
-          log.info(s"拉流：rtmp://10.1.29.247:42037/live/room-${roomInfo.map(_.roomId).get}")
-          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/room-${roomInfo.map(_.roomId).get}"), Some(hostScene.gc), None)
+          log.info(s"拉流：rtmp://47.92.170.2:42037/live/room-${roomInfo.map(_.roomId).get}")
+          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://47.92.170.2:42037/live/room-${roomInfo.map(_.roomId).get}"), Some(hostScene.gc), None)
 
           hostBehavior(stageCtx, homeController, hostScene, hostController, liveManager, mediaPlayer, sender, hostStatus, joinAudience, Some(true), rtpLive, biliLive)
 
@@ -986,8 +986,8 @@ object RmManager {
 //          mediaPlayer.setTimeGetter(playId, () => System.currentTimeMillis())
 //          val videoPlayer = ctx.spawn(VideoPlayer.create(playId, Some(audienceScene), None, None), s"videoPlayer$playId")
           //            mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
-//          log.info(s"rtmp://10.1.29.247:42037/live/room-${audienceScene.getRoomInfo.roomId}")
-//          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://10.1.29.247:42037/live/room-${audienceScene.getRoomInfo.roomId}"), Some(audienceScene.gc), None)
+//          log.info(s"rtmp://47.92.170.2:42037/live/room-${audienceScene.getRoomInfo.roomId}")
+//          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://47.92.170.2:42037/live/room-${audienceScene.getRoomInfo.roomId}"), Some(audienceScene.gc), None)
 
 
           // val userId = userInfo.get.userId
@@ -1024,10 +1024,10 @@ object RmManager {
         /*开始推流*/
         case msg: Devicesuccess =>
           val userId = userInfo.get.userId
-          println("开始推流！"+s"rtmp://10.1.29.247:42037/live/user-${userId}")
+          println("开始推流！"+s"rtmp://47.92.170.2:42037/live/user-${userId}")
           //          audienceScene.autoReset2()
 //          liveManager ! LiveManager.PushStream(msg.audienceLiveInfo.liveId, msg.audienceLiveInfo.liveCode)
-          liveManager ! LiveManager.PushRtmpStream(s"rtmp://10.1.29.247:42037/live/user-${userId}")
+          liveManager ! LiveManager.PushRtmpStream(s"rtmp://47.92.170.2:42037/live/user-${userId}")
 
           /*开始拉取并播放主播rtp流*/
           //          val joinInfo = JoinInfo(
