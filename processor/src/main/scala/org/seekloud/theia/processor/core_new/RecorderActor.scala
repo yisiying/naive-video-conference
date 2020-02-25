@@ -35,7 +35,7 @@ object RecorderActor {
 
   var audioChannels = 2 //todo 待议
   val sampleFormat = 1 //todo 待议
-  var frameRate = 30
+  var frameRate = 24
   private var hostChannel: Int = _
   private var hostSampleRate: Int = _
 
@@ -100,16 +100,16 @@ object RecorderActor {
           recorder4ts.setFormat("flv")
 
 
-          recorder4ts.setAudioOption("crf", "0")
-          recorder4ts.setAudioQuality(0)
-          recorder4ts.setAudioBitrate(192000)
-          recorder4ts.setSampleRate(44100)
+          //          recorder4ts.setAudioOption("crf", "0")
+          //          recorder4ts.setAudioQuality(0)
+          //          recorder4ts.setAudioBitrate(192000)
+          //          recorder4ts.setSampleRate(44100)
           //          recorder4ts.setInterleaved(true)
-          recorder4ts.setGopSize(60)
+          //          recorder4ts.setGopSize(60)
 
-          recorder4ts.setVideoOption("tune", "zerolatency")
-          recorder4ts.setVideoOption("preset", "ultrafast")
-          recorder4ts.setVideoOption("crf", "23")
+          //          recorder4ts.setVideoOption("tune", "zerolatency")
+          //          recorder4ts.setVideoOption("preset", "ultrafast")
+          //          recorder4ts.setVideoOption("crf", "23")
           //    encoder.setVideoOption("keyint", "1")
 
 
@@ -298,8 +298,8 @@ object RecorderActor {
           ffFilterN.setAudioChannels(n)
           ffFilterN.setSampleFormat(sampleFormat)
           ffFilterN.setAudioInputs(n)
-          ffFilter.setAudioChannels(hostChannel)
-          ffFilter.setSampleRate(hostSampleRate)
+          ffFilterN.setAudioChannels(hostChannel)
+          ffFilterN.setSampleRate(hostSampleRate)
           ffFilterN.start()
           work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilterN, drawer, canvasSize)
 
@@ -355,8 +355,8 @@ object RecorderActor {
               graph.drawImage(img, canvasSize._1 / 4 * 3, 0, canvasSize._1 / 4, canvasSize._2 / 4, null)
               graph.drawString("参会者", 584, 24)
           }*/
-          if (clientImgList.length >= 2)
-            log.info(s"${clientImgList.length}")
+          //          if (clientImgList.length >= 2)
+          //            log.info(s"${clientImgList.length}")
           clientImgList.length + 1 match {
             case x if x == 1 =>
               graph.drawImage(img, 0, 0, canvasSize._1, canvasSize._2, null)
