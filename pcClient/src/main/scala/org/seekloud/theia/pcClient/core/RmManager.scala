@@ -582,7 +582,7 @@ object RmManager {
           val videoPlayer = ctx.spawn(VideoPlayer.create(playId, Some(hostScene), None, None), s"videoPlayer$playId")
 //                      mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
           log.info(s"拉流：rtmp://47.92.170.2:42037/live/room-${roomInfo.map(_.roomId).get}")
-          mediaPlayer.start(playId, videoPlayer, Left(s"rtmp://47.92.170.2:42037/live/room-${roomInfo.map(_.roomId).get}"), Some(hostScene.gc), None)
+          mediaPlayer.start(playId, videoPlayer, Left(s"${AppSettings.srsServer}room-${roomInfo.map(_.roomId).get}"), Some(hostScene.gc), None)
 
           hostBehavior(stageCtx, homeController, hostScene, hostController, liveManager, mediaPlayer, sender, hostStatus, joinAudience, Some(true), rtpLive, biliLive)
 
