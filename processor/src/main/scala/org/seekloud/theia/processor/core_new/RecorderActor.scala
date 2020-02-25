@@ -104,7 +104,7 @@ object RecorderActor {
           recorder4ts.setAudioQuality(0)
           recorder4ts.setAudioBitrate(192000)
           recorder4ts.setSampleRate(44100)
-          recorder4ts.setInterleaved(true)
+          //          recorder4ts.setInterleaved(true)
           recorder4ts.setGopSize(60)
 
           recorder4ts.setVideoOption("tune", "zerolatency")
