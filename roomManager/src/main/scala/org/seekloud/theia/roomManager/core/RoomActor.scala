@@ -664,34 +664,34 @@ object RoomActor {
                   case Right(rsp) =>
                     if (rsp.errCode == 0) {
                       log.info(s"set spokeman :$spokesmanId success")
-                      dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), SetSpokesmanRsp())
+                      dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), SetSpokesmanRsp())
                     } else {
                       log.info(s"set spokesman error: ${rsp.msg}")
-                      dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), SetSpokesmanRsp(10002, rsp.msg))
+                      dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), SetSpokesmanRsp(10002, rsp.msg))
                     }
                   case Left(e) =>
                     log.info(s"set spokesman error: $e")
-                    dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), SetSpokesmanRsp(10003, e))
+                    dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), SetSpokesmanRsp(10003, e))
                 }
               } else {
-                dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), SetSpokesmanRsp(10000, "no user"))
+                dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), SetSpokesmanRsp(10000, "no user"))
               }
             } else {
-              dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), SetSpokesmanRsp(10001, "no audience"))
+              dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), SetSpokesmanRsp(10001, "no audience"))
             }
           case _ =>
             ProcessorClient.spokesman(roomId, None, wholeRoomInfo.roomInfo.rtmp.get).map {
               case Right(rsp) =>
                 if (rsp.errCode == 0) {
                   log.info(s"set spokeman :$spokesmanId success")
-                  dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), SetSpokesmanRsp())
+                  dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), SetSpokesmanRsp())
                 } else {
                   log.info(s"set spokesman error: ${rsp.msg}")
-                  dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), SetSpokesmanRsp(10002, rsp.msg))
+                  dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), SetSpokesmanRsp(10002, rsp.msg))
                 }
               case Left(e) =>
                 log.info(s"set spokesman error: $e")
-                dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), SetSpokesmanRsp(10003, e))
+                dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), SetSpokesmanRsp(10003, e))
             }
         }
 
@@ -704,20 +704,20 @@ object RoomActor {
               case Right(rsp) =>
                 if (rsp.errCode == 0) {
                   log.info(s"update block: $userId4Audience success")
-                  dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), UpdateBlockRsp())
+                  dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), UpdateBlockRsp())
                 } else {
                   log.info(s"update block error: ${rsp.msg}")
-                  dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), UpdateBlockRsp(10002, rsp.msg))
+                  dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), UpdateBlockRsp(10002, rsp.msg))
                 }
               case Left(e) =>
                 log.info(s"update block error: $e")
-                dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), UpdateBlockRsp(10003, e))
+                dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), UpdateBlockRsp(10003, e))
             }
           } else {
-            dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), UpdateBlockRsp(10000, "no user"))
+            dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), UpdateBlockRsp(10000, "no user"))
           }
         } else {
-          dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), UpdateBlockRsp(10001, "no audience"))
+          dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), UpdateBlockRsp(10001, "no audience"))
         }
         Behaviors.same
 
