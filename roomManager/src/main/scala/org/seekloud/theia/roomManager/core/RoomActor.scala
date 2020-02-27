@@ -103,24 +103,24 @@ object RoomActor {
               //              ProcessorClient.startRoom(roomId, s"user-${userTableOpt.get.uid}", roomInfo.rtmp.get, 0).map {
               //                case Right(r) =>
               //                  log.info(s"processor start mix stream")
-                  //                  DistributorClient.startPull(roomId, "main").map {
-                  //                    case Right(r) =>
-                  //                      log.info(s"distributor startPull succeed, get live address: ${r.liveAdd}")
+              //                  DistributorClient.startPull(roomId, "main").map {
+              //                    case Right(r) =>
+              //                      log.info(s"distributor startPull succeed, get live address: ${r.liveAdd}")
               //                  dispatchTo(subscribers)(List((userId, false)), StartLiveRsp(Some(LiveInfo(roomInfo.rtmp.get))))
-                  val startTime = System.currentTimeMillis()
-                  ctx.self ! SwitchBehavior("idle", idle(WholeRoomInfo(roomInfo),
-                    mutable.HashMap(Role.host -> mutable.HashMap(userId -> LiveInfo(s"user-${userTableOpt.get.uid}"))),
-                    subscribers,
-                    startTime,
-                    mutable.HashMap(Role.host -> List((userTableOpt.get.uid, userTableOpt.get.userName)))
-                  )
-                  )
+              val startTime = System.currentTimeMillis()
+              ctx.self ! SwitchBehavior("idle", idle(WholeRoomInfo(roomInfo),
+                mutable.HashMap(Role.host -> mutable.HashMap(userId -> LiveInfo(s"user-${userTableOpt.get.uid}"))),
+                subscribers,
+                startTime,
+                mutable.HashMap(Role.host -> List((userTableOpt.get.uid, userTableOpt.get.userName)))
+              )
+              )
 
-                //                    case Left(e) =>
-                //                      log.error(s"distributor startPull error: $e")
-                //                      dispatchTo(subscribers)(List((userId, false)), StartLiveRefused4LiveInfoError)
-                //                      ctx.self ! SwitchBehavior("init", init(roomId, subscribers))
-                //                  }
+              //                    case Left(e) =>
+              //                      log.error(s"distributor startPull error: $e")
+              //                      dispatchTo(subscribers)(List((userId, false)), StartLiveRefused4LiveInfoError)
+              //                      ctx.self ! SwitchBehavior("init", init(roomId, subscribers))
+              //                  }
               //                case Left(e) =>
               //                  log.error(s"processor start room error:$e")
               //                  ctx.self ! SwitchBehavior("init", init(roomId, subscribers))
@@ -426,7 +426,6 @@ object RoomActor {
         idle(wholeRoomInfo, liveInfoMap, subscribers, startTime, invitationList, isJoinOpen)
 
 
-
       case JoinAccept(`roomId`, userId4Audience, clientType, accept) =>
         log.debug(s"${ctx.self.path} 接受连线者请求，roomId=$roomId   ---ws")
         if (accept) {
@@ -523,7 +522,7 @@ object RoomActor {
         wholeRoomInfo.roomInfo.rtmp match {
           case Some(v) =>
             //            if (v != liveInfoMap(Role.host)(wholeRoomInfo.roomInfo.userId).liveId)
-              ProcessorClient.closeRoom(roomId)
+            ProcessorClient.closeRoom(roomId)
             log.debug(s"roomId:$roomId 主播停止推流，向distributor发送finishpull消息")
             DistributorClient.finishPull(v)
             if (startTime != -1l) {
@@ -653,6 +652,72 @@ object RoomActor {
           case e: Exception =>
             log.debug(s"获取用户信息失败，inter error：$e")
             dispatchTo(List((userId, false)), GetLiveIdRsp(None, 100036, s"获取用户信息失败，inter error：$e"))
+        }
+        Behaviors.same
+
+      case SetSpokesman(spokesmanId) =>
+        spokesmanId match {
+          case l if l > 0 =>
+            if (liveInfoMap.contains(Role.audience)) {
+              if (liveInfoMap(Role.audience).contains(l)) {
+                ProcessorClient.spokesman(roomId, Some(liveInfoMap(Role.audience)(l).liveId), wholeRoomInfo.roomInfo.rtmp.get).map {
+                  case Right(rsp) =>
+                    if (rsp.errCode == 0) {
+                      log.info(s"set spokeman :$spokesmanId success")
+                      dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), SetSpokesmanRsp())
+                    } else {
+                      log.info(s"set spokesman error: ${rsp.msg}")
+                      dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), SetSpokesmanRsp(10002, rsp.msg))
+                    }
+                  case Left(e) =>
+                    log.info(s"set spokesman error: $e")
+                    dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), SetSpokesmanRsp(10003, e))
+                }
+              } else {
+                dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), SetSpokesmanRsp(10000, "no user"))
+              }
+            } else {
+              dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), SetSpokesmanRsp(10001, "no audience"))
+            }
+          case _ =>
+            ProcessorClient.spokesman(roomId, None, wholeRoomInfo.roomInfo.rtmp.get).map {
+              case Right(rsp) =>
+                if (rsp.errCode == 0) {
+                  log.info(s"set spokeman :$spokesmanId success")
+                  dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), SetSpokesmanRsp())
+                } else {
+                  log.info(s"set spokesman error: ${rsp.msg}")
+                  dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), SetSpokesmanRsp(10002, rsp.msg))
+                }
+              case Left(e) =>
+                log.info(s"set spokesman error: $e")
+                dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), SetSpokesmanRsp(10003, e))
+            }
+        }
+
+        Behaviors.same
+
+      case UpdateBlock(userId4Audience, imageOrSound, addOrDelete) =>
+        if (liveInfoMap.contains(Role.audience)) {
+          if (liveInfoMap(Role.audience).contains(userId4Audience)) {
+            ProcessorClient.updateBlockList(roomId, liveInfoMap(Role.audience)(userId4Audience).liveId, imageOrSound, addOrDelete, wholeRoomInfo.roomInfo.rtmp.get).map {
+              case Right(rsp) =>
+                if (rsp.errCode == 0) {
+                  log.info(s"update block: $userId4Audience success")
+                  dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), UpdateBlockRsp())
+                } else {
+                  log.info(s"update block error: ${rsp.msg}")
+                  dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), UpdateBlockRsp(10002, rsp.msg))
+                }
+              case Left(e) =>
+                log.info(s"update block error: $e")
+                dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), UpdateBlockRsp(10003, e))
+            }
+          } else {
+            dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), UpdateBlockRsp(10000, "no user"))
+          }
+        } else {
+          dispatchTo(List(wholeRoomInfo.roomInfo.userId, false), UpdateBlockRsp(10001, "no audience"))
         }
         Behaviors.same
 

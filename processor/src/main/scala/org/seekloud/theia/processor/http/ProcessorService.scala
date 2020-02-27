@@ -77,23 +77,23 @@ trait ProcessorService extends ServiceUtils {
     entity(as[Either[Error, UpdateImageOrSound]]) {
       case Right(req) =>
         log.info(s"post method $UpdateImageOrSound")
-        roomManager ! RoomManager.UpdateBlock(req.roomId, req.userLiveId, req.IOS, req.AOD, req.roomLiveId)
+        roomManager ! RoomManager.UpdateBlock(req.roomId, req.userLiveId, req.iOS, req.aOD, req.roomLiveId)
         complete(UpdateImageOrSoundRsp())
       case Left(e) =>
         complete(parseJsonError)
     }
   }
 
-  //  private def updateSound = (path("updateSound") & post) {
-  //    entity(as[Either[Error, UpdateSound]]) {
-  //      case Right(req) =>
-  //        log.info(s"post method $SetSpokesman")
-  //        roomManager ! RoomManager.
-  //        complete(UpdateSoundRsp())
-  //      case Left(e) =>
-  //        complete(parseJsonError)
-  //    }
-  //  }
+  private def changeHost = (path("changeHost") & post) {
+    entity(as[Either[Error, ChangeHost]]) {
+      case Right(req) =>
+        log.info(s"post method $ChangeHost")
+        roomManager ! RoomManager.ChangeHost(req.roomId, req.newHostLiveId, req.roomLiveId)
+        complete(ChangeHostRsp())
+      case Left(e) =>
+        complete(parseJsonError)
+    }
+  }
 
   private def closeRoom = (path("closeRoom") & post) {
     entity(as[Either[Error, CloseRoom]]) {
@@ -122,15 +122,15 @@ trait ProcessorService extends ServiceUtils {
   def tempDestination(fileInfo: FileInfo): File =
     File.createTempFile(fileInfo.fileName, ".tmp")
 
-  def createNewFile(file:File, name:String): Boolean = {
-    val fis =new FileInputStream(file)
-    val picFile = new File("D:\\image\\"+ name)
+  def createNewFile(file: File, name: String): Boolean = {
+    val fis = new FileInputStream(file)
+    val picFile = new File("D:\\image\\" + name)
     picFile.createNewFile()
     val fos = new FileOutputStream(picFile)
     var byteRead = 0
     val bytes = new Array[Byte](1024)
     byteRead = fis.read(bytes, 0, bytes.length)
-    while(byteRead != -1){
+    while (byteRead != -1) {
       fos.write(bytes, 0, byteRead)
       byteRead = fis.read(bytes, 0, bytes.length)
     }
@@ -148,16 +148,16 @@ trait ProcessorService extends ServiceUtils {
     }
   }
 
-  private val streamLog  = (path("streamLog") & get){
+  private val streamLog = (path("streamLog") & get) {
     showStreamLog = !showStreamLog
     complete(showStreamLog)
   }
-//
-//  val processorRoute:Route = pathPrefix("processor") {
-//    updateRoomInfo ~ closeRoom ~ getMpd ~ getRtmpUrl ~ getDash ~ getMpd4Record ~ getRecordList ~ upLoadImg ~ streamLog
-//  }
+  //
+  //  val processorRoute:Route = pathPrefix("processor") {
+  //    updateRoomInfo ~ closeRoom ~ getMpd ~ getRtmpUrl ~ getDash ~ getMpd4Record ~ getRecordList ~ upLoadImg ~ streamLog
+  //  }
 
-  val processorRoute:Route = pathPrefix("processor") {
-    startRoom ~ newConnect ~ userQuit ~ closeRoom ~ updateRoomInfo ~ upLoadImg ~ streamLog ~ setSpokesman ~ updateImageOrSound
+  val processorRoute: Route = pathPrefix("processor") {
+    startRoom ~ newConnect ~ userQuit ~ closeRoom ~ updateRoomInfo ~ upLoadImg ~ streamLog ~ setSpokesman ~ updateImageOrSound ~ changeHost
   }
 }

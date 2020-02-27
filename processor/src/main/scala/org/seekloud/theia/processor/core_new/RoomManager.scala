@@ -43,6 +43,8 @@ object RoomManager {
 
   case class UpdateBlock(roomId: Long, userLiveId: String, iOS: Int, aOD: Int, roomLiveId: String) extends Command
 
+  case class ChangeHost(roomId: Long, userLiveId: String, roomLiveId: String) extends Command
+
   case class ChildDead(roomId: Long, childName: String, value: ActorRef[RoomActor.Command]) extends Command
 
   def create(): Behavior[Command] = {
@@ -105,6 +107,14 @@ object RoomManager {
           }
           Behaviors.same
 
+        case ChangeHost(roomId, userLiveId, roomLiveId) =>
+          log.info(s"${ctx.self} receive change host msg, roomId: $roomId, partnerLiveId: $userLiveId")
+          val roomActor = getRoomActorOpt(ctx, roomId, roomLiveId)
+          roomActor match {
+            case Some(actor) => actor ! RoomActor.ChangeHost(roomId, userLiveId)
+            case None => log.info(s"roomActor:$roomId is not exist")
+          }
+          Behaviors.same
 
         case msg:UpdateRoomInfo =>
           log.info(s"${ctx.self} receive a msg${msg}")

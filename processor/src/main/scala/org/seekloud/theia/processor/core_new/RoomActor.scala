@@ -9,7 +9,6 @@ import akka.actor.typed.scaladsl.{ActorContext, Behaviors, StashBuffer, TimerSch
 import org.seekloud.theia.processor.common.AppSettings.{debugPath, isDebug}
 import org.seekloud.theia.processor.stream.PipeStream
 import org.seekloud.theia.processor.common.Constants.Part
-import org.seekloud.theia.processor.core_new.RoomManager.UpdateBlock
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
@@ -49,6 +48,8 @@ object RoomActor {
   case class SetSpokesman(roomId: Long, userLiveIdOpt: Option[String]) extends Command
 
   case class UpdateBlock(roomId: Long, userLiveId: String, iOS: Int, aOD: Int) extends Command
+
+  case class ChangeHost(roomId: Long, newHostLiveId: String) extends Command
 
   case class ClosePipe(liveId: String) extends Command
 
@@ -163,10 +164,27 @@ object RoomActor {
           }
           Behaviors.same
 
+        case ChangeHost(roomId, newHostLiveId) =>
+          if (roomLiveMap.get(roomId).nonEmpty) {
+            if (roomLiveMap(roomId).contains(newHostLiveId)) {
+              recorderMap.get(roomId) match {
+                case Some(actor) =>
+                  actor ! RecorderActor.ChangeHost(newHostLiveId)
+                case None =>
+                  log.info(s"no recorder actor when change host")
+              }
+            } else {
+              log.info(s"no user: $newHostLiveId")
+            }
+          } else {
+            log.info("no room")
+          }
+          Behaviors.same
+
         case CloseRoom(roomId) =>
           log.info(s"${ctx.self} receive a msg $msg")
           if(grabberMap.get(roomId).nonEmpty){
-            grabberMap(roomId).values.toList.foreach(_ ! GrabberActor.StopGrabber)
+            grabberMap(roomId).foreach(g => g._2 ! GrabberActor.StopGrabber)
             grabberMap.remove(roomId)
           } else {
             log.info(s"${roomId}  grabbers not exist when closeRoom")

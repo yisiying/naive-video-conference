@@ -48,6 +48,34 @@ object ProcessorProtocol {
                           msg: String = "ok"
                         ) extends CommonRsp
 
+  case class setSpokesman(
+                           roomId: Long,
+                           userLiveIdOpt: Option[String],
+                           roomLiveId: String
+                         )
+
+  case class setSpokesmanRsp(
+                              errCode: Int = 0,
+                              msg: String = "ok"
+                            ) extends CommonRsp
+
+  case class updateImageOrSound(
+                                 roomId: Long,
+                                 userLiveId: String,
+                                 iOS: Int,
+                                 aOD: Int,
+                                 roomLiveId: String
+                               )
+
+  case class updateImageOrSoundRsp(
+                                    errCode: Int = 0,
+                                    msg: String = "ok"
+                                  ) extends CommonRsp
+
+  case class ChangeHost(roomId: Long, newHostLiveId: String, roomLiveId: String)
+
+  case class ChangeHostRsp(errCode: Int = 0, msg: String = "ok") extends CommonRsp
+
   // update
   case class UpdateRoomInfo(
                              roomId:Long,

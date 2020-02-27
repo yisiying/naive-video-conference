@@ -147,6 +147,28 @@ object AuthProtocol {
                                msg: String = "ok"
                              ) extends WsMsgRm2Host
 
+  case class SetSpokesman(spokesmanId: Long) extends WsMsgHost
+
+  case class SetSpokesmanRsp(
+                              errCode: Int = 0,
+                              msg: String = "ok"
+                            ) extends WsMsgRm2Host
+
+  case class UpdateBlock(userId4Audience: Long, imageOrSound: Int, addOrDelete: Int) extends WsMsgHost
+
+  case class UpdateBlockRsp(
+                             errCode: Int = 0,
+                             msg: String = "ok"
+                           ) extends WsMsgRm2Host
+
+  //  case class UpdateBlockRsp4Audience(
+  //                                    imageOrSound: Int,
+  //                                    addOrdelete: Int
+  //                                    )
+
+
+  //  case class SetSpokesmanRsp4Audience() extends WsMsgRm2Audience
+
 
   /**
     *

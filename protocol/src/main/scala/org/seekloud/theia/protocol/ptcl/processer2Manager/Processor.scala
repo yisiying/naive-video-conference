@@ -60,8 +60,8 @@ object Processor {
   case class UpdateImageOrSound(
                                  roomId: Long,
                                  userLiveId: String,
-                                 IOS: Int,
-                                 AOD: Int,
+                                 iOS: Int,
+                                 aOD: Int,
                                  roomLiveId: String
                                )
 
@@ -69,6 +69,10 @@ object Processor {
                                     errCode: Int = 0,
                                     msg: String = "ok"
                                   ) extends CommonRsp
+
+  case class ChangeHost(roomId: Long, newHostLiveId: String, roomLiveId: String)
+
+  case class ChangeHostRsp(errCode: Int = 0, msg: String = "ok") extends CommonRsp
 
 
   /** url:processor/closeRoom

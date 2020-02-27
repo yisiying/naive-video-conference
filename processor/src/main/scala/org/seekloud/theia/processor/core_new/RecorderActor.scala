@@ -67,6 +67,8 @@ object RecorderActor {
 
   case class ChangeSpokesman(userLiveId: Option[String]) extends Command
 
+  case class ChangeHost(newHostLiveId: String) extends Command
+
   sealed trait VideoCommand
 
   case class TimeOut(msg: String) extends Command
@@ -84,6 +86,8 @@ object RecorderActor {
   case class ChangeSpeaker(userLiveId: Option[String]) extends VideoCommand
 
   case class UpdateImageBlock(userLiveId: String, aOD: Int) extends VideoCommand
+
+  case class NewHostInfo(newHostLiveId: String) extends VideoCommand
 
   case object Close extends VideoCommand
 
@@ -230,6 +234,10 @@ object RecorderActor {
           log.info("get update block in single state")
           Behaviors.same
 
+        case ChangeHost(newHostLiveId) =>
+          log.info("get change host in single state")
+          Behaviors.same
+
         case StopRecorder =>
           timer.startSingleTimer(TimerKey4Close, CloseRecorder, 1.seconds)
           Behaviors.same
@@ -349,6 +357,23 @@ object RecorderActor {
             case _ =>
               Behaviors.same
           }
+
+        case ChangeHost(newHostLiveId) =>
+          if (spokesman != null) {
+            log.info("someone is speaking, can not change host")
+          } else if (imageBlock.contains(newHostLiveId) || soundBlock.contains(newHostLiveId)) {
+            log.info("new host is blocked")
+          } else {
+            clientLiveIdMap.get(newHostLiveId) match {
+              case Some(index) =>
+                clientLiveIdMap.remove(newHostLiveId)
+                clientLiveIdMap.put(hostLiveId, index)
+              case None =>
+                log.info(s"clientLiveId map not contain liveId: $newHostLiveId")
+            }
+            drawer ! NewHostInfo(newHostLiveId)
+          }
+          work(roomId, newHostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, spokesman, soundBlock, imageBlock)
 
         case Init(num) =>
           log.info(s"recorder init: $num")
@@ -507,9 +532,7 @@ object RecorderActor {
               clientFrameList.filter(c => c._1 == t.liveId).foreach(_._2.frame = t.frame)
               Behaviors.same
             } else {
-              log.info(s"get new partner: ${
-                t.liveId
-              } !!!!!!!!!!!!!!!!")
+              log.info(s"get new partner: ${t.liveId} !!!!!!!!!!!!!!!!")
               val newList = (t.liveId, Image(t.frame)) :: clientFrameList
               convert2Map.put(t.liveId, new Java2DFrameConverter())
               graph.clearRect(0, 0, canvasSize._1, canvasSize._2)
@@ -536,6 +559,10 @@ object RecorderActor {
                 imageBlock.filterNot(_ == userLiveId)
             }
             draw(canvas, graph, clientFrameList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize, spokesman, newList)
+
+          case NewHostInfo(newHostLiveId) =>
+            convert2Map.remove(newHostLiveId)
+            Behaviors.same
 
           case Close =>
             log.info(s"drawer stopped")

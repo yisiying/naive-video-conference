@@ -24,7 +24,7 @@ object ProcessorClient extends HttpUtil{
 
   val processorBaseUrl = s"http://${AppSettings.processorIp}:${AppSettings.processorPort}/theia/processor"
 
-  def startRoom(roomId: Long, liveId4host: String, liveId4room: String, layout: Int) = {
+  def startRoom(roomId: Long, liveId4host: String, liveId4room: String, layout: Int): Future[Either[String, startRoomRsp]] = {
     val url = processorBaseUrl + "/startRoom"
     val jsonString = startRoomInfo(roomId, liveId4host, liveId4room, layout).asJson.noSpaces
     postJsonRequestSend("startRoom", url, List(), jsonString, timeOut = 60 * 1000, needLogRsp = false).map {
@@ -61,7 +61,7 @@ object ProcessorClient extends HttpUtil{
 
   }
 
-  def userQuit(roomId: Long, userLiveId: String, roomLiveId: String) = {
+  def userQuit(roomId: Long, userLiveId: String, roomLiveId: String): Future[Either[String, userQuitRsp]] = {
     val url = processorBaseUrl + "/userQuit"
     val jsonString = userQuitInfo(roomId, userLiveId, roomLiveId).asJson.noSpaces
     postJsonRequestSend("userQuit", url, List(), jsonString, timeOut = 60 * 1000, needLogRsp = false).map {
@@ -75,6 +75,60 @@ object ProcessorClient extends HttpUtil{
         }
       case Left(error) =>
         log.error(s"userQuit postJsonRequestSend error : $error")
+        Left("Error")
+    }
+  }
+
+  def spokesman(roomId: Long, userIdOpt: Option[String], roomLiveId: String): Future[Either[String, setSpokesmanRsp]] = {
+    val url = processorBaseUrl + "/setSpokesman"
+    val jsonString = setSpokesman(roomId, userIdOpt, roomLiveId).asJson.noSpaces
+    postJsonRequestSend("setSpokesman", url, List(), jsonString, timeOut = 60 * 1000, needLogRsp = false).map {
+      case Right(v) =>
+        decode[setSpokesmanRsp](v) match {
+          case Right(value) =>
+            Right(value)
+          case Left(e) =>
+            log.error(s"setSpokesman decode error : $e")
+            Left("Error")
+        }
+      case Left(error) =>
+        log.error(s"setSpokesman postJsonRequestSend error : $error")
+        Left("Error")
+    }
+  }
+
+  def updateBlockList(roomId: Long, userLiveId: String, iOS: Int, aOD: Int, roomLiveId: String): Future[Either[String, updateImageOrSoundRsp]] = {
+    val url = processorBaseUrl + "/updateImage"
+    val jsonString = updateImageOrSound(roomId, userLiveId, iOS, aOD, roomLiveId).asJson.noSpaces
+    postJsonRequestSend("updateImage", url, List(), jsonString, timeOut = 60 * 1000, needLogRsp = false).map {
+      case Right(v) =>
+        decode[updateImageOrSoundRsp](v) match {
+          case Right(value) =>
+            Right(value)
+          case Left(e) =>
+            log.error(s"setSpokesman decode error : $e")
+            Left("Error")
+        }
+      case Left(error) =>
+        log.error(s"setSpokesman postJsonRequestSend error : $error")
+        Left("Error")
+    }
+  }
+
+  def changeHost(roomId: Long, newHostLiveId: String, roomLiveId: String): Future[Either[String, ChangeHostRsp]] = {
+    val url = processorBaseUrl + "/changeHost"
+    val jsonString = ChangeHost(roomId, newHostLiveId, roomLiveId).asJson.noSpaces
+    postJsonRequestSend("changeHost", url, List(), jsonString, timeOut = 60 * 1000, needLogRsp = false).map {
+      case Right(v) =>
+        decode[ChangeHostRsp](v) match {
+          case Right(value) =>
+            Right(value)
+          case Left(e) =>
+            log.error(s"change host decode error : $e")
+            Left("Error")
+        }
+      case Left(error) =>
+        log.error(s"change host postJsonRequestSend error : $error")
         Left("Error")
     }
   }
