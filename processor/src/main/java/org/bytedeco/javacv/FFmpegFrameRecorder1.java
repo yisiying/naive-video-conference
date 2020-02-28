@@ -78,6 +78,7 @@ import static org.bytedeco.ffmpeg.global.swresample.*;
 import static org.bytedeco.ffmpeg.global.swscale.*;
 
 /**
+ *
  * @author Samuel Audet
  */
 public class FFmpegFrameRecorder1 extends FrameRecorder {
@@ -88,12 +89,10 @@ public class FFmpegFrameRecorder1 extends FrameRecorder {
     public static FFmpegFrameRecorder createDefault(String f, int w, int h) throws Exception {
         return new FFmpegFrameRecorder(f, w, h);
     }
-
     private long ts = 0;
     private long lastTs = 0;
 
     private static Exception loadingException = null;
-
     public static void tryLoad() throws Exception {
         if (loadingException != null) {
             throw loadingException;
@@ -134,23 +133,18 @@ public class FFmpegFrameRecorder1 extends FrameRecorder {
     public FFmpegFrameRecorder1(File file, int audioChannels) {
         this(file, 0, 0, audioChannels);
     }
-
     public FFmpegFrameRecorder1(String filename, int audioChannels) {
         this(filename, 0, 0, audioChannels);
     }
-
     public FFmpegFrameRecorder1(File file, int imageWidth, int imageHeight) {
         this(file, imageWidth, imageHeight, 0);
     }
-
     public FFmpegFrameRecorder1(String filename, int imageWidth, int imageHeight) {
         this(filename, imageWidth, imageHeight, 0);
     }
-
     public FFmpegFrameRecorder1(File file, int imageWidth, int imageHeight, int audioChannels) {
         this(file.getAbsolutePath(), imageWidth, imageHeight, audioChannels);
     }
-
     public FFmpegFrameRecorder1(String filename, int imageWidth, int imageHeight, int audioChannels) {
         this.filename = filename;
         this.imageWidth = imageWidth;
@@ -172,31 +166,26 @@ public class FFmpegFrameRecorder1 extends FrameRecorder {
         this.video_pkt = new AVPacket();
         this.audio_pkt = new AVPacket();
     }
-
     public FFmpegFrameRecorder1(OutputStream outputStream, int audioChannels) {
         this(outputStream.toString(), audioChannels);
         this.outputStream = outputStream;
         this.closeOutputStream = true;
     }
-
     public FFmpegFrameRecorder1(OutputStream outputStream, int imageWidth, int imageHeight) {
         this(outputStream.toString(), imageWidth, imageHeight);
         this.outputStream = outputStream;
         this.closeOutputStream = true;
     }
-
     public FFmpegFrameRecorder1(OutputStream outputStream, int imageWidth, int imageHeight, int audioChannels) {
         this(outputStream.toString(), imageWidth, imageHeight, audioChannels);
         this.outputStream = outputStream;
         this.closeOutputStream = true;
     }
-
     public void release() throws Exception {
         synchronized (org.bytedeco.ffmpeg.global.avcodec.class) {
             releaseUnsafe();
         }
     }
-
     public void releaseUnsafe() throws Exception {
         /* close each codec */
         if (video_c != null) {
@@ -331,7 +320,6 @@ public class FFmpegFrameRecorder1 extends FrameRecorder {
     }
 
     static WriteCallback writeCallback = new WriteCallback();
-
     static {
         PointerScope s = PointerScope.getInnerScope();
         if (s != null) {
@@ -370,7 +358,6 @@ public class FFmpegFrameRecorder1 extends FrameRecorder {
     public boolean isCloseOutputStream() {
         return closeOutputStream;
     }
-
     public void setCloseOutputStream(boolean closeOutputStream) {
         this.closeOutputStream = closeOutputStream;
     }
@@ -937,17 +924,13 @@ public class FFmpegFrameRecorder1 extends FrameRecorder {
 
     @Override
     public void record(Frame frame) throws Exception {
-//        System.out.println("1 ----------------------------");
         record(frame, frame.opaque instanceof AVFrame ? ((AVFrame) frame.opaque).format() : AV_PIX_FMT_NONE);
     }
-
     public void record(Frame frame, int pixelFormat) throws Exception {
-//        System.out.println("2 ----------------------------");
         if (frame == null || (frame.image == null && frame.samples == null)) {
             recordImage(0, 0, 0, 0, 0, pixelFormat, (Buffer[]) null);
         } else {
             if (frame.image != null) {
-//                System.out.println("3 ----------------------------");
                 frame.keyFrame = recordImage(frame.imageWidth, frame.imageHeight, frame.imageDepth,
                         frame.imageChannels, frame.imageStride, pixelFormat, frame.image);
             }
