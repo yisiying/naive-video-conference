@@ -558,7 +558,8 @@ object RecorderActor {
 
           case NewHostInfo(newHostLiveId) =>
             convert2Map.remove(newHostLiveId)
-            Behaviors.same
+            val newList = clientFrameList.filterNot(_._1 == newHostLiveId)
+            draw(canvas, graph, newList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize, spokesman, imageBlock)
 
           case Close =>
             log.info(s"drawer stopped")
