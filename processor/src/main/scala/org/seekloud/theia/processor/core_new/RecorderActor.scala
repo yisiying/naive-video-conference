@@ -211,7 +211,7 @@ object RecorderActor {
                 layout, "defaultImg.jpg", roomId, (640, 480), "-1", Nil),
               s"drawer_$roomId")
             ctx.self ! NewFrame(liveId, frame)
-            work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, "-1", Nil, Nil)
+            work(roomId, mutable.HashMap[Long, String](roomId, hostLiveId), clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, mutable.HashMap[Long, String](roomId, "-1"), mutable.HashMap[Long, List[String]](), Nil)
           }
 
         case CloseRecorder =>
@@ -245,13 +245,13 @@ object RecorderActor {
     }
   }
 
-  def work(roomId: Long, hostLiveId: String, clientLiveIdMap: mutable.Map[String, Int], layout: Int,
+  def work(roomId: Long, hostLiveId: mutable.HashMap[Long, String], clientLiveIdMap: mutable.Map[String, Int], layout: Int,
            recorder4ts: FFmpegFrameRecorder1,
            ffFilter: FFmpegFrameFilter,
            drawer: ActorRef[VideoCommand],
            canvasSize: (Int, Int),
-           spokesman: String,
-           soundBlock: List[String],
+           spokesman: mutable.HashMap[Long, String],
+           soundBlock: mutable.HashMap[Long, List[String]],
            imageBlock: List[String]
           )
           (implicit timer: TimerScheduler[Command],
@@ -274,7 +274,7 @@ object RecorderActor {
               if (liveId == hostLiveId) {
                 ffFilter.pushSamples(0, frame.audioChannels, frame.sampleRate, ffFilter.getSampleFormat, frame.samples: _*)
               } else if (clientLiveIdMap.keys.toList.contains(liveId)) {
-                if ((spokesman == "-1" || spokesman == liveId) && !soundBlock.contains(liveId)) {
+                if ((spokesman(roomId) == "-1" || spokesman(roomId) == liveId) && !soundBlock(roomId).contains(liveId)) {
                   ffFilter.pushSamples(clientLiveIdMap(liveId), frame.audioChannels, frame.sampleRate, ffFilter.getSampleFormat, frame.samples: _*)
                 }
               } else {
@@ -326,8 +326,9 @@ object RecorderActor {
           if (drawer != null) {
             drawer ! ChangeSpeaker(userLiveId)
           }
-          val newSpokesman = userLiveId
-          work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, newSpokesman, soundBlock, imageBlock)
+          spokesman.update(roomId, userLiveId)
+          //          work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, spokesman, soundBlock, imageBlock)
+          Behaviors.same
 
         case UpdateBlock(userLiveId, iOS, aOD) =>
           iOS match {
@@ -339,31 +340,34 @@ object RecorderActor {
             case ImageOrSound.sound =>
               val newList = aOD match {
                 case Block.add =>
-                  userLiveId :: soundBlock
+                  userLiveId :: soundBlock(roomId)
                 case Block.delete =>
-                  soundBlock.filterNot(_ == userLiveId)
+                  soundBlock(roomId).filterNot(_ == userLiveId)
               }
-              work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, spokesman, newList, imageBlock)
+              soundBlock.update(roomId, newList)
+              //              work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, spokesman, newList, imageBlock)
+              Behaviors.same
             case _ =>
               Behaviors.same
           }
 
         case ChangeHost(newHostLiveId) =>
-          if (spokesman != "-1") {
+          if (spokesman(roomId) != "-1") {
             log.info("someone is speaking, can not change host")
-          } else if (imageBlock.contains(newHostLiveId) || soundBlock.contains(newHostLiveId)) {
+          } else if (imageBlock.contains(newHostLiveId) || soundBlock(roomId).contains(newHostLiveId)) {
             log.info("new host is blocked")
           } else {
             clientLiveIdMap.get(newHostLiveId) match {
               case Some(index) =>
                 clientLiveIdMap.remove(newHostLiveId)
-                clientLiveIdMap.put(hostLiveId, index)
+                clientLiveIdMap.put(hostLiveId(roomId), index)
               case None =>
                 log.info(s"clientLiveId map not contain liveId: $newHostLiveId")
             }
             drawer ! NewHostInfo(newHostLiveId)
+            hostLiveId.update(roomId, newHostLiveId)
           }
-          work(roomId, newHostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, spokesman, soundBlock, imageBlock)
+          work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, spokesman, soundBlock, imageBlock)
 
         case Init(num) =>
           log.info(s"recorder init: $num")
