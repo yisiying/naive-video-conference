@@ -39,7 +39,7 @@ object RoomManager {
 
   case class RecorderRef(roomId: Long, ref: ActorRef[RecorderActor.Command]) extends Command
 
-  case class SetSpokesman(roomId: Long, userLiveIdOpt: Option[String], roomLiveId: String) extends Command
+  case class SetSpokesman(roomId: Long, userLiveIdOpt: String, roomLiveId: String) extends Command
 
   case class UpdateBlock(roomId: Long, userLiveId: String, iOS: Int, aOD: Int, roomLiveId: String) extends Command
 

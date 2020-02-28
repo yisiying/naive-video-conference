@@ -65,7 +65,7 @@ object RecorderActor {
 
   case object TimerKey4Close
 
-  case class ChangeSpokesman(userLiveId: Option[String]) extends Command
+  case class ChangeSpokesman(userLiveId: String) extends Command
 
   case class ChangeHost(newHostLiveId: String) extends Command
 
@@ -83,7 +83,7 @@ object RecorderActor {
 
   case class RemoveClient(liveId: String) extends VideoCommand
 
-  case class ChangeSpeaker(userLiveId: Option[String]) extends VideoCommand
+  case class ChangeSpeaker(userLiveId: String) extends VideoCommand
 
   case class UpdateImageBlock(userLiveId: String, aOD: Int) extends VideoCommand
 
@@ -326,10 +326,7 @@ object RecorderActor {
           if (drawer != null) {
             drawer ! ChangeSpeaker(userLiveId)
           }
-          val newSpokesman = userLiveId match {
-            case Some(v) => v
-            case None => "-1"
-          }
+          val newSpokesman = userLiveId
           work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, newSpokesman, soundBlock, imageBlock)
 
         case UpdateBlock(userLiveId, iOS, aOD) =>
@@ -545,10 +542,7 @@ object RecorderActor {
 
           case ChangeSpeaker(userLiveId) =>
             log.info(s"get set spokesman: $userLiveId")
-            val newSpokesman = userLiveId match {
-              case Some(v) => v
-              case None => "-1"
-            }
+            val newSpokesman = userLiveId
             graph.clearRect(0, 0, canvasSize._1, canvasSize._2)
             draw(canvas, graph, clientFrameList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize, newSpokesman, imageBlock)
 

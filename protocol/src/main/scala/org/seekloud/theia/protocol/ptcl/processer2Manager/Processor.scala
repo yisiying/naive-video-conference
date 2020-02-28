@@ -48,7 +48,7 @@ object Processor {
 
   case class SetSpokesman(
                            roomId: Long,
-                           userLiveIdOpt: Option[String],
+                           userLiveIdOpt: String,
                            roomLiveId: String
                          )
 

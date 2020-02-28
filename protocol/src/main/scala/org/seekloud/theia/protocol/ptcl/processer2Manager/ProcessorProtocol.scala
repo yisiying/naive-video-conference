@@ -50,7 +50,7 @@ object ProcessorProtocol {
 
   case class setSpokesman(
                            roomId: Long,
-                           userLiveIdOpt: Option[String],
+                           userLiveIdOpt: String,
                            roomLiveId: String
                          )
 

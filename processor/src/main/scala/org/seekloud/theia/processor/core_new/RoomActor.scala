@@ -45,7 +45,7 @@ object RoomActor {
 
   case class ChildDead4Recorder(roomId: Long, childName: String, value: ActorRef[RecorderActor.Command]) extends Command
 
-  case class SetSpokesman(roomId: Long, userLiveIdOpt: Option[String]) extends Command
+  case class SetSpokesman(roomId: Long, userLiveIdOpt: String) extends Command
 
   case class UpdateBlock(roomId: Long, userLiveId: String, iOS: Int, aOD: Int) extends Command
 

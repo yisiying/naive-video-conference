@@ -79,9 +79,9 @@ object ProcessorClient extends HttpUtil{
     }
   }
 
-  def spokesman(roomId: Long, userIdOpt: Option[String], roomLiveId: String): Future[Either[String, setSpokesmanRsp]] = {
+  def spokesman(roomId: Long, userId: String, roomLiveId: String): Future[Either[String, setSpokesmanRsp]] = {
     val url = processorBaseUrl + "/setSpokesman"
-    val jsonString = setSpokesman(roomId, userIdOpt, roomLiveId).asJson.noSpaces
+    val jsonString = setSpokesman(roomId, userId, roomLiveId).asJson.noSpaces
     postJsonRequestSend("setSpokesman", url, List(), jsonString, timeOut = 60 * 1000, needLogRsp = false).map {
       case Right(v) =>
         decode[setSpokesmanRsp](v) match {
