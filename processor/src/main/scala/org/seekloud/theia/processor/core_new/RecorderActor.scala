@@ -208,10 +208,10 @@ object RecorderActor {
             val drawer = ctx.spawn(
               draw(canvas, canvas.getGraphics, List[(String, Image)](), recorder4ts,
                 new Java2DFrameConverter(), mutable.Map(liveId -> new Java2DFrameConverter()), new Java2DFrameConverter,
-                layout, "defaultImg.jpg", roomId, (640, 480), null, Nil),
+                layout, "defaultImg.jpg", roomId, (640, 480), "", Nil),
               s"drawer_$roomId")
             ctx.self ! NewFrame(liveId, frame)
-            work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, null, Nil, Nil)
+            work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, "", Nil, Nil)
           }
 
         case CloseRecorder =>
@@ -274,7 +274,7 @@ object RecorderActor {
               if (liveId == hostLiveId) {
                 ffFilter.pushSamples(0, frame.audioChannels, frame.sampleRate, ffFilter.getSampleFormat, frame.samples: _*)
               } else if (clientLiveIdMap.keys.toList.contains(liveId)) {
-                if ((spokesman == null || spokesman == liveId) && !soundBlock.contains(liveId)) {
+                if ((spokesman == "" || spokesman == liveId) && !soundBlock.contains(liveId)) {
                   ffFilter.pushSamples(clientLiveIdMap(liveId), frame.audioChannels, frame.sampleRate, ffFilter.getSampleFormat, frame.samples: _*)
                 }
               } else {
@@ -328,7 +328,7 @@ object RecorderActor {
           }
           val newSpokesman = userLiveId match {
             case Some(v) => v
-            case None => null
+            case None => ""
           }
           work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, newSpokesman, soundBlock, imageBlock)
 
@@ -359,7 +359,7 @@ object RecorderActor {
           }
 
         case ChangeHost(newHostLiveId) =>
-          if (spokesman != null) {
+          if (spokesman != "") {
             log.info("someone is speaking, can not change host")
           } else if (imageBlock.contains(newHostLiveId) || soundBlock.contains(newHostLiveId)) {
             log.info("new host is blocked")
@@ -554,7 +554,7 @@ object RecorderActor {
             log.info(s"get set spokesman: $userLiveId")
             val newSpokesman = userLiveId match {
               case Some(v) => v
-              case None => null
+              case None => ""
             }
             graph.clearRect(0, 0, canvasSize._1, canvasSize._2)
             draw(canvas, graph, clientFrameList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize, newSpokesman, imageBlock)
