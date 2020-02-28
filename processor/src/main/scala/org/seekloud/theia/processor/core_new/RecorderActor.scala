@@ -458,7 +458,7 @@ object RecorderActor {
                       graph.setColor(Color.GREEN)
                       graph.drawRect(canvasSize._1 / 2, canvasSize._2 / 4, canvasSize._1 / 2, canvasSize._2 / 2)
                       graph.drawImage(clientImg._2, canvasSize._1 / 2 + 8, canvasSize._2 / 4 + 8, canvasSize._1 / 2 - 16, canvasSize._2 / 2 - 16, null)
-                      graph.setColor(Color.BLACK)
+                      graph.setColor(Color.WHITE)
                       graph.drawString("参会者", 344, 24)
                     } else {
                       graph.drawImage(clientImg._2, canvasSize._1 / 2 + 8, canvasSize._2 / 4 + 8, canvasSize._1 / 2 - 16, canvasSize._2 / 2 - 16, null)
@@ -480,7 +480,7 @@ object RecorderActor {
                       graph.setColor(Color.GREEN)
                       graph.drawRect(canvasSize._1 / 2, canvasSize._2 / 4, canvasSize._1 / 2, canvasSize._2 / 2)
                       graph.drawImage(clientImg._2, n * canvasSize._1 / 2 + 8, canvasSize._2 / 2 + 8, canvasSize._1 / 2 - 16, canvasSize._2 / 2 - 16, null)
-                      graph.setColor(Color.BLACK)
+                      graph.setColor(Color.WHITE)
                       graph.drawString("参会者", 344, 24)
                     } else {
                       graph.drawImage(clientImg._2, n * canvasSize._1 / 2 + 8, canvasSize._2 / 2 + 8, canvasSize._1 / 2 - 16, canvasSize._2 / 2 - 16, null)
@@ -501,7 +501,7 @@ object RecorderActor {
                   graph.setColor(Color.GREEN)
                   graph.drawRect(canvasSize._1 / 2, canvasSize._2 / 4, canvasSize._1 / 2, canvasSize._2 / 2)
                   graph.drawImage(clientImgList.head._2, canvasSize._1 / 2 + 8, 8, canvasSize._1 / 2 - 8, canvasSize._2 / 2 - 8, null)
-                  graph.setColor(Color.BLACK)
+                  graph.setColor(Color.WHITE)
                   graph.drawString("参会者", 344, 24)
                 } else {
                   graph.drawImage(clientImgList.head._2, canvasSize._1 / 2 + 8, 8, canvasSize._1 / 2 - 8, canvasSize._2 / 2 - 8, null)
