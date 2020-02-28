@@ -261,7 +261,7 @@ object RecorderActor {
       msg match {
         case NewFrame(liveId, frame) =>
           if (frame.image != null) {
-            if (liveId == hostLiveId) {
+            if (liveId == hostLiveId(roomId)) {
               drawer ! Image4Host(frame)
             } else if (clientLiveIdMap.keys.toList.contains(liveId)) {
               drawer ! Image4Client(liveId, frame)
@@ -271,7 +271,7 @@ object RecorderActor {
           }
           if (frame.samples != null) {
             try {
-              if (liveId == hostLiveId) {
+              if (liveId == hostLiveId(roomId)) {
                 ffFilter.pushSamples(0, frame.audioChannels, frame.sampleRate, ffFilter.getSampleFormat, frame.samples: _*)
               } else if (clientLiveIdMap.keys.toList.contains(liveId)) {
                 if ((spokesman(roomId) == "-1" || spokesman(roomId) == liveId) && !soundBlock(roomId).contains(liveId)) {
