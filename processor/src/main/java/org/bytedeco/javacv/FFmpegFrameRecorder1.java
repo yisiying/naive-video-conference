@@ -937,17 +937,17 @@ public class FFmpegFrameRecorder1 extends FrameRecorder {
 
     @Override
     public void record(Frame frame) throws Exception {
-        System.out.println("1 ----------------------------");
+//        System.out.println("1 ----------------------------");
         record(frame, frame.opaque instanceof AVFrame ? ((AVFrame) frame.opaque).format() : AV_PIX_FMT_NONE);
     }
 
     public void record(Frame frame, int pixelFormat) throws Exception {
-        System.out.println("2 ----------------------------");
+//        System.out.println("2 ----------------------------");
         if (frame == null || (frame.image == null && frame.samples == null)) {
             recordImage(0, 0, 0, 0, 0, pixelFormat, (Buffer[]) null);
         } else {
             if (frame.image != null) {
-                System.out.println("3 ----------------------------");
+//                System.out.println("3 ----------------------------");
                 frame.keyFrame = recordImage(frame.imageWidth, frame.imageHeight, frame.imageDepth,
                         frame.imageChannels, frame.imageStride, pixelFormat, frame.image);
             }

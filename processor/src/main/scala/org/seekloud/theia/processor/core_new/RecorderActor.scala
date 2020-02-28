@@ -554,6 +554,7 @@ object RecorderActor {
               case Some(v) => v
               case None => null
             }
+            graph.clearRect(0, 0, canvasSize._1, canvasSize._2)
             draw(canvas, graph, clientFrameList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize, newSpokesman, imageBlock)
 
           case UpdateImageBlock(userLiveId, aOD) =>
