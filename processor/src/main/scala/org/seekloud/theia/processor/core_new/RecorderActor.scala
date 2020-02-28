@@ -274,7 +274,7 @@ object RecorderActor {
               if (liveId == hostLiveId) {
                 ffFilter.pushSamples(0, frame.audioChannels, frame.sampleRate, ffFilter.getSampleFormat, frame.samples: _*)
               } else if (clientLiveIdMap.keys.toList.contains(liveId)) {
-                if ((spokesman == "-1" || spokesman == liveId) && !soundBlock(roomId).contains(liveId)) {
+                if ((spokesman == "-1" || spokesman == liveId) && !soundBlock.contains(liveId)) {
                   ffFilter.pushSamples(clientLiveIdMap(liveId), frame.audioChannels, frame.sampleRate, ffFilter.getSampleFormat, frame.samples: _*)
                 }
               } else {
