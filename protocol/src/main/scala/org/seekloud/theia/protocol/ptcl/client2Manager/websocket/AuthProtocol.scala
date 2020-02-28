@@ -161,6 +161,12 @@ object AuthProtocol {
                              msg: String = "ok"
                            ) extends WsMsgRm2Host
 
+  case class ChangeHost(newHostId: Long) extends WsMsgHost
+
+  case class ChangeHostRsp(roomInfo: RoomInfo) extends WsMsgRm
+
+
+
   //  case class UpdateBlockRsp4Audience(
   //                                    imageOrSound: Int,
   //                                    addOrdelete: Int

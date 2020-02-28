@@ -85,7 +85,6 @@ object SaveActor {
       //      val process = pb.start()
       //      this.process = process
 
-      if(!testModel){
         val commandStr = s"cat $fileLocation$roomId/init-stream0.m4s $fileLocation$roomId/chunk-stream0*.m4s >> $recordLocation$roomId/$startTime/video.mp4" +
                          s"; cat $fileLocation$roomId/init-stream1.m4s $fileLocation$roomId/chunk-stream1*.m4s >> $recordLocation$roomId/$startTime/audio.mp4"
         CmdUtil.exeCmd4Linux(commandStr).onComplete {
@@ -124,39 +123,6 @@ object SaveActor {
             periodlyRm()
             log.info(s"record error: $e")
         }
-      } else {
-        val path = "/Users/litianyu/Downloads/dash/"
-//        val path = "D:\\test\\"
-        val commandStr4Win1 = s"copy /b ${path}init-stream0.m4s+${path}chunk-stream0*.m4s ${path}video.mp4"
-        val commandStr4Win2 = s"copy /b ${path}init-stream1.m4s+${path}chunk-stream1*.m4s ${path}audio.mp4"
-        val r1 = CmdUtil.exeCmd4Windows(commandStr4Win1)
-        val r2 = CmdUtil.exeCmd4Windows(commandStr4Win2)
-        Future.sequence(List(r1, r2)).onComplete{
-          case Success(a) =>
-            println(s"exe successfully, $a")
-            val fCommandStr = ffmpeg + s" -i ${path}video.mp4 -i ${path}audio.mp4 -c copy -b:v 1M -movflags faststart ${path}final.mp4"
-
-            val file = new File(s"$saveLogPath/saveLog-$roomId-${TimeUtil.timeStamp2DetailDate(startTime).replaceAll(" ","-")}")
-            if (!file.exists()) {
-              file.createNewFile()
-              log.debug(s"create distributor log info: $file")
-            }
-            if (file.exists() && file.canWrite) {
-              log.debug(s"create distributor log info: $file")
-              writer = new BufferedWriter(new FileWriter(file))
-              CmdUtil.exeFFmpegWithLog(fCommandStr, writer) match {
-                case Right(processAndLog) =>
-                  process = processAndLog
-
-                case Left(e) =>
-                  log.info(s"execute ffmpeg cmd error, $e")
-              }
-            }
-
-          case Failure(exception) =>
-            println(s"exe error, $exception")
-        }
-      }
     }
 
     def close(): Unit = {

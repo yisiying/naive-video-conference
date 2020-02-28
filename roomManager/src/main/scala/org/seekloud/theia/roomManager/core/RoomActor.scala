@@ -370,6 +370,55 @@ object RoomActor {
                                   sendBuffer: MiddleBufferInJvm
                                 ): Behavior[Command] = {
     msg match {
+      case ChangeHost(newHostId) =>
+        if (invitationList.contains(Role.audience)) {
+          if (invitationList(Role.audience).map(_._1).contains(newHostId)) {
+            for {
+              userTableOpt <- UserInfoDao.searchById(newHostId)
+            } yield {
+              if (userTableOpt.nonEmpty) {
+                val roomInfo = RoomInfo(roomId, s"${userTableOpt.get.userName}的会议室", "", userTableOpt.get.uid, userTableOpt.get.userName,
+                  UserInfoDao.getHeadImg(userTableOpt.get.headImg),
+                  UserInfoDao.getHeadImg(userTableOpt.get.coverImg), 0, 0,
+                  Some(s"room-$roomId")
+                )
+                val oldHostId = userId
+                val oldHostName = invitationList(Role.host).head._2
+                val oldHostLiveInfo = liveInfoMap(Role.host)(userId)
+                val newHostLiveInfo = liveInfoMap(Role.audience)(userTableOpt.get.uid)
+                liveInfoMap.put(Role.host, mutable.HashMap(userTableOpt.get.uid -> newHostLiveInfo))
+                liveInfoMap(Role.audience).remove(userTableOpt.get.uid)
+                liveInfoMap(Role.audience).put(oldHostId, oldHostLiveInfo)
+                invitationList.put(Role.host, List((userTableOpt.get.uid, userTableOpt.get.userName)))
+                val audienceList = invitationList(Role.audience)
+                val newList = (oldHostId, oldHostName) :: audienceList.filterNot(_._1 == userTableOpt.get.uid)
+                invitationList.put(Role.audience, newList)
+                dispatch(ChangeHostRsp(roomInfo))
+                ctx.self ! SwitchBehavior("idle", idle(WholeRoomInfo(roomInfo),
+                  liveInfoMap,
+                  subscribers,
+                  startTime,
+                  invitationList,
+                  isJoinOpen
+                )
+                )
+              } else {
+                log.debug(s"${ctx.self.path} 开始直播被拒绝，数据库中没有该用户的数据，userId=$userId")
+                dispatchTo(subscribers)(List((userId, false)), StartLiveRefused)
+                ctx.self ! SwitchBehavior("idle", idle(wholeRoomInfo, liveInfoMap, subscribers, startTime, invitationList, isJoinOpen))
+              }
+            }
+
+            switchBehavior(ctx, "busy", busy(), InitTime, TimeOut("busy"))
+          } else {
+            log.info("no user in invitation list")
+            Behaviors.same
+          }
+        } else {
+          log.info("no user in invitation list")
+          Behaviors.same
+        }
+
       case ChangeLiveMode(isConnectOpen, aiMode, screenLayout) =>
         log.info(s"get ChangeLiveMode msg: $isConnectOpen, $aiMode, $screenLayout")
         val connect = isConnectOpen match {
@@ -612,6 +661,7 @@ object RoomActor {
       case JudgeLike(`userId`, `roomId`) =>
         dispatchTo(List((userId, false)), JudgeLikeRsp(like = false))
         Behaviors.same
+
 
       case Comment(`userId`, `roomId`, comment, color, extension) =>
         UserInfoDao.searchById(userId).onComplete {
