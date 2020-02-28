@@ -208,7 +208,7 @@ object RecorderActor {
             val drawer = ctx.spawn(
               draw(canvas, canvas.getGraphics, List[(String, Image)](), recorder4ts,
                 new Java2DFrameConverter(), mutable.Map(liveId -> new Java2DFrameConverter()), new Java2DFrameConverter,
-                layout, "defaultImg.jpg", roomId, (640, 480), null, Nil),
+                layout, "defaultImg.jpg", roomId, (640, 480), "", Nil),
               s"drawer_$roomId")
             ctx.self ! NewFrame(liveId, frame)
             work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, "", Nil, Nil)
