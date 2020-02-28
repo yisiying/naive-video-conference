@@ -453,6 +453,7 @@ object RecorderActor {
                     if (imageBlock.contains(clientImg._1)) {
                       graph.setColor(Color.BLACK)
                       graph.drawRect(canvasSize._1 / 2, canvasSize._2 / 4, canvasSize._1 / 2, canvasSize._2 / 2)
+                      graph.setColor(Color.white)
                       graph.drawString("参会者", 344, 24)
                     } else if (spokesman == clientImg._1) {
                       graph.setColor(Color.GREEN)
@@ -475,7 +476,8 @@ object RecorderActor {
                     if (imageBlock.contains(clientImg._1)) {
                       graph.setColor(Color.BLACK)
                       graph.drawRect(n * canvasSize._1 / 2, canvasSize._2 / 2, canvasSize._1 / 2, canvasSize._2 / 2)
-                      graph.drawString("参会者", 344, 24)
+                      graph.setColor(Color.white)
+                      graph.drawString("参会者", n * canvasSize._1 / 2 + 24, canvasSize._2 / 2 + 24)
                     } else if (spokesman == clientImg._1) {
                       graph.setColor(Color.GREEN)
                       graph.drawRect(n * canvasSize._1 / 2, canvasSize._2 / 2, canvasSize._1 / 2, canvasSize._2 / 2)
@@ -565,6 +567,7 @@ object RecorderActor {
               case Block.delete =>
                 imageBlock.filterNot(_ == userLiveId)
             }
+            graph.clearRect(0, 0, canvasSize._1, canvasSize._2)
             draw(canvas, graph, clientFrameList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize, spokesman, newList)
 
           case NewHostInfo(newHostLiveId) =>
