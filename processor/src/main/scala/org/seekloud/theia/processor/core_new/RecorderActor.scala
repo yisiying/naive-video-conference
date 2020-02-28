@@ -440,15 +440,15 @@ object RecorderActor {
                 clientImgList.foreach {
                   clientImg =>
                     if (imageBlock.contains(clientImg._1)) {
-                      graph.setColor(Color.BLACK)
+                      graph.setColor(Color.black)
                       graph.drawRect(canvasSize._1 / 2, canvasSize._2 / 4, canvasSize._1 / 2, canvasSize._2 / 2)
                       graph.setColor(Color.white)
                       graph.drawString("参会者", 344, 24)
                     } else if (spokesman == clientImg._1) {
-                      graph.setColor(Color.GREEN)
+                      graph.setColor(Color.green)
                       graph.drawRect(canvasSize._1 / 2, canvasSize._2 / 4, canvasSize._1 / 2, canvasSize._2 / 2)
                       graph.drawImage(clientImg._2, canvasSize._1 / 2 + 8, canvasSize._2 / 4 + 8, canvasSize._1 / 2 - 16, canvasSize._2 / 2 - 16, null)
-                      graph.setColor(Color.WHITE)
+                      graph.setColor(Color.white)
                       graph.drawString("参会者", 344, 24)
                     } else {
                       graph.drawImage(clientImg._2, canvasSize._1 / 2 + 8, canvasSize._2 / 4 + 8, canvasSize._1 / 2 - 16, canvasSize._2 / 2 - 16, null)
@@ -463,15 +463,15 @@ object RecorderActor {
                 clientImgList.foreach {
                   clientImg =>
                     if (imageBlock.contains(clientImg._1)) {
-                      graph.setColor(Color.BLACK)
+                      graph.setColor(Color.black)
                       graph.drawRect(n * canvasSize._1 / 2, canvasSize._2 / 2, canvasSize._1 / 2, canvasSize._2 / 2)
                       graph.setColor(Color.white)
                       graph.drawString("参会者", n * canvasSize._1 / 2 + 24, canvasSize._2 / 2 + 24)
                     } else if (spokesman == clientImg._1) {
-                      graph.setColor(Color.GREEN)
+                      graph.setColor(Color.green)
                       graph.drawRect(n * canvasSize._1 / 2, canvasSize._2 / 2, canvasSize._1 / 2, canvasSize._2 / 2)
                       graph.drawImage(clientImg._2, n * canvasSize._1 / 2 + 8, canvasSize._2 / 2 + 8, canvasSize._1 / 2 - 16, canvasSize._2 / 2 - 16, null)
-                      graph.setColor(Color.WHITE)
+                      graph.setColor(Color.white)
                       graph.drawString("参会者", n * canvasSize._1 / 2 + 24, canvasSize._2 / 2 + 24)
                     } else {
                       graph.drawImage(clientImg._2, n * canvasSize._1 / 2 + 8, canvasSize._2 / 2 + 8, canvasSize._1 / 2 - 16, canvasSize._2 / 2 - 16, null)
@@ -485,14 +485,14 @@ object RecorderActor {
                 graph.drawString("主持人", 24, 24)
 
                 if (imageBlock.contains(clientImgList.head._1)) {
-                  graph.setColor(Color.BLACK)
+                  graph.setColor(Color.black)
                   graph.drawRect(canvasSize._1 / 2, 0, canvasSize._1 / 2, canvasSize._2 / 2)
                   graph.drawString("参会者", 344, 24)
                 } else if (spokesman == clientImgList.head._1) {
-                  graph.setColor(Color.GREEN)
+                  graph.setColor(Color.green)
                   graph.drawRect(canvasSize._1 / 2, 0, canvasSize._1 / 2, canvasSize._2 / 2)
                   graph.drawImage(clientImgList.head._2, canvasSize._1 / 2 + 8, 8, canvasSize._1 / 2 - 8, canvasSize._2 / 2 - 8, null)
-                  graph.setColor(Color.WHITE)
+                  graph.setColor(Color.white)
                   graph.drawString("参会者", 344, 24)
                 } else {
                   graph.drawImage(clientImgList.head._2, canvasSize._1 / 2 + 8, 8, canvasSize._1 / 2 - 8, canvasSize._2 / 2 - 8, null)
@@ -501,14 +501,14 @@ object RecorderActor {
                 clientImgList.drop(1).foreach {
                   clientImg =>
                     if (imageBlock.contains(clientImg._1)) {
-                      graph.setColor(Color.BLACK)
+                      graph.setColor(Color.black)
                       graph.drawRect(n * canvasSize._1 / 2, canvasSize._2 / 2, canvasSize._1 / 2, canvasSize._2 / 2)
                       graph.drawString("参会者", 344, 24)
                     } else if (spokesman == clientImg._1) {
-                      graph.setColor(Color.GREEN)
+                      graph.setColor(Color.green)
                       graph.drawRect(n * canvasSize._1 / 2, canvasSize._2 / 2, canvasSize._1 / 2, canvasSize._2 / 2)
                       graph.drawImage(clientImg._2, n * canvasSize._1 / 2 + 8, canvasSize._2 / 2 + 8, canvasSize._1 / 2 - 8, canvasSize._2 / 2 - 8, null)
-                      graph.setColor(Color.BLACK)
+                      graph.setColor(Color.black)
                       graph.drawString("参会者", 344, 24)
                     } else {
                       graph.drawImage(clientImg._2, n * canvasSize._1 / 2 + 8, canvasSize._2 / 2 + 8, canvasSize._1 / 2 - 8, canvasSize._2 / 2 - 8, null)
@@ -572,7 +572,7 @@ object RecorderActor {
     }
   }
 
-  def getInitString(n: Int) = {
+  def getInitString(n: Int): String = {
     var t = ""
     for (i <- 0 until n) {
       t += s"[$i:a]"
