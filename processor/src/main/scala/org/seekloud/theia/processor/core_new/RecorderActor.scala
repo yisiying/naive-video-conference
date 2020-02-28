@@ -208,10 +208,10 @@ object RecorderActor {
             val drawer = ctx.spawn(
               draw(canvas, canvas.getGraphics, List[(String, Image)](), recorder4ts,
                 new Java2DFrameConverter(), mutable.Map(liveId -> new Java2DFrameConverter()), new Java2DFrameConverter,
-                layout, "defaultImg.jpg", roomId, (640, 480), "", Nil),
+                layout, "defaultImg.jpg", roomId, (640, 480), null, Nil),
               s"drawer_$roomId")
             ctx.self ! NewFrame(liveId, frame)
-            work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, "", Nil, Nil)
+            work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, null, Nil, Nil)
           }
 
         case CloseRecorder =>
@@ -328,7 +328,7 @@ object RecorderActor {
           }
           val newSpokesman = userLiveId match {
             case Some(v) => v
-            case None => ""
+            case None => null
           }
           work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, newSpokesman, soundBlock, imageBlock)
 
@@ -442,7 +442,7 @@ object RecorderActor {
             //            log.info(s"${clientImgList.length}")
             clientImgList.length + 1 match {
               case 1 =>
-                graph.drawImage(img, 0, 0, canvasSize._1, canvasSize._2, null)
+                graph.drawImage(img, 8, 8, canvasSize._1 - 8, canvasSize._2 - 8, null)
                 graph.drawString("主持人", 24, 24)
 
               case 2 =>
@@ -500,11 +500,11 @@ object RecorderActor {
                 } else if (spokesman == clientImgList.head._1) {
                   graph.setColor(Color.GREEN)
                   graph.drawRect(canvasSize._1 / 2, canvasSize._2 / 4, canvasSize._1 / 2, canvasSize._2 / 2)
-                  graph.drawImage(clientImgList.head._2, canvasSize._1 / 2 + 8, 8, canvasSize._1 / 2 - 16, canvasSize._2 / 2 - 16, null)
+                  graph.drawImage(clientImgList.head._2, canvasSize._1 / 2 + 8, 8, canvasSize._1 / 2 - 8, canvasSize._2 / 2 - 8, null)
                   graph.setColor(Color.BLACK)
                   graph.drawString("参会者", 344, 24)
                 } else {
-                  graph.drawImage(clientImgList.head._2, canvasSize._1 / 2 + 8, 8, canvasSize._1 / 2 - 16, canvasSize._2 / 2 - 16, null)
+                  graph.drawImage(clientImgList.head._2, canvasSize._1 / 2 + 8, 8, canvasSize._1 / 2 - 8, canvasSize._2 / 2 - 8, null)
                   graph.drawString("参会者", 344, 24)
                 }
                 clientImgList.drop(1).foreach {
@@ -516,11 +516,11 @@ object RecorderActor {
                     } else if (spokesman == clientImg._1) {
                       graph.setColor(Color.GREEN)
                       graph.drawRect(canvasSize._1 / 2, canvasSize._2 / 4, canvasSize._1 / 2, canvasSize._2 / 2)
-                      graph.drawImage(clientImg._2, n * canvasSize._1 / 2 + 8, canvasSize._2 / 2 + 8, canvasSize._1 / 2 - 16, canvasSize._2 / 2 - 16, null)
+                      graph.drawImage(clientImg._2, n * canvasSize._1 / 2 + 8, canvasSize._2 / 2 + 8, canvasSize._1 / 2 - 8, canvasSize._2 / 2 - 8, null)
                       graph.setColor(Color.BLACK)
                       graph.drawString("参会者", 344, 24)
                     } else {
-                      graph.drawImage(clientImg._2, n * canvasSize._1 / 2 + 8, canvasSize._2 / 2 + 8, canvasSize._1 / 2 - 16, canvasSize._2 / 2 - 16, null)
+                      graph.drawImage(clientImg._2, n * canvasSize._1 / 2 + 8, canvasSize._2 / 2 + 8, canvasSize._1 / 2 - 8, canvasSize._2 / 2 - 8, null)
                       graph.drawString("参会者", n * canvasSize._1 / 2 + 24, canvasSize._2 / 2 + 24)
                     }
                     n += 1
@@ -552,7 +552,7 @@ object RecorderActor {
             log.info(s"get set spokesman: $userLiveId")
             val newSpokesman = userLiveId match {
               case Some(v) => v
-              case None => ""
+              case None => null
             }
             draw(canvas, graph, clientFrameList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize, newSpokesman, imageBlock)
 
