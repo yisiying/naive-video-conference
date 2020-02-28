@@ -443,7 +443,7 @@ object RecorderActor {
                       graph.setColor(Color.black)
                       graph.drawRect(canvasSize._1 / 2, canvasSize._2 / 4, canvasSize._1 / 2, canvasSize._2 / 2)
                       graph.setColor(Color.white)
-                      graph.drawString("参会者", 344, 24)
+                      graph.drawString(s"参会者, ${clientImg._1}", 344, 24)
                     } else if (spokesman == clientImg._1) {
                       graph.setColor(Color.green)
                       graph.drawRect(canvasSize._1 / 2, canvasSize._2 / 4, canvasSize._1 / 2, canvasSize._2 / 2)
