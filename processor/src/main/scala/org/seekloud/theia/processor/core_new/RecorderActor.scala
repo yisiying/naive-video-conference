@@ -256,7 +256,7 @@ object RecorderActor {
           )
           (implicit timer: TimerScheduler[Command],
            stashBuffer: StashBuffer[Command]): Behavior[Command] = {
-    log.info(s"$roomId recorder to couple behavior")
+    //    log.info(s"$roomId recorder to couple behavior")
     Behaviors.receive[Command] { (ctx, msg) =>
       msg match {
         case NewFrame(liveId, frame) =>
