@@ -211,7 +211,7 @@ object RecorderActor {
                 layout, "defaultImg.jpg", roomId, (640, 480), "-1", Nil),
               s"drawer_$roomId")
             ctx.self ! NewFrame(liveId, frame)
-            work(roomId, mutable.HashMap[Long, String](roomId, hostLiveId), clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, mutable.HashMap[Long, String](roomId, "-1"), mutable.HashMap[Long, List[String]](), Nil)
+            work(roomId, mutable.HashMap[Long, String](roomId -> hostLiveId), clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, mutable.HashMap[Long, String](roomId -> "-1"), mutable.HashMap[Long, List[String]](), Nil)
           }
 
         case CloseRecorder =>
