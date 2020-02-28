@@ -1049,7 +1049,9 @@ public class FFmpegFrameRecorder1 extends FrameRecorder {
             ts++;
 //        System.out.println("ts:" + ts);
         if (got_video_packet[0] != 0) {
+            System.out.println("1---");
             if (video_pkt.pts() != AV_NOPTS_VALUE) {
+                System.out.println("2---");
 //                if(lastTs >= ts){
 //                    lastTs += 33;
 //                    video_pkt.pts(av_rescale_q(video_pkt.pts(), video_c.time_base(), video_st.time_base()));
@@ -1060,6 +1062,7 @@ public class FFmpegFrameRecorder1 extends FrameRecorder {
 
             }
             if (video_pkt.dts() != AV_NOPTS_VALUE) {
+                System.out.println("3---");
 //                if(ts == 0)
 //                    video_pkt.dts(av_rescale_q(video_pkt.dts(), video_c.time_base(), video_st.time_base()));
 //                else
@@ -1068,6 +1071,7 @@ public class FFmpegFrameRecorder1 extends FrameRecorder {
             }
             video_pkt.stream_index(video_st.index());
         } else {
+            System.out.println("4---");
             return false;
         }
 //        }
