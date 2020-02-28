@@ -452,7 +452,7 @@ object RecorderActor {
                       graph.drawString("参会者", 344, 24)
                     } else {
                       graph.drawImage(clientImg._2, canvasSize._1 / 2 + 12, canvasSize._2 / 4 + 12, canvasSize._1 / 2 - 24, canvasSize._2 / 2 - 24, null)
-                      graph.drawString("参会者", 344, 24)
+                      graph.drawString(s"参会者, ${clientImg._1}", 344, 24)
                     }
                 }
 
@@ -475,7 +475,7 @@ object RecorderActor {
                       graph.drawString("参会者", n * canvasSize._1 / 2 + 24, canvasSize._2 / 2 + 24)
                     } else {
                       graph.drawImage(clientImg._2, n * canvasSize._1 / 2 + 12, canvasSize._2 / 2 + 12, canvasSize._1 / 2 - 24, canvasSize._2 / 2 - 24, null)
-                      graph.drawString("参会者", n * canvasSize._1 / 2 + 24, canvasSize._2 / 2 + 24)
+                      graph.drawString(s"参会者, ${clientImg._1}", n * canvasSize._1 / 2 + 24, canvasSize._2 / 2 + 24)
                     }
                     n += 1
                 }
