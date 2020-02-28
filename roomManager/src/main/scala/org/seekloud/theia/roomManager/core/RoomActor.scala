@@ -404,7 +404,7 @@ object RoomActor {
                 )
               } else {
                 log.debug(s"${ctx.self.path} 开始直播被拒绝，数据库中没有该用户的数据，userId=$userId")
-                dispatchTo(subscribers)(List((userId, false)), StartLiveRefused)
+                //                dispatchTo(subscribers)(List((userId, false)), StartLiveRefused)
                 ctx.self ! SwitchBehavior("idle", idle(wholeRoomInfo, liveInfoMap, subscribers, startTime, invitationList, isJoinOpen))
               }
             }
