@@ -81,9 +81,11 @@ class HostController(
             setSpokesman(userId)
         }
         val blockBtn = new Button("")
+        var addOrDelete = 0
         blockBtn.setOnAction {
           _ =>
-            hostScene.listener.updateBlock(userId,0,0)
+            hostScene.listener.updateBlock(userId,0,addOrDelete)
+            addOrDelete = (addOrDelete+1)%2
         }
         hostScene.partnerList.add(PartnerListInfo(
           new SimpleLongProperty(userId),
@@ -304,14 +306,22 @@ class HostController(
           }
           hostScene.partnerList.addAll(msg.audienceList.map { e =>
             val spokesmanBtn = new Button("")
+            var spokesmanOn = true
             spokesmanBtn.setOnAction {
               _ =>
-                hostScene.listener.setSpokesman(e._1)
+                if(spokesmanOn){
+                  hostScene.listener.setSpokesman(e._1)
+                } else {
+                  hostScene.listener.setSpokesman(-1)
+                }
+                spokesmanOn = !spokesmanOn
             }
             val blockBtn = new Button("")
+            var addOrDelete = 0
             blockBtn.setOnAction {
               _ =>
-                hostScene.listener.updateBlock(e._1,0,0)
+                hostScene.listener.updateBlock(e._1,0,addOrDelete)
+                addOrDelete = (addOrDelete+1)%2
             }
             PartnerListInfo(new SimpleLongProperty(e._1), new SimpleStringProperty(e._2),
               new SimpleObjectProperty[Button](spokesmanBtn),new SimpleObjectProperty[Button](blockBtn))
