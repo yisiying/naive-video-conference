@@ -419,6 +419,9 @@ object RmManager {
 
         case BackToHome =>
           log.info("back to home.")
+          val playId = Ids.getPlayId(HostStatus.LIVE, roomId = Some(roomInfo.map(_.roomId).get))
+          println(s"stop mediaPlayer:$playId")
+          mediaPlayer.stop(playId,()=>System.currentTimeMillis())
           Boot.addToPlatform {
             homeController.foreach(_.showScene())
           }
@@ -526,6 +529,9 @@ object RmManager {
         case BackToHome =>
           timer.cancel(HeartBeat)
           timer.cancel(PingTimeOut)
+          val playId = Ids.getPlayId(HostStatus.LIVE, roomId = Some(roomInfo.map(_.roomId).get))
+          println(s"stop mediaPlayer:$playId")
+          mediaPlayer.stop(playId,()=>System.currentTimeMillis())
           sender.foreach(_ ! CompleteMsgClient)
           if (hostStatus == HostStatus.CONNECT) {
             //            playManager ! PlayManager.StopPlay(roomInfo.get.roomId, hostScene.resetBack, joinAudience.map(_.userId))
@@ -838,6 +844,9 @@ object RmManager {
 
         case BackToHome =>
           log.debug(s"audience back to previous page.")
+          val playId = Ids.getPlayId(AudienceStatus.LIVE, roomId = Some(roomInfo.map(_.roomId).get))
+          println(s"stop mediaPlayer:$playId")
+          mediaPlayer.stop(playId,()=>System.currentTimeMillis())
           timer.cancel(HeartBeat)
           timer.cancel(PingTimeOut)
           sender.foreach(_ ! CompleteMsgClient)
@@ -912,7 +921,7 @@ object RmManager {
         case msg: JoinRoomReq =>
           assert(userInfo.nonEmpty)
           val userId = userInfo.get.userId
-//          sender.foreach(_ ! JoinReq(userId, msg.roomId, ClientType.PC))
+          sender.foreach(_ ! JoinReq(userId, msg.roomId, ClientType.PC))
           Behaviors.same
 
         case msg: ChangeOption4Audience =>
@@ -990,7 +999,6 @@ object RmManager {
           //case StartJoin =>
           log.info(s"Start join.")
           assert(userInfo.nonEmpty)
-//          //同意连线后才能看到画面
 //          println(s"111111111111111111111111111  ${audienceScene.liveId}")
 //          liveManager ! LiveManager.PullRtmpStream(audienceScene.liveId.get, watchInfo = None, audienceScene = Some(audienceScene))
 //          val playId = Ids.getPlayId(AudienceStatus.LIVE, roomId = Some(audienceScene.getRoomInfo.roomId))
