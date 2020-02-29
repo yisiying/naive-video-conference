@@ -169,7 +169,7 @@ object RmManager {
 
   final case class JoinRoomReq(roomId: Long) extends RmCommand
 
-  final case class StartJoin(hostLiveId: String, audienceLiveInfo: LiveInfo) extends RmCommand
+  final case class StartJoin(hostLiveId: String, audienceLiveInfo: LiveInfo, roomId: Long = -1) extends RmCommand
 
   final case class Devicesuccess(hostLiveId: String, audienceLiveInfo: LiveInfo) extends RmCommand
 
@@ -921,6 +921,7 @@ object RmManager {
         case msg: JoinRoomReq =>
           assert(userInfo.nonEmpty)
           val userId = userInfo.get.userId
+          log.debug("send JoinRoomReq")
           sender.foreach(_ ! JoinReq(userId, msg.roomId, ClientType.PC))
           Behaviors.same
 
@@ -1035,6 +1036,7 @@ object RmManager {
           /*开启媒体设备*/
           def callBack(): Unit = {
             ctx.self ! Devicesuccess(msg.hostLiveId, msg.audienceLiveInfo) //(htLiveId,audLiveInfo)
+            ctx.self ! RmManager.JoinRoomReq(msg.roomId)
           }
           //          liveManager ! LiveManager.StopPull
           liveManager ! LiveManager.DevicesOn(audienceScene.gc, isJoin = true, callBackFunc = Some(callBack))
