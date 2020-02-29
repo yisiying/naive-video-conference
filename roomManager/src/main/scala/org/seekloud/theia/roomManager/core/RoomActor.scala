@@ -316,7 +316,7 @@ object RoomActor {
           Behaviors.stopped
 
         case x =>
-          log.debug(s"${ctx.self.path} recv an unknown msg $x")
+          log.debug(s"${ctx.self.path} recv an unknown msg $x in idle")
           Behaviors.same
       }
     }
@@ -650,7 +650,28 @@ object RoomActor {
         if (isJoinOpen) {
           UserInfoDao.searchById(userId4Audience).map { r =>
             if (r.nonEmpty) {
-              dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), AudienceJoin(userId4Audience, r.get.userName, clientType))
+              liveInfoMap.get(Role.host) match {
+                case Some(value) =>
+                  val liveIdHost = value.get(wholeRoomInfo.roomInfo.userId)
+                  if (liveIdHost.nonEmpty) {
+                    liveInfoMap.get(Role.audience) match {
+                      case Some(value4Audience) =>
+                        value4Audience.put(userId4Audience, LiveInfo(s"user-$userId4Audience"))
+                        liveInfoMap.put(Role.audience, value4Audience)
+                      case None =>
+                        liveInfoMap.put(Role.audience, mutable.HashMap(userId4Audience -> LiveInfo(s"user-$userId4Audience")))
+                    }
+                    ProcessorClient.newConnect(roomId, s"user-$userId4Audience", wholeRoomInfo.roomInfo.rtmp.get, wholeRoomInfo.layout)
+                    dispatch(RcvComment(-1l, "", s"user:$userId join in room:$roomId")) //群发评论
+                  } else {
+                    log.debug(s"${ctx.self.path} 没有主播的liveId,roomId=$roomId")
+                    dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), AudienceJoinError)
+
+                  }
+                case None =>
+                  log.debug(s"${ctx.self.path} 没有主播的liveId,roomId=$roomId")
+                  dispatchTo(List((wholeRoomInfo.roomInfo.userId, false)), AudienceJoinError)
+              }
             } else {
               log.debug(s"${ctx.self.path} 连线请求失败，用户id错误id=$userId4Audience in roomId=$roomId")
               dispatchTo(List((userId4Audience, false)), JoinAccountError)
@@ -839,7 +860,7 @@ object RoomActor {
         Behaviors.same
 
       case x =>
-        log.debug(s"${ctx.self.path} recv an unknown msg:$x")
+        log.debug(s"${ctx.self.path} recv an unknown msg:$x in ws")
         Behaviors.same
     }
   }

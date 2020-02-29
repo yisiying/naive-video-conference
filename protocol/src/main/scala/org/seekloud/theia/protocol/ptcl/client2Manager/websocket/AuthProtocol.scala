@@ -203,7 +203,7 @@ object AuthProtocol {
 
 
   /*申请连线*/
-  case class JoinReq(userId: Long, roomId: Long, clientType: Int) extends WsMsgAudience
+  case class JoinReq(userId: Long, roomId: Long, clientType: Int) extends WsMsgClient
 
 
   case class JoinRsp(
