@@ -145,6 +145,10 @@ object RmManager {
 
   final case class AddPartner(name:String) extends RmCommand
 
+  final case class SetSpokesman(id:Long) extends RmCommand
+
+  final case class UpdateBlock(userId4Audience: Long, imageOrSound: Int, addOrDelete: Int) extends RmCommand
+
   // 0->camera; 1->desktop; 2->both
   //0：左上  1：右上  2：右下  3：左下
 
@@ -647,6 +651,14 @@ object RmManager {
           sender.foreach(_ ! AuthProtocol.AddPartner(name))
           Behaviors.same
 
+        case SetSpokesman(id)=>
+          println("set spoksman "+id)
+          sender.foreach(_ ! AuthProtocol.SetSpokesman(id))
+          Behaviors.same
+
+        case UpdateBlock(id,imageOrSound,addOrDelete)=>
+          sender.foreach(_ ! AuthProtocol.UpdateBlock(id,imageOrSound,addOrDelete))
+          Behaviors.same
 
         case msg: RecordOption =>
           liveManager ! LiveManager.RecordOption(msg.recordOrNot, msg.path, hostScene.resetLoading)

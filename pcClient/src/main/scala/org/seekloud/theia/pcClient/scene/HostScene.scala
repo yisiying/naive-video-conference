@@ -68,13 +68,16 @@ object HostScene {
 
   }
 
-  case class PartnerListInfo(userId:LongProperty,username:StringProperty){
+  case class PartnerListInfo(userId:LongProperty,username:StringProperty,spokesBtn:ObjectProperty[Button],blockBtn:ObjectProperty[Button]){
     def getUserId:Long = userId.get()
     def setUserId(info:Long) :Unit = userId.set(info)
     def getUsername: String = username.get()
     def setUsername(name:String): Unit = username.set(name)
+    def getSpokesBtn:Button = spokesBtn.get()
+    def setSpokesBtn(btn:Button):Unit = spokesBtn.set(btn)
+    def getBlockBtn:Button=blockBtn.get()
+    def setBlockBtn(btn:Button):Unit = blockBtn.set(btn)
   }
-
 
 
   trait HostSceneListener {
@@ -122,6 +125,9 @@ object HostScene {
 
     def addPartner(name:String)
 
+    def setSpokesman(id:Long)
+
+    def updateBlock(userId4Audience: Long, imageOrSound: Int, addOrDelete: Int)
   }
 
 }
@@ -682,15 +688,23 @@ class HostScene(stage: Stage) extends Secene {
       partnerTable.getStyleClass.add("table-view")
 
       val userIdCol = new TableColumn[PartnerListInfo, String]("用户id")
-      userIdCol.setPrefWidth(width * 0.13)
+      userIdCol.setPrefWidth(width * 0.08)
       userIdCol.setCellValueFactory(new PropertyValueFactory[PartnerListInfo, String]("userId"))
 
       val usernameCol = new TableColumn[PartnerListInfo, String]("用户名")
       usernameCol.setCellValueFactory(new PropertyValueFactory[PartnerListInfo, String]("username"))
       usernameCol.setPrefWidth(width * 0.05)
 
+      val setSpokesCol = new TableColumn[PartnerListInfo,Button]("指定发言")
+      setSpokesCol.setPrefWidth(width*0.05)
+      setSpokesCol.setCellValueFactory(new PropertyValueFactory[PartnerListInfo,Button]("spokesBtn"))
+
+      val setBlockCol = new TableColumn[PartnerListInfo,Button]("屏蔽图像")
+      setBlockCol.setPrefWidth(width*0.05)
+      setBlockCol.setCellValueFactory(new PropertyValueFactory[PartnerListInfo,Button]("blockBtn"))
+
       partnerTable.setItems(partnerList)
-      partnerTable.getColumns.addAll(List(userIdCol, usernameCol).asJavaCollection)
+      partnerTable.getColumns.addAll(List(userIdCol, usernameCol,setSpokesCol,setBlockCol).asJavaCollection)
       partnerTable.setPrefHeight(height * 0.8)
       partnerTable
     }

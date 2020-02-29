@@ -1,7 +1,9 @@
 package org.seekloud.theia.pcClient.controller
 
 import akka.actor.typed.ActorRef
-import javafx.beans.property.{LongProperty, SimpleLongProperty, SimpleStringProperty}
+import javafx.beans.property.{LongProperty, SimpleLongProperty, SimpleObjectProperty, SimpleStringProperty}
+import javafx.scene.control.Button
+import javafx.scene.image.ImageView
 import org.seekloud.theia.pcClient.Boot
 import org.seekloud.theia.pcClient.common.{Constants, StageContext}
 import org.seekloud.theia.pcClient.component.WarningDialog
@@ -63,9 +65,32 @@ class HostController(
       rmManager ! RmManager.ChangeMode(isJoinOpen, aiMode, screenLayout)
     }
 
+    override def setSpokesman(id: Long): Unit = {
+      rmManager ! RmManager.SetSpokesman(id)
+    }
+
+    override def updateBlock(userId4Audience: Long, imageOrSound: Int, addOrDelete: Int): Unit = {
+      rmManager ! RmManager.UpdateBlock(userId4Audience,imageOrSound,addOrDelete)
+    }
+
     override def audienceAcceptance(userId: Long, accept: Boolean, newRequest: AudienceListInfo): Unit = {
       if (accept) {
-        hostScene.partnerList.add(PartnerListInfo(new SimpleLongProperty(userId), new SimpleStringProperty(newRequest.userInfo.toString)))
+        val spokesmanBtn = new Button("", new ImageView("img/agreeBtn.png"))
+        spokesmanBtn.setOnAction {
+          _ =>
+            setSpokesman(userId)
+        }
+        val blockBtn = new Button("")
+        blockBtn.setOnAction {
+          _ =>
+            hostScene.listener.updateBlock(userId,0,0)
+        }
+        hostScene.partnerList.add(PartnerListInfo(
+          new SimpleLongProperty(userId),
+          new SimpleStringProperty(newRequest.userInfo.toString),
+          new SimpleObjectProperty[Button](spokesmanBtn),
+          new SimpleObjectProperty[Button](blockBtn)
+        ))
       }
       rmManager ! RmManager.AudienceAcceptance(userId, accept)
       hostScene.audObservableList.remove(newRequest)
@@ -267,17 +292,30 @@ class HostController(
           hostScene.updateAudienceList(msg.userId, msg.userName)
         }
 
-      case msg:UpdatePartnerRsp=>
+      case msg: UpdatePartnerRsp =>
         log.debug("update partner rsp")
-        if(msg.errCode!=0){
-          Boot.addToPlatform{
+        if (msg.errCode != 0) {
+          Boot.addToPlatform {
             WarningDialog.initWarningDialog("更新失败")
           }
-        }else{
-          Boot.addToPlatform{
+        } else {
+          Boot.addToPlatform {
             WarningDialog.initWarningDialog("更新成功")
           }
-          hostScene.partnerList.addAll(msg.audienceList.map(e=>PartnerListInfo(new SimpleLongProperty(e._1),new SimpleStringProperty(e._2))).asJavaCollection)
+          hostScene.partnerList.addAll(msg.audienceList.map { e =>
+            val spokesmanBtn = new Button("")
+            spokesmanBtn.setOnAction {
+              _ =>
+                hostScene.listener.setSpokesman(e._1)
+            }
+            val blockBtn = new Button("")
+            blockBtn.setOnAction {
+              _ =>
+                hostScene.listener.updateBlock(e._1,0,0)
+            }
+            PartnerListInfo(new SimpleLongProperty(e._1), new SimpleStringProperty(e._2),
+              new SimpleObjectProperty[Button](spokesmanBtn),new SimpleObjectProperty[Button](blockBtn))
+          }.asJavaCollection)
           println(hostScene.partnerList)
         }
 
