@@ -165,6 +165,18 @@ object AuthProtocol {
 
   case class ChangeHostRsp(roomInfo: RoomInfo) extends WsMsgRm
 
+  case class ForceQuit(userId4Audience: Long) extends WsMsgClient
+
+  case object QuitAudience extends WsMsgRm
+
+  case class SpokesReq(userId4Audience: Long) extends WsMsgClient
+
+  case class SpokesReqToHost(userId: Long, userName: String) extends WsMsgRm
+
+  case class SpokesAccept(userId4Audience: Long, accept: Boolean) extends WsMsgClient
+
+  case class SpokesRsp(errCode: Int = 0, msg: String = "ok") extends WsMsgRm
+
 
 
   //  case class UpdateBlockRsp4Audience(
