@@ -581,7 +581,7 @@ object RmManager {
           mediaPlayer.setTimeGetter(playId, () => System.currentTimeMillis())
           val videoPlayer = ctx.spawn(VideoPlayer.create(playId, Some(hostScene), None, None), s"videoPlayer$playId")
 //                      mediaPlayer.start(playId, videoPlayer, Right(inputStream), Some(watchInfo.get.gc), None)
-          log.info(s"拉流：rtmp://47.92.170.2:42037/live/room-${roomInfo.map(_.roomId).get}")
+          log.info(s"拉流：${AppSettings.srsServer}room-${roomInfo.map(_.roomId).get}")
           mediaPlayer.start(playId, videoPlayer, Left(s"${AppSettings.srsServer}room-${roomInfo.map(_.roomId).get}"), Some(hostScene.gc), None)
 
           hostBehavior(stageCtx, homeController, hostScene, hostController, liveManager, mediaPlayer, sender, hostStatus, joinAudience, Some(true), rtpLive, biliLive)
@@ -1024,10 +1024,10 @@ object RmManager {
         /*开始推流*/
         case msg: Devicesuccess =>
           val userId = userInfo.get.userId
-          println("开始推流！"+s"rtmp://47.92.170.2:42037/live/user-${userId}")
+          println("开始推流！"+s"${AppSettings.srsServer}/user-${userId}")
           //          audienceScene.autoReset2()
 //          liveManager ! LiveManager.PushStream(msg.audienceLiveInfo.liveId, msg.audienceLiveInfo.liveCode)
-          liveManager ! LiveManager.PushRtmpStream(s"rtmp://47.92.170.2:42037/live/user-${userId}")
+          liveManager ! LiveManager.PushRtmpStream(s"${AppSettings.srsServer}/user-${userId}")
 
           /*开始拉取并播放主播rtp流*/
           //          val joinInfo = JoinInfo(
