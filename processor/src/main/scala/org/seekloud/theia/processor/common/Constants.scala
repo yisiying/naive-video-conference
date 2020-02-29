@@ -31,4 +31,14 @@ object Constants {
     val out = 1
   }
 
+  object Block {
+    val add = 0
+    val delete = 1
+  }
+
+  object ImageOrSound {
+    val image = 0
+    val sound = 1
+  }
+
 }

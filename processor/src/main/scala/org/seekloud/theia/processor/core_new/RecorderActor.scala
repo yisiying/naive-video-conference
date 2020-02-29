@@ -1,23 +1,25 @@
 package org.seekloud.theia.processor.core_new
 
 import java.awt.Graphics
+import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.{File, FileOutputStream, OutputStream}
 import java.nio.{ByteBuffer, ShortBuffer}
 
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{Behaviors, StashBuffer, TimerScheduler}
+import javax.swing.plaf.basic.BasicTextUI.BasicHighlighter
 import org.bytedeco.ffmpeg.global.{avcodec, avutil}
-import org.bytedeco.javacv.{FFmpegFrameFilter, /*FFmpegFrameRecorder,*/ Frame, Java2DFrameConverter}
+import org.bytedeco.javacv.{FFmpegFrameFilter, Frame, Java2DFrameConverter}
 import org.bytedeco.javacv.FFmpegFrameRecorder1
 import org.seekloud.theia.processor.Boot.roomManager
 import org.seekloud.theia.processor.common.AppSettings.{addTs, bitRate, debugPath, isDebug}
 import org.slf4j.LoggerFactory
 import org.seekloud.theia.processor.utils.TimeUtil
 import org.seekloud.theia.processor.common.AppSettings
-import scala.collection.mutable
-import org.seekloud.theia.processor.common.Constants.Part
 
+import scala.collection.mutable
+import org.seekloud.theia.processor.common.Constants.{Block, ImageOrSound, Part}
 
 import scala.concurrent.duration._
 
@@ -59,9 +61,13 @@ object RecorderActor {
 
   case class UpdateRecorder(channel: Int, sampleRate: Int, frameRate: Double, width: Int, height: Int, liveId: String) extends Command
 
+  case class UpdateBlock(userLiveId: String, iOS: Int, aOD: Int) extends Command
+
   case object TimerKey4Close
 
   case class ChangeSpokesman(userLiveId: String) extends Command
+
+  case class ChangeHost(newHostLiveId: String) extends Command
 
   sealed trait VideoCommand
 
@@ -78,6 +84,10 @@ object RecorderActor {
   case class RemoveClient(liveId: String) extends VideoCommand
 
   case class ChangeSpeaker(userLiveId: String) extends VideoCommand
+
+  case class UpdateImageBlock(userLiveId: String, aOD: Int) extends VideoCommand
+
+  case class NewHostInfo(newHostLiveId: String) extends VideoCommand
 
   case object Close extends VideoCommand
 
@@ -198,10 +208,10 @@ object RecorderActor {
             val drawer = ctx.spawn(
               draw(canvas, canvas.getGraphics, List[(String, Image)](), recorder4ts,
                 new Java2DFrameConverter(), mutable.Map(liveId -> new Java2DFrameConverter()), new Java2DFrameConverter,
-                layout, "defaultImg.jpg", roomId, (640, 480), null, Nil, Nil),
+                layout, "defaultImg.jpg", roomId, (640, 480), "-1", Nil),
               s"drawer_$roomId")
             ctx.self ! NewFrame(liveId, frame)
-            work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, null, Nil, Nil)
+            work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, "-1", Nil, Nil)
           }
 
         case CloseRecorder =>
@@ -218,6 +228,14 @@ object RecorderActor {
 
         case ChangeSpokesman(userLiveId) =>
           log.info("get change spokeman in single state")
+          Behaviors.same
+
+        case UpdateBlock(userLiveId, iOS, aOD) =>
+          log.info("get update block in single state")
+          Behaviors.same
+
+        case ChangeHost(newHostLiveId) =>
+          log.info("get change host in single state")
           Behaviors.same
 
         case StopRecorder =>
@@ -238,7 +256,7 @@ object RecorderActor {
           )
           (implicit timer: TimerScheduler[Command],
            stashBuffer: StashBuffer[Command]): Behavior[Command] = {
-    log.info(s"$roomId recorder to couple behavior")
+    //    log.info(s"$roomId recorder to couple behavior")
     Behaviors.receive[Command] { (ctx, msg) =>
       msg match {
         case NewFrame(liveId, frame) =>
@@ -256,7 +274,7 @@ object RecorderActor {
               if (liveId == hostLiveId) {
                 ffFilter.pushSamples(0, frame.audioChannels, frame.sampleRate, ffFilter.getSampleFormat, frame.samples: _*)
               } else if (clientLiveIdMap.keys.toList.contains(liveId)) {
-                if (spokesman == null || spokesman == liveId) {
+                if ((spokesman == "-1" || spokesman == liveId) && !soundBlock.contains(liveId)) {
                   ffFilter.pushSamples(clientLiveIdMap(liveId), frame.audioChannels, frame.sampleRate, ffFilter.getSampleFormat, frame.samples: _*)
                 }
               } else {
@@ -309,6 +327,43 @@ object RecorderActor {
             drawer ! ChangeSpeaker(userLiveId)
           }
           work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, userLiveId, soundBlock, imageBlock)
+
+        case UpdateBlock(userLiveId, iOS, aOD) =>
+          iOS match {
+            case ImageOrSound.image =>
+              if (drawer != null) {
+                drawer ! UpdateImageBlock(userLiveId, aOD)
+              }
+              Behaviors.same
+            case ImageOrSound.sound =>
+              val newList = aOD match {
+                case Block.add =>
+                  userLiveId :: soundBlock
+                case Block.delete =>
+                  soundBlock.filterNot(_ == userLiveId)
+              }
+              work(roomId, hostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, spokesman, newList, imageBlock)
+            case _ =>
+              Behaviors.same
+          }
+
+        case ChangeHost(newHostLiveId) =>
+          if (spokesman != "-1") {
+            log.info("someone is speaking, can not change host")
+          } else if (imageBlock.contains(newHostLiveId) || soundBlock.contains(newHostLiveId)) {
+            log.info("new host is blocked")
+          } else {
+            clientLiveIdMap.get(newHostLiveId) match {
+              case Some(index) =>
+                clientLiveIdMap.remove(newHostLiveId)
+                clientLiveIdMap.put(hostLiveId, index)
+              case None =>
+                log.info(s"clientLiveId map not contain liveId: $newHostLiveId")
+            }
+            drawer ! NewHostInfo(newHostLiveId)
+          }
+          work(roomId, newHostLiveId, clientLiveIdMap, layout, recorder4ts, ffFilter, drawer, canvasSize, spokesman, soundBlock, imageBlock)
+
         case Init(num) =>
           log.info(s"recorder init: $num")
           if (ffFilter != null) {
@@ -364,106 +419,161 @@ object RecorderActor {
            roomId: Long,
            canvasSize: (Int, Int),
            spokesman: String,
-           soundBlock: List[String],
            imageBlock: List[String]
           ): Behavior[VideoCommand] = {
-    Behaviors.setup[VideoCommand] { ctx =>
-      Behaviors.receiveMessage[VideoCommand] {
-        case t: Image4Host =>
-          val img = convert1.convert(t.frame)
-          val clientImgList = clientFrameList.reverse.map(i => convert2Map(i._1).convert(i._2.frame))
-          /*layout match {
-            case 0 =>
-              graph.drawImage(img, 0, canvasSize._2 / 4, canvasSize._1 / 2, canvasSize._2 / 2, null)
-              graph.drawString("主持人", 24, 24)
-              graph.drawImage(clientImg, canvasSize._1 / 2, canvasSize._2 / 4, canvasSize._1 / 2, canvasSize._2 / 2, null)
-              graph.drawString("参会者", 344, 24)
-            case 1 =>
-              graph.drawImage(img, 0, 0, canvasSize._1, canvasSize._2, null)
-              graph.drawString("主持人", 24, 24)
-              graph.drawImage(clientImg, canvasSize._1 / 4 * 3, 0, canvasSize._1 / 4, canvasSize._2 / 4, null)
-              graph.drawString("参会者", 584, 24)
-            case 2 =>
-              graph.drawImage(clientImg, 0, 0, canvasSize._1, canvasSize._2, null)
-              graph.drawString("主持人", 24, 24)
-              graph.drawImage(img, canvasSize._1 / 4 * 3, 0, canvasSize._1 / 4, canvasSize._2 / 4, null)
-              graph.drawString("参会者", 584, 24)
-          }*/
-          //          if (clientImgList.length >= 2)
-          //            log.info(s"${clientImgList.length}")
-          clientImgList.length + 1 match {
-            case x if x == 1 =>
-              graph.drawImage(img, 0, 0, canvasSize._1, canvasSize._2, null)
-              graph.drawString("主持人", 24, 24)
+    Behaviors.setup[VideoCommand] {
+      ctx =>
+        Behaviors.receiveMessage[VideoCommand] {
+          case t: Image4Host =>
+            val img = convert1.convert(t.frame)
+            val clientImgList = clientFrameList.reverse.map(i => (i._1, convert2Map(i._1).convert(i._2.frame)))
+            //          if (clientImgList.length >= 2)
+            //            log.info(s"${clientImgList.length}")
+            clientImgList.length + 1 match {
+              case 1 =>
+                graph.drawImage(img, 8, 8, canvasSize._1 - 8, canvasSize._2 - 8, null)
+                graph.drawString("主持人", 24, 24)
 
-            case x if x == 2 =>
-              graph.drawImage(img, 0, canvasSize._2 / 4, canvasSize._1 / 2, canvasSize._2 / 2, null)
-              graph.drawString("主持人", 24, 24)
-              clientImgList.foreach { clientImg =>
-                graph.drawImage(clientImg, canvasSize._1 / 2, canvasSize._2 / 4, canvasSize._1 / 2, canvasSize._2 / 2, null)
-                graph.drawString("参会者", 344, 24)
-              }
+              case 2 =>
+                graph.drawImage(img, 12, canvasSize._2 / 4 + 12, canvasSize._1 / 2 - 24, canvasSize._2 / 2 - 24, null)
+                graph.drawString("主持人", 24, 24)
+                clientImgList.foreach {
+                  clientImg =>
+                    if (imageBlock.contains(clientImg._1)) {
+                      graph.setColor(Color.black)
+                      graph.drawRect(canvasSize._1 / 2, canvasSize._2 / 4, canvasSize._1 / 2, canvasSize._2 / 2)
+                      graph.setColor(Color.white)
+                      graph.drawString(s"参会者, ${clientImg._1}", 344, 24)
+                    } else if (spokesman == clientImg._1) {
+                      graph.setColor(Color.green)
+                      graph.drawRect(canvasSize._1 / 2, canvasSize._2 / 4, canvasSize._1 / 2, canvasSize._2 / 2)
+                      graph.drawImage(clientImg._2, canvasSize._1 / 2 + 12, canvasSize._2 / 4 + 12, canvasSize._1 / 2 - 24, canvasSize._2 / 2 - 24, null)
+                      graph.setColor(Color.white)
+                      graph.drawString("参会者", 344, 24)
+                    } else {
+                      graph.drawImage(clientImg._2, canvasSize._1 / 2 + 12, canvasSize._2 / 4 + 12, canvasSize._1 / 2 - 24, canvasSize._2 / 2 - 24, null)
+                      graph.drawString(s"参会者, ${clientImg._1}", 344, 24)
+                    }
+                }
 
-            case x if x == 3 =>
-              var n = 0
-              graph.drawImage(img, canvasSize._1 / 4, 0, canvasSize._1 / 2, canvasSize._2 / 2, null)
-              graph.drawString("主持人", canvasSize._1 / 4 + 24, 24)
-              clientImgList.foreach { clientImg =>
-                graph.drawImage(clientImg, n * canvasSize._1 / 2, canvasSize._2 / 2, canvasSize._1 / 2, canvasSize._2 / 2, null)
-                graph.drawString("参会者", n * canvasSize._1 / 2 + 24, canvasSize._2 / 2 + 24)
-                n += 1
-              }
-            case x if x == 4 =>
-              var n = 0
-              graph.drawImage(img, 0, 0, canvasSize._1 / 2, canvasSize._2 / 2, null)
-              graph.drawString("主持人", 24, 24)
-              graph.drawImage(clientImgList.head, canvasSize._1 / 2, 0, canvasSize._1 / 2, canvasSize._2 / 2, null)
-              graph.drawString("参会者", 344, 24)
-              clientImgList.drop(1).foreach { clientImg =>
-                graph.drawImage(clientImg, n * canvasSize._1 / 2, canvasSize._2 / 2, canvasSize._1 / 2, canvasSize._2 / 2, null)
-                graph.drawString("参会者", n * canvasSize._1 / 2 + 24, canvasSize._2 / 2 + 24)
-                n += 1
-              }
-          }
-          //fixme 此处为何不直接recordImage
-          val frame = convert.convert(canvas)
-          recorder4ts.record(frame.clone())
-          Behaviors.same
+              case 3 =>
+                var n = 0
+                graph.drawImage(img, canvasSize._1 / 4 + 12, 12, canvasSize._1 / 2 - 24, canvasSize._2 / 2 - 24, null)
+                graph.drawString("主持人", canvasSize._1 / 4 + 24, 24)
+                clientImgList.foreach {
+                  clientImg =>
+                    if (imageBlock.contains(clientImg._1)) {
+                      graph.setColor(Color.black)
+                      graph.drawRect(n * canvasSize._1 / 2, canvasSize._2 / 2, canvasSize._1 / 2, canvasSize._2 / 2)
+                      graph.setColor(Color.white)
+                      graph.drawString("参会者", n * canvasSize._1 / 2 + 24, canvasSize._2 / 2 + 24)
+                    } else if (spokesman == clientImg._1) {
+                      graph.setColor(Color.green)
+                      graph.drawRect(n * canvasSize._1 / 2, canvasSize._2 / 2, canvasSize._1 / 2, canvasSize._2 / 2)
+                      graph.drawImage(clientImg._2, n * canvasSize._1 / 2 + 12, canvasSize._2 / 2 + 12, canvasSize._1 / 2 - 24, canvasSize._2 / 2 - 24, null)
+                      graph.setColor(Color.white)
+                      graph.drawString("参会者", n * canvasSize._1 / 2 + 24, canvasSize._2 / 2 + 24)
+                    } else {
+                      graph.drawImage(clientImg._2, n * canvasSize._1 / 2 + 12, canvasSize._2 / 2 + 12, canvasSize._1 / 2 - 24, canvasSize._2 / 2 - 24, null)
+                      graph.drawString(s"参会者, ${clientImg._1}", n * canvasSize._1 / 2 + 24, canvasSize._2 / 2 + 24)
+                    }
+                    n += 1
+                }
+              case 4 =>
+                var n = 0
+                graph.drawImage(img, 8, 8, canvasSize._1 / 2 - 8, canvasSize._2 / 2 - 8, null)
+                graph.drawString("主持人", 24, 24)
 
-        case t: Image4Client =>
-          if (clientFrameList.map(_._1).contains(t.liveId)) {
-            clientFrameList.filter(c => c._1 == t.liveId).foreach(_._2.frame = t.frame)
+                if (imageBlock.contains(clientImgList.head._1)) {
+                  graph.setColor(Color.black)
+                  graph.drawRect(canvasSize._1 / 2, 0, canvasSize._1 / 2, canvasSize._2 / 2)
+                  graph.drawString("参会者", 344, 24)
+                } else if (spokesman == clientImgList.head._1) {
+                  graph.setColor(Color.green)
+                  graph.drawRect(canvasSize._1 / 2, 0, canvasSize._1 / 2, canvasSize._2 / 2)
+                  graph.drawImage(clientImgList.head._2, canvasSize._1 / 2 + 8, 8, canvasSize._1 / 2 - 8, canvasSize._2 / 2 - 8, null)
+                  graph.setColor(Color.white)
+                  graph.drawString("参会者", 344, 24)
+                } else {
+                  graph.drawImage(clientImgList.head._2, canvasSize._1 / 2 + 8, 8, canvasSize._1 / 2 - 8, canvasSize._2 / 2 - 8, null)
+                  graph.drawString("参会者", 344, 24)
+                }
+                clientImgList.drop(1).foreach {
+                  clientImg =>
+                    if (imageBlock.contains(clientImg._1)) {
+                      graph.setColor(Color.black)
+                      graph.drawRect(n * canvasSize._1 / 2, canvasSize._2 / 2, canvasSize._1 / 2, canvasSize._2 / 2)
+                      graph.drawString("参会者", 344, 24)
+                    } else if (spokesman == clientImg._1) {
+                      graph.setColor(Color.green)
+                      graph.drawRect(n * canvasSize._1 / 2, canvasSize._2 / 2, canvasSize._1 / 2, canvasSize._2 / 2)
+                      graph.drawImage(clientImg._2, n * canvasSize._1 / 2 + 8, canvasSize._2 / 2 + 8, canvasSize._1 / 2 - 8, canvasSize._2 / 2 - 8, null)
+                      graph.setColor(Color.black)
+                      graph.drawString("参会者", 344, 24)
+                    } else {
+                      graph.drawImage(clientImg._2, n * canvasSize._1 / 2 + 8, canvasSize._2 / 2 + 8, canvasSize._1 / 2 - 8, canvasSize._2 / 2 - 8, null)
+                      graph.drawString("参会者", n * canvasSize._1 / 2 + 24, canvasSize._2 / 2 + 24)
+                    }
+                    n += 1
+                }
+            }
+            //fixme 此处为何不直接recordImage
+            val frame = convert.convert(canvas)
+            recorder4ts.record(frame.clone())
             Behaviors.same
-          } else {
-            log.info(s"get new partner: ${t.liveId} !!!!!!!!!!!!!!!!")
-            val newList = (t.liveId, Image(t.frame)) :: clientFrameList
-            convert2Map.put(t.liveId, new Java2DFrameConverter())
+
+          case t: Image4Client =>
+            if (clientFrameList.map(_._1).contains(t.liveId)) {
+              clientFrameList.filter(c => c._1 == t.liveId).foreach(_._2.frame = t.frame)
+              Behaviors.same
+            } else {
+              log.info(s"get new partner: ${t.liveId} !!!!!!!!!!!!!!!!")
+              val newList = (t.liveId, Image(t.frame)) :: clientFrameList
+              convert2Map.put(t.liveId, new Java2DFrameConverter())
+              graph.clearRect(0, 0, canvasSize._1, canvasSize._2)
+              draw(canvas, graph, newList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize, spokesman, imageBlock)
+            }
+
+          case RemoveClient(liveId) =>
+            val newList = clientFrameList.filterNot(c => c._1 == liveId)
+            convert2Map.remove(liveId)
+            draw(canvas, graph, newList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize, spokesman, imageBlock)
+
+          case ChangeSpeaker(userLiveId) =>
+            log.info(s"get set spokesman: $userLiveId")
+            val newSpokesman = userLiveId
             graph.clearRect(0, 0, canvasSize._1, canvasSize._2)
-            draw(canvas, graph, newList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize, spokesman, soundBlock, imageBlock)
-          }
+            draw(canvas, graph, clientFrameList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize, newSpokesman, imageBlock)
 
-        case RemoveClient(liveId) =>
-          val newList = clientFrameList.filterNot(c => c._1 == liveId)
-          convert2Map.remove(liveId)
-          draw(canvas, graph, newList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize, spokesman, soundBlock, imageBlock)
+          case UpdateImageBlock(userLiveId, aOD) =>
+            log.info(s"get update block: id: $userLiveId, aod: $aOD")
+            val newList = aOD match {
+              case Block.add =>
+                userLiveId :: imageBlock
+              case Block.delete =>
+                imageBlock.filterNot(_ == userLiveId)
+            }
+            graph.clearRect(0, 0, canvasSize._1, canvasSize._2)
+            draw(canvas, graph, clientFrameList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize, spokesman, newList)
 
-        case ChangeSpeaker(userLiveId) =>
+          case NewHostInfo(newHostLiveId) =>
+            convert2Map.remove(newHostLiveId)
+            val newList = clientFrameList.filterNot(_._1 == newHostLiveId)
+            draw(canvas, graph, newList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize, spokesman, imageBlock)
 
-          draw(canvas, graph, clientFrameList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize, userLiveId, soundBlock, imageBlock)
+          case Close =>
+            log.info(s"drawer stopped")
+            recorder4ts.releaseUnsafe()
+            Behaviors.stopped
 
-        case Close =>
-          log.info(s"drawer stopped")
-          recorder4ts.releaseUnsafe()
-          Behaviors.stopped
-
-        case t: SetLayout =>
-          log.info(s"got msg: $t")
-          draw(canvas, graph, clientFrameList, recorder4ts, convert1, convert2Map, convert, t.layout, bgImg, roomId, canvasSize, spokesman, soundBlock, imageBlock)
-      }
+          case t: SetLayout =>
+            log.info(s"got msg: $t")
+            draw(canvas, graph, clientFrameList, recorder4ts, convert1, convert2Map, convert, t.layout, bgImg, roomId, canvasSize, spokesman, imageBlock)
+        }
     }
   }
 
-  def getInitString(n: Int) = {
+  def getInitString(n: Int): String = {
     var t = ""
     for (i <- 0 until n) {
       t += s"[$i:a]"

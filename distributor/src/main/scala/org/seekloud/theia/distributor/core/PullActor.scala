@@ -107,17 +107,17 @@ object PullActor {
       Behaviors.withTimers[Command] {
         implicit timer =>
           log.info(s"pullActor start----")
-          if(testModel){
-            pullChannel.socket().bind(new InetSocketAddress("0.0.0.0", 41660))
-            work()
-          }else {
+          //          if(testModel){
+          //            pullChannel.socket().bind(new InetSocketAddress("0.0.0.0", 41660))
+          //            work()
+          //          }else {
             val pullStreamDst = new InetSocketAddress(rtpToHost, 61041)
             val host = "0.0.0.0"
             val port = getRandomPort
             val client = new PullStreamClient(host, port, pullStreamDst, ctx.self, rtpServerDst)
             ctx.self ! Ready(client)
             wait()
-          }
+        //          }
       }
     }
   }
@@ -283,50 +283,51 @@ object PullActor {
     }
   }
 
-  def work()(implicit timer: TimerScheduler[Command],
-    stashBuffer: StashBuffer[Command]):Behavior[Command] = {
-    log.info("-----------------------测试中，自己收流")
-    recvThread.start()
-    Behaviors.receive[Command] { (ctx, msg) =>
-      msg match {
-        case m@NewLive(liveId, roomId) =>
-          log.info(s"got msg: $m")
-          liveCountMap.put(liveId, 0)
-          roomLiveMap.put(roomId,liveId)
-          val sender = getSendActor(ctx,roomId)
-          liveSenderMap.put(liveId, sender)
-          Behaviors.same
-
-        case RoomWithPort(roomId, port) =>
-          roomLiveMap.get(roomId).foreach(liveId =>
-            liveSenderMap.get(liveId).foreach( s => s! SendActor.GetUdp(new InetSocketAddress("127.0.0.1", port)))
-          )
-          Behaviors.same
-
-        case PullStreamData(liveId, _, data) =>
-          if(liveSenderMap.get(liveId).isDefined){
-            val sender = liveSenderMap(liveId)
-            if(liveCountMap.getOrElse(liveId,0) < 5){
-              log.info(s"$liveId get stream --")
-              liveCountMap.update(liveId, liveCountMap(liveId) +1)
-            }
-            sender ! SendData(data)
-          }
-          Behaviors.same
-
-        case RoomClose(roomId) =>
-          roomLiveMap.get(roomId).foreach( liveId =>
-            liveSenderMap.remove(liveId)
-          )
-          roomLiveMap.remove(roomId)
-          Behaviors.same
-
-        case x =>
-          log.info(s"recv unknown msg: $x")
-          Behaviors.same
-      }
-    }
-  }
+  //
+  //  def work()(implicit timer: TimerScheduler[Command],
+  //    stashBuffer: StashBuffer[Command]):Behavior[Command] = {
+  //    log.info("-----------------------测试中，自己收流")
+  //    recvThread.start()
+  //    Behaviors.receive[Command] { (ctx, msg) =>
+  //      msg match {
+  //        case m@NewLive(liveId, roomId) =>
+  //          log.info(s"got msg: $m")
+  //          liveCountMap.put(liveId, 0)
+  //          roomLiveMap.put(roomId,liveId)
+  //          val sender = getSendActor(ctx,roomId)
+  //          liveSenderMap.put(liveId, sender)
+  //          Behaviors.same
+  //
+  //        case RoomWithPort(roomId, port) =>
+  //          roomLiveMap.get(roomId).foreach(liveId =>
+  //            liveSenderMap.get(liveId).foreach( s => s! SendActor.GetUdp(new InetSocketAddress("127.0.0.1", port)))
+  //          )
+  //          Behaviors.same
+  //
+  //        case PullStreamData(liveId, _, data) =>
+  //          if(liveSenderMap.get(liveId).isDefined){
+  //            val sender = liveSenderMap(liveId)
+  //            if(liveCountMap.getOrElse(liveId,0) < 5){
+  //              log.info(s"$liveId get stream --")
+  //              liveCountMap.update(liveId, liveCountMap(liveId) +1)
+  //            }
+  //            sender ! SendData(data)
+  //          }
+  //          Behaviors.same
+  //
+  //        case RoomClose(roomId) =>
+  //          roomLiveMap.get(roomId).foreach( liveId =>
+  //            liveSenderMap.remove(liveId)
+  //          )
+  //          roomLiveMap.remove(roomId)
+  //          Behaviors.same
+  //
+  //        case x =>
+  //          log.info(s"recv unknown msg: $x")
+  //          Behaviors.same
+  //      }
+  //    }
+  //  }
 
   private def getSendActor(ctx: ActorContext[Command], roomId:Long) = {
     val childName = s"wrapActor_$roomId"

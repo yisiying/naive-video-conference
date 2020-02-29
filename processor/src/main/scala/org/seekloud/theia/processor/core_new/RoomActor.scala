@@ -12,8 +12,6 @@ import org.seekloud.theia.processor.common.Constants.Part
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
-
-
 import scala.collection.mutable
 
 /**
@@ -46,6 +44,12 @@ object RoomActor {
   case class ChildDead4Grabber(roomId: Long, childName: String, value: ActorRef[GrabberActor.Command]) extends Command// fixme liveID
 
   case class ChildDead4Recorder(roomId: Long, childName: String, value: ActorRef[RecorderActor.Command]) extends Command
+
+  case class SetSpokesman(roomId: Long, userLiveIdOpt: String) extends Command
+
+  case class UpdateBlock(roomId: Long, userLiveId: String, iOS: Int, aOD: Int) extends Command
+
+  case class ChangeHost(roomId: Long, newHostLiveId: String) extends Command
 
   case class ClosePipe(liveId: String) extends Command
 
@@ -144,10 +148,43 @@ object RoomActor {
           }
           Behaviors.same
 
+        case SetSpokesman(roomId, userLiveIdOpt) =>
+          if (recorderMap.get(roomId).nonEmpty) {
+            recorderMap(roomId) ! RecorderActor.ChangeSpokesman(userLiveIdOpt)
+          } else {
+            log.info(s"${roomId}  recorder not exist when setSpokesman")
+          }
+          Behaviors.same
+
+        case UpdateBlock(roomId, userLiveId, iOS, aOD) =>
+          if (recorderMap.get(roomId).nonEmpty) {
+            recorderMap(roomId) ! RecorderActor.UpdateBlock(userLiveId, iOS, aOD)
+          } else {
+            log.info(s"${roomId}  recorder not exist when setSpokesman")
+          }
+          Behaviors.same
+
+        case ChangeHost(roomId, newHostLiveId) =>
+          if (roomLiveMap.get(roomId).nonEmpty) {
+            if (roomLiveMap(roomId).contains(newHostLiveId)) {
+              recorderMap.get(roomId) match {
+                case Some(actor) =>
+                  actor ! RecorderActor.ChangeHost(newHostLiveId)
+                case None =>
+                  log.info(s"no recorder actor when change host")
+              }
+            } else {
+              log.info(s"no user: $newHostLiveId")
+            }
+          } else {
+            log.info("no room")
+          }
+          Behaviors.same
+
         case CloseRoom(roomId) =>
           log.info(s"${ctx.self} receive a msg $msg")
           if(grabberMap.get(roomId).nonEmpty){
-            grabberMap(roomId).values.toList.foreach(_ ! GrabberActor.StopGrabber)
+            grabberMap(roomId).foreach(g => g._2 ! GrabberActor.StopGrabber)
             grabberMap.remove(roomId)
           } else {
             log.info(s"${roomId}  grabbers not exist when closeRoom")

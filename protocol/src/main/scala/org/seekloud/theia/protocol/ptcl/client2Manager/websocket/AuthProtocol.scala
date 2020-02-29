@@ -147,6 +147,46 @@ object AuthProtocol {
                                msg: String = "ok"
                              ) extends WsMsgRm2Host
 
+  case class SetSpokesman(spokesmanId: Long) extends WsMsgHost
+
+  case class SetSpokesmanRsp(
+                              errCode: Int = 0,
+                              msg: String = "ok"
+                            ) extends WsMsgRm2Host
+
+  case class UpdateBlock(userId4Audience: Long, imageOrSound: Int, addOrDelete: Int) extends WsMsgHost
+
+  case class UpdateBlockRsp(
+                             errCode: Int = 0,
+                             msg: String = "ok"
+                           ) extends WsMsgRm2Host
+
+  case class ChangeHost(newHostId: Long) extends WsMsgHost
+
+  case class ChangeHostRsp(roomInfo: RoomInfo) extends WsMsgRm
+
+  case class ForceQuit(userId4Audience: Long) extends WsMsgClient
+
+  case object QuitAudience extends WsMsgRm
+
+  case class SpokesReq(userId4Audience: Long) extends WsMsgClient
+
+  case class SpokesReqToHost(userId: Long, userName: String) extends WsMsgRm
+
+  case class SpokesAccept(userId4Audience: Long, accept: Boolean) extends WsMsgClient
+
+  case class SpokesRsp(errCode: Int = 0, msg: String = "ok") extends WsMsgRm
+
+
+
+  //  case class UpdateBlockRsp4Audience(
+  //                                    imageOrSound: Int,
+  //                                    addOrdelete: Int
+  //                                    )
+
+
+  //  case class SetSpokesmanRsp4Audience() extends WsMsgRm2Audience
+
 
   /**
     *
