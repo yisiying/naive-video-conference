@@ -1036,10 +1036,10 @@ object RmManager {
         /*开始推流*/
         case msg: Devicesuccess =>
           val userId = userInfo.get.userId
-          println("开始推流！"+s"${AppSettings.srsServer}/user-${userId}")
+          println("开始推流！"+s"${AppSettings.srsServer}user-${userId}")
           //          audienceScene.autoReset2()
 //          liveManager ! LiveManager.PushStream(msg.audienceLiveInfo.liveId, msg.audienceLiveInfo.liveCode)
-          liveManager ! LiveManager.PushRtmpStream(s"${AppSettings.srsServer}/user-${userId}")
+          liveManager ! LiveManager.PushRtmpStream(s"${AppSettings.srsServer}user-${userId}")
 
           /*开始拉取并播放主播rtp流*/
           //          val joinInfo = JoinInfo(
