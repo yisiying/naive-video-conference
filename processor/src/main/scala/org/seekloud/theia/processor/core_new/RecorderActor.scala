@@ -537,6 +537,7 @@ object RecorderActor {
           case RemoveClient(liveId) =>
             val newList = clientFrameList.filterNot(c => c._1 == liveId)
             convert2Map.remove(liveId)
+            graph.clearRect(0, 0, canvasSize._1, canvasSize._2)
             draw(canvas, graph, newList, recorder4ts, convert1, convert2Map, convert, layout, bgImg, roomId, canvasSize, spokesman, imageBlock)
 
           case ChangeSpeaker(userLiveId) =>
