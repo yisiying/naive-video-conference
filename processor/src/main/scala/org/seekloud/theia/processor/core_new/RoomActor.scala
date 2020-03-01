@@ -238,7 +238,7 @@ object RoomActor {
   def getRecorderActor(ctx: ActorContext[Command], roomId: Long, hostLiveId: String, roomLiveId: String, layout: Int) = {
     val childName = s"recorderActor_${roomId}_$roomLiveId"
     ctx.child(childName).getOrElse{
-      val actor = ctx.spawn(RecorderActor.create(roomId, hostLiveId, mutable.Map[String, Int](), roomLiveId, layout), childName)
+      val actor = ctx.spawn(RecorderActor.create(roomId, hostLiveId, mutable.HashMap[String, Int](), roomLiveId, layout), childName)
       ctx.watchWith(actor,ChildDead4Recorder(roomId, childName, actor))
       actor
     }.unsafeUpcast[RecorderActor.Command]
