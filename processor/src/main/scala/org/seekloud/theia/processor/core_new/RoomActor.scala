@@ -214,7 +214,7 @@ object RoomActor {
 
         case ChildDead4Grabber(roomId, childName, value) =>
           log.info(s"${childName} is dead ")
-          grabberMap.remove(roomId)
+          //          grabberMap.remove(roomId)
           Behaviors.same
 
         case ChildDead4Recorder(roomId, childName, value) =>
