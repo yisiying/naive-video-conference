@@ -148,8 +148,8 @@ object GrabberActor {
           Behaviors.same
 
         case StopGrabber =>
-          log.info(s"get stop grabber msg, stop grabber in 400 ms")
-          timer.startSingleTimer(TimerKey4Close + liveId, CloseGrabber, 400.milli)
+          log.info(s"get stop grabber msg, stop grabber in 40 ms")
+          timer.startSingleTimer(TimerKey4Close + liveId, CloseGrabber, 40.milli)
           Behaviors.same
 
 
