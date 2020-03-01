@@ -130,9 +130,9 @@ object RoomActor {
             val newRoomLiveList = roomLiveMap(roomId).filterNot(_ == partnerLiveId)
             roomLiveMap.update(roomId, newRoomLiveList)
           }
-          println("2------------" + grabberMap)
+          println("2--------------" + grabberMap)
           recorderMap(roomId) ! RecorderActor.UpdateClientList(partnerLiveId, Part.out)
-          Behaviors.same
+          work(grabberMap, recorderMap, roomLiveMap)
 
         case UpdateRoomInfo(roomId, layout) =>
           if(recorderMap.get(roomId).nonEmpty) {
