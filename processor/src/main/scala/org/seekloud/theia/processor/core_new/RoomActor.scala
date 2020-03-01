@@ -117,6 +117,7 @@ object RoomActor {
 
         case PartnerOut(roomId, partnerLiveId) =>
           log.info(s"partner out, liveId: $partnerLiveId")
+          println("1-------------" + grabberMap)
           if (grabberMap(roomId).get(partnerLiveId).nonEmpty) {
             grabberMap(roomId)(partnerLiveId) ! GrabberActor.StopGrabber
             val m = grabberMap(roomId)
@@ -129,7 +130,7 @@ object RoomActor {
             val newRoomLiveList = roomLiveMap(roomId).filterNot(_ == partnerLiveId)
             roomLiveMap.update(roomId, newRoomLiveList)
           }
-          println(grabberMap)
+          println("2------------" + grabberMap)
           recorderMap(roomId) ! RecorderActor.UpdateClientList(partnerLiveId, Part.out)
           Behaviors.same
 
