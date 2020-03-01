@@ -67,16 +67,16 @@ object RoomActor {
       Behaviors.withTimers[Command] {
         implicit timer =>
           log.info(s"grabberManager start----")
-          work(mutable.Map[Long, mutable.Map[String, ActorRef[GrabberActor.Command]]](), mutable.Map[Long, ActorRef[RecorderActor.Command]](), mutable.Map[Long, List[String]]())
+          work(mutable.HashMap[Long, mutable.HashMap[String, ActorRef[GrabberActor.Command]]](), mutable.HashMap[Long, ActorRef[RecorderActor.Command]](), mutable.HashMap[Long, List[String]]())
       }
     }
   }
 
   def work(
             //    grabberMap: mutable.Map[Long, List[ActorRef[GrabberActor.Command]]],
-            grabberMap: mutable.Map[Long, mutable.Map[String, ActorRef[GrabberActor.Command]]],
-            recorderMap: mutable.Map[Long,ActorRef[RecorderActor.Command]],
-            roomLiveMap: mutable.Map[Long, List[String]]
+            grabberMap: mutable.HashMap[Long, mutable.HashMap[String, ActorRef[GrabberActor.Command]]],
+            recorderMap: mutable.HashMap[Long, ActorRef[RecorderActor.Command]],
+            roomLiveMap: mutable.HashMap[Long, List[String]]
   )(implicit stashBuffer: StashBuffer[Command],
     timer: TimerScheduler[Command]):Behavior[Command] = {
     Behaviors.receive[Command]{(ctx, msg) =>
@@ -93,7 +93,7 @@ object RoomActor {
           val recorderActor = getRecorderActor(ctx, roomId, hostLiveId, roomLiveId, layout)
           val grabber4host = getGrabberActor(ctx, roomId, hostLiveId, recorderActor)
           //          val grabber4client = getGrabberActor(ctx, roomId, client, recorderActor)
-          grabberMap.put(roomId, mutable.Map(hostLiveId -> grabber4host))
+          grabberMap.put(roomId, mutable.HashMap(hostLiveId -> grabber4host))
           recorderMap.put(roomId, recorderActor)
           roomLiveMap.put(roomId, List(hostLiveId, roomLiveId))
           Behaviors.same
@@ -119,7 +119,9 @@ object RoomActor {
           log.info(s"partner out, liveId: $partnerLiveId")
           if (grabberMap(roomId).get(partnerLiveId).nonEmpty) {
             grabberMap(roomId)(partnerLiveId) ! GrabberActor.StopGrabber
-            grabberMap(roomId).remove(partnerLiveId)
+            val m = grabberMap(roomId)
+            val n = m.filterNot(_._1 == partnerLiveId)
+            grabberMap.update(roomId, n)
           } else {
             log.info(s"$partnerLiveId grabber not exist")
           }
@@ -127,6 +129,7 @@ object RoomActor {
             val newRoomLiveList = roomLiveMap(roomId).filterNot(_ == partnerLiveId)
             roomLiveMap.update(roomId, newRoomLiveList)
           }
+          println(grabberMap)
           recorderMap(roomId) ! RecorderActor.UpdateClientList(partnerLiveId, Part.out)
           Behaviors.same
 

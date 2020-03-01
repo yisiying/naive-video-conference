@@ -97,7 +97,7 @@ object RecorderActor {
   private val emptyAudio4one = ShortBuffer.allocate(1152)
 
 
-  def create(roomId: Long, hostLiveId: String, clientLiveIdMap: mutable.Map[String, Int], roomLiveId: String, layout: Int): Behavior[Command] = {
+  def create(roomId: Long, hostLiveId: String, clientLiveIdMap: mutable.HashMap[String, Int], roomLiveId: String, layout: Int): Behavior[Command] = {
     Behaviors.setup[Command] { ctx =>
       implicit val stashBuffer: StashBuffer[Command] = StashBuffer[Command](Int.MaxValue)
       Behaviors.withTimers[Command] {
@@ -140,7 +140,7 @@ object RecorderActor {
     }
   }
 
-  def single(roomId: Long, hostLiveId: String, clientLiveIdMap: mutable.Map[String, Int], layout: Int,
+  def single(roomId: Long, hostLiveId: String, clientLiveIdMap: mutable.HashMap[String, Int], layout: Int,
              recorder4ts: FFmpegFrameRecorder1,
              ffFilter: FFmpegFrameFilter,
              drawer: ActorRef[VideoCommand],
@@ -207,7 +207,7 @@ object RecorderActor {
             val canvas = new BufferedImage(640, 480, BufferedImage.TYPE_3BYTE_BGR)
             val drawer = ctx.spawn(
               draw(canvas, canvas.getGraphics, List[(String, Image)](), recorder4ts,
-                new Java2DFrameConverter(), mutable.Map(liveId -> new Java2DFrameConverter()), new Java2DFrameConverter,
+                new Java2DFrameConverter(), mutable.HashMap(liveId -> new Java2DFrameConverter()), new Java2DFrameConverter,
                 layout, "defaultImg.jpg", roomId, (640, 480), "-1", Nil),
               s"drawer_$roomId")
             ctx.self ! NewFrame(liveId, frame)
@@ -245,7 +245,7 @@ object RecorderActor {
     }
   }
 
-  def work(roomId: Long, hostLiveId: String, clientLiveIdMap: mutable.Map[String, Int], layout: Int,
+  def work(roomId: Long, hostLiveId: String, clientLiveIdMap: mutable.HashMap[String, Int], layout: Int,
            recorder4ts: FFmpegFrameRecorder1,
            ffFilter: FFmpegFrameFilter,
            drawer: ActorRef[VideoCommand],
@@ -412,7 +412,7 @@ object RecorderActor {
            clientFrameList: List[(String, Image)],
            recorder4ts: FFmpegFrameRecorder1,
            convert1: Java2DFrameConverter,
-           convert2Map: mutable.Map[String, Java2DFrameConverter],
+           convert2Map: mutable.HashMap[String, Java2DFrameConverter],
            convert: Java2DFrameConverter,
            layout: Int = 0,
            bgImg: String,
