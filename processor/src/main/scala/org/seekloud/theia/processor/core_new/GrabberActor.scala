@@ -66,9 +66,9 @@ object GrabberActor {
           //            else if (liveId == "user-100001")
           //              new FFmpegFrameGrabber1(s"${AppSettings.srsServer}user-100002")
           //            else if (liveId == "user-100002")
-            new FFmpegFrameGrabber1(s"${AppSettings.srsServer}user-100002")
+          //            new FFmpegFrameGrabber1(s"${AppSettings.srsServer}user-100002")
           //            else
-          //              new FFmpegFrameGrabber1(s"${AppSettings.srsServer}$liveId")
+            new FFmpegFrameGrabber1(s"${AppSettings.srsServer}$liveId")
           log.info(s"grabber开始拉流：${AppSettings.srsServer}$liveId")
           try {
             grabber.start()
